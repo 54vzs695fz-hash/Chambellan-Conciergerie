@@ -68,7 +68,7 @@ const LOCK_LAYOUT = `
     if (bodyHeight < 40) return;
     timeline.style.height = bodyHeight + "px";
     timeline.style.minHeight = bodyHeight + "px";
-    timeline.style.maxHeight = bodyHeight + "px";
+    timeline.style.overflow = "visible";
   });
   document.documentElement.setAttribute("data-lux-print-ready", "true");
 })();
@@ -92,8 +92,8 @@ function standaloneHtml(stayCount) {
 <style>
   html, body { height: 794px; margin: 0; }
   .lux-print-root--client {
-    --lux-print-grid-height: 102mm;
-    --lux-print-stay-height: 22mm;
+    --lux-print-grid-height: 86mm;
+    --lux-print-stay-height: 20mm;
     height: 794px;
     display: flex;
     flex-direction: column;
@@ -112,11 +112,11 @@ function standaloneHtml(stayCount) {
   .lux-itinerary-days { flex: 1; height: 100%; display: flex; align-items: stretch; }
   .lux-day-card { flex: 1; display: flex; flex-direction: column; height: 100%; }
   .lux-day-card-head { height: 36px; flex-shrink: 0; }
-  .lux-day-card-body--timeline { display: flex; flex-direction: column; flex: 1; height: 100%; }
-  .lux-timeline-band { flex: 0 0 20%; height: 20%; max-height: 20%; min-height: 0; overflow: hidden; }
-  .lux-timeline-band--afternoon, .lux-timeline-band--evening, .lux-timeline-band--space-mid {
-    display: flex; flex-direction: column; justify-content: center;
-  }
+  .lux-day-card-body--timeline { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: visible; }
+  .lux-timeline-top-spacer { flex: 0 0 26%; flex-shrink: 0; }
+  .lux-timeline-bottom-spacer { flex: 0 0 12%; flex-shrink: 0; }
+  .lux-period-block { flex: 0 0 auto; }
+  .lux-period-block--evening { margin-top: auto; }
   .lux-travel-card { background: #f3efe8; padding: 8px; }
   .lux-print-stay-reserved {
     display: flex; flex-direction: column; justify-content: center;
@@ -142,15 +142,14 @@ function standaloneHtml(stayCount) {
           <article class="lux-day-card">
             <header class="lux-day-card-head"><span>Mon</span></header>
             <div class="lux-day-card-body lux-day-card-body--timeline" data-lux-timeline>
-              <div class="lux-timeline-band lux-timeline-band--space-top"></div>
-              <div class="lux-timeline-band lux-timeline-band--afternoon">
+              <div class="lux-timeline-top-spacer"></div>
+              <div class="lux-period-block lux-period-block--afternoon">
                 <div class="lux-travel-card"><time class="lux-travel-time">15:30</time><p class="lux-travel-venue">Shellona</p></div>
               </div>
-              <div class="lux-timeline-band lux-timeline-band--space-mid"></div>
-              <div class="lux-timeline-band lux-timeline-band--evening">
+              <div class="lux-period-block lux-period-block--evening">
                 <div class="lux-travel-card"><time class="lux-travel-time">22:00</time><p class="lux-travel-venue">Gaia</p></div>
               </div>
-              <div class="lux-timeline-band lux-timeline-band--space-bottom"></div>
+              <div class="lux-timeline-bottom-spacer"></div>
             </div>
           </article>
         </div>
@@ -181,10 +180,10 @@ async function runStandaloneLayoutTest(page) {
       const stay = document.querySelector(".lux-print-stay-reserved");
       const timeline = document.querySelector("[data-lux-timeline]");
       const afternoon = document.querySelector(
-        ".lux-timeline-band--afternoon .lux-travel-card"
+        ".lux-period-block--afternoon .lux-travel-card"
       );
       const evening = document.querySelector(
-        ".lux-timeline-band--evening .lux-travel-card"
+        ".lux-period-block--evening .lux-travel-card"
       );
       if (!grid || !timeline || !afternoon || !evening) return null;
       const timelineRect = timeline.getBoundingClientRect();
@@ -195,15 +194,11 @@ async function runStandaloneLayoutTest(page) {
         gridHeight: Math.round(grid.getBoundingClientRect().height),
         stayHeight: stay ? Math.round(stay.getBoundingClientRect().height) : 0,
         timelineH: Math.round(timelineRect.height),
-        afternoonCenterPct: Math.round(
-          (((afternoonRect.top + afternoonRect.bottom) / 2 - timelineRect.top) /
-            timelineRect.height) *
-            100
+        afternoonTopPct: Math.round(
+          ((afternoonRect.top - timelineRect.top) / timelineRect.height) * 100
         ),
-        eveningCenterPct: Math.round(
-          (((eveningRect.top + eveningRect.bottom) / 2 - timelineRect.top) /
-            timelineRect.height) *
-            100
+        eveningTopPct: Math.round(
+          ((eveningRect.top - timelineRect.top) / timelineRect.height) * 100
         ),
         gapPct: Math.round((gap / timelineRect.height) * 100),
         stayFields: document.querySelectorAll(".lux-travel-info-item").length,
@@ -241,12 +236,12 @@ async function runStandaloneLayoutTest(page) {
   }
 
   const m = gridHeights[0];
-  const okAfternoon = m.afternoonCenterPct >= 25 && m.afternoonCenterPct <= 40;
-  const okEvening = m.eveningCenterPct >= 60 && m.eveningCenterPct <= 75;
-  const okGap = m.gapPct >= 15 && m.gapPct <= 45;
+  const okAfternoon = m.afternoonTopPct >= 22 && m.afternoonTopPct <= 32;
+  const okEvening = m.eveningTopPct >= 52 && m.eveningTopPct <= 62;
+  const okGap = m.gapPct >= 3 && m.gapPct <= 35;
   if (!okAfternoon || !okEvening || !okGap) {
     console.error(
-      `  FAIL: expected afternoon 25-40%, evening 60-75%, gap 15-45% (got ${m.afternoonCenterPct}%, ${m.eveningCenterPct}%, ${m.gapPct}%)`
+      `  FAIL: expected afternoon top 22-32%, evening top 52-62%, gap 3-35% (got ${m.afternoonTopPct}%, ${m.eveningTopPct}%, ${m.gapPct}%)`
     );
     process.exitCode = 1;
   } else {
@@ -289,10 +284,10 @@ async function main() {
         if (!timeline) return;
         const timelineRect = timeline.getBoundingClientRect();
         const afternoon = timeline.querySelector(
-          ".lux-timeline-band--afternoon .lux-travel-card"
+          ".lux-period-block--afternoon .lux-travel-card"
         );
         const evening = timeline.querySelector(
-          ".lux-timeline-band--evening .lux-travel-card"
+          ".lux-period-block--evening .lux-travel-card"
         );
         if (!afternoon || !evening) return;
         const afternoonRect = afternoon.getBoundingClientRect();
@@ -303,15 +298,11 @@ async function main() {
           day: index + 1,
           gridHeight: grid ? Math.round(grid.getBoundingClientRect().height) : 0,
           timelineH: Math.round(timelineH),
-          afternoonCenterPct: Math.round(
-            (((afternoonRect.top + afternoonRect.bottom) / 2 - timelineRect.top) /
-              timelineH) *
-              100
+          afternoonTopPct: Math.round(
+            ((afternoonRect.top - timelineRect.top) / timelineH) * 100
           ),
-          eveningCenterPct: Math.round(
-            (((eveningRect.top + eveningRect.bottom) / 2 - timelineRect.top) /
-              timelineH) *
-              100
+          eveningTopPct: Math.round(
+            ((eveningRect.top - timelineRect.top) / timelineH) * 100
           ),
           gapPct: Math.round((gap / timelineH) * 100),
         });
@@ -326,15 +317,15 @@ async function main() {
     }
     for (const m of metrics) {
       console.log(
-        `  Day ${m.day}: grid ${m.gridHeight}px | timeline ${m.timelineH}px | afternoon ${m.afternoonCenterPct}% | evening ${m.eveningCenterPct}% | gap ${m.gapPct}%`
+        `  Day ${m.day}: grid ${m.gridHeight}px | timeline ${m.timelineH}px | afternoon top ${m.afternoonTopPct}% | evening top ${m.eveningTopPct}% | gap ${m.gapPct}%`
       );
       const ok =
-        m.afternoonCenterPct >= 25 &&
-        m.afternoonCenterPct <= 40 &&
-        m.eveningCenterPct >= 60 &&
-        m.eveningCenterPct <= 75 &&
-        m.gapPct >= 15 &&
-        m.gapPct <= 45;
+        m.afternoonTopPct >= 22 &&
+        m.afternoonTopPct <= 32 &&
+        m.eveningTopPct >= 52 &&
+        m.eveningTopPct <= 62 &&
+        m.gapPct >= 3 &&
+        m.gapPct <= 35;
       console.log(ok ? "  PASS" : "  FAIL");
       if (!ok) process.exitCode = 1;
     }

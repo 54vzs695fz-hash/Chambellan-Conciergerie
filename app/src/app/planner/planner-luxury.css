@@ -1144,7 +1144,7 @@
 }
 
 .lux-print-root:not(.lux-print-root--client) {
-  --lux-print-grid-height: 118mm;
+  --lux-print-grid-height: 96mm;
   --lux-print-concierge-footer-height: 24mm;
   min-height: 100vh;
   height: 100vh;
@@ -1154,7 +1154,7 @@
 
 .lux-print-root:not(.lux-print-root--client)
   .lux-document:not(:has(.lux-print-concierge-reserved)) {
-  --lux-print-grid-height: 138mm;
+  --lux-print-grid-height: 112mm;
 }
 
 .lux-print-root:not(.lux-print-root--client) .lux-document {
@@ -1458,7 +1458,7 @@
   margin-top: 0.16rem;
 }
 
-/* Luxury itinerary — centered five-band layout (~30% / ~70%) */
+/* Luxury itinerary — flex timeline (~27% / ~58% from top, safe for PDF) */
 .lux-day-card-body--timeline,
 .lux-section-body--timeline {
   display: flex;
@@ -1466,24 +1466,36 @@
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
   gap: 0;
+  box-sizing: border-box;
 }
 
-.lux-timeline-band {
-  flex: 0 0 20%;
-  height: 20%;
-  max-height: 20%;
+.lux-timeline-top-spacer {
+  flex: 0 0 26%;
+  flex-shrink: 0;
   min-height: 0;
-  overflow: hidden;
+  max-height: 30%;
 }
 
-.lux-timeline-band--afternoon,
-.lux-timeline-band--evening,
-.lux-timeline-band--space-mid {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+.lux-timeline-bottom-spacer {
+  flex: 0 0 12%;
+  flex-shrink: 0;
+  min-height: 0;
+  max-height: 14%;
+}
+
+.lux-day-card-body--timeline .lux-period-block--afternoon,
+.lux-section-body--timeline .lux-itinerary-block--afternoon {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.lux-day-card-body--timeline .lux-period-block--evening,
+.lux-section-body--timeline .lux-itinerary-block--evening {
+  flex: 0 0 auto;
+  min-height: 0;
+  margin-top: auto;
 }
 
 .lux-period-title {
@@ -1679,8 +1691,8 @@
   --lux-gold: #7d5c28;
   --lux-gold-rich: #6b4f22;
   --lux-gold-accent: #b8956a;
-  --lux-print-grid-height: 102mm;
-  --lux-print-stay-height: 22mm;
+  --lux-print-grid-height: 86mm;
+  --lux-print-stay-height: 20mm;
   min-height: 100vh;
   height: 100vh;
   display: flex;
@@ -1689,7 +1701,17 @@
 }
 
 .lux-print-root--client .lux-document:not(:has(.lux-print-stay-reserved)) {
-  --lux-print-grid-height: 122mm;
+  --lux-print-grid-height: 104mm;
+}
+
+.lux-print-root .lux-day-card-body--timeline,
+.lux-print-root .lux-section-body--timeline {
+  overflow: visible;
+}
+
+.lux-print-root .lux-day-card-body--timeline .lux-travel-card,
+.lux-print-root .lux-section-body--timeline .lux-activity-card--itinerary {
+  overflow: visible;
 }
 
 .lux-print-root .lux-print-grid-stage {

@@ -201,15 +201,10 @@ function ClientDayCard({ day }: { day: TripDay }) {
           className="lux-day-card-body lux-day-card-body--timeline"
           data-lux-timeline
         >
-          <div className="lux-timeline-band lux-timeline-band--space-top" aria-hidden="true" />
-          <div className="lux-timeline-band lux-timeline-band--afternoon">
-            <ClientPeriodBlock period="afternoon" periodItems={afternoonItems} />
-          </div>
-          <div className="lux-timeline-band lux-timeline-band--space-mid" aria-hidden="true" />
-          <div className="lux-timeline-band lux-timeline-band--evening">
-            <ClientPeriodBlock period="evening" periodItems={eveningItems} />
-          </div>
-          <div className="lux-timeline-band lux-timeline-band--space-bottom" aria-hidden="true" />
+          <div className="lux-timeline-top-spacer" aria-hidden="true" />
+          <ClientPeriodBlock period="afternoon" periodItems={afternoonItems} />
+          <ClientPeriodBlock period="evening" periodItems={eveningItems} />
+          <div className="lux-timeline-bottom-spacer" aria-hidden="true" />
         </div>
       ) : (
         <div className="lux-day-card-body">
@@ -333,33 +328,27 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
       <div className={`lux-day-section${splitTimeline ? " lux-day-section--timeline" : ""}`}>
         {splitTimeline ? (
           <div className="lux-section-body lux-section-body--timeline" data-lux-timeline>
-            <div className="lux-timeline-band lux-timeline-band--space-top" aria-hidden="true" />
-            <div className="lux-timeline-band lux-timeline-band--afternoon">
-              {afternoonSection ? (
-                <ConciergeSectionBlock
-                  section={afternoonSection}
-                  acts={sectionActs(afternoonSection.id)}
-                />
-              ) : null}
-            </div>
-            <div className="lux-timeline-band lux-timeline-band--space-mid">
-              {middleSections.map((section) => (
-                <ConciergeSectionBlock
-                  key={section.id}
-                  section={section}
-                  acts={sectionActs(section.id)}
-                />
-              ))}
-            </div>
-            <div className="lux-timeline-band lux-timeline-band--evening">
-              {eveningSection ? (
-                <ConciergeSectionBlock
-                  section={eveningSection}
-                  acts={sectionActs(eveningSection.id)}
-                />
-              ) : null}
-            </div>
-            <div className="lux-timeline-band lux-timeline-band--space-bottom" aria-hidden="true" />
+            <div className="lux-timeline-top-spacer" aria-hidden="true" />
+            {afternoonSection ? (
+              <ConciergeSectionBlock
+                section={afternoonSection}
+                acts={sectionActs(afternoonSection.id)}
+              />
+            ) : null}
+            {middleSections.map((section) => (
+              <ConciergeSectionBlock
+                key={section.id}
+                section={section}
+                acts={sectionActs(section.id)}
+              />
+            ))}
+            {eveningSection ? (
+              <ConciergeSectionBlock
+                section={eveningSection}
+                acts={sectionActs(eveningSection.id)}
+              />
+            ) : null}
+            <div className="lux-timeline-bottom-spacer" aria-hidden="true" />
           </div>
         ) : (
           <div className="lux-section-body">
