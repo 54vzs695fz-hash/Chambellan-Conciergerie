@@ -1,0 +1,228 @@
+import type { Trip, TripWithDays } from "../types";
+import { ACTIVITY_TYPE_LABELS, EMPTY_TRIP_HEADER } from "../types";
+
+export const PLANNER_ACTIVITY_TYPES = Object.keys(
+  ACTIVITY_TYPE_LABELS
+) as import("../types").ActivityType[];
+
+export type PlannerExportVariant = "client" | "concierge";
+
+export interface ConciergeTeamRow {
+  key: "driver" | "butler" | "security" | "emergency";
+  label: string;
+  nameField: keyof Trip;
+  phoneField?: keyof Trip;
+}
+
+export const CONCIERGE_TEAM_FIELDS: ConciergeTeamRow[] = [
+  {
+    key: "driver",
+    label: "Driver",
+    nameField: "driver_name",
+    phoneField: "driver_phone",
+  },
+  {
+    key: "butler",
+    label: "Butler",
+    nameField: "butler_name",
+    phoneField: "butler_phone",
+  },
+  {
+    key: "security",
+    label: "Security",
+    nameField: "security_contact",
+  },
+  {
+    key: "emergency",
+    label: "Emergency Contact",
+    nameField: "emergency_contact",
+  },
+];
+
+export interface OptionalServiceField {
+  key: string;
+  label: string;
+  tripField: keyof Trip;
+}
+
+export const OPTIONAL_SERVICE_FIELDS: OptionalServiceField[] = [
+  { key: "hotel", label: "Hotel", tripField: "hotel" },
+  { key: "villa", label: "Villa", tripField: "villa" },
+  { key: "yacht", label: "Yacht", tripField: "yacht" },
+  { key: "jet", label: "Jet", tripField: "jet" },
+  {
+    key: "restaurant_reservations",
+    label: "Restaurant Reservations",
+    tripField: "restaurant_reservations",
+  },
+  {
+    key: "club_reservations",
+    label: "Club Reservations",
+    tripField: "club_reservations",
+  },
+];
+
+/** Client-facing arrangements only (no staff or internal reservation flags) */
+export const CLIENT_DOCUMENT_ARRANGEMENTS: OptionalServiceField[] = [
+  { key: "hotel", label: "Hotel", tripField: "hotel" },
+  { key: "villa", label: "Villa", tripField: "villa" },
+  { key: "yacht", label: "Yacht", tripField: "yacht" },
+  { key: "jet", label: "Jet", tripField: "jet" },
+];
+
+export function getDocumentArrangementFields(
+  variant: PlannerExportVariant
+): OptionalServiceField[] {
+  return variant === "client"
+    ? CLIENT_DOCUMENT_ARRANGEMENTS
+    : OPTIONAL_SERVICE_FIELDS;
+}
+
+export function getFilledDocumentArrangements(
+  trip: Trip,
+  variant: PlannerExportVariant
+) {
+  return getDocumentArrangementFields(variant)
+    .map((f) => ({
+      ...f,
+      value: String(trip[f.tripField] ?? "").trim(),
+    }))
+    .filter((s) => s.value);
+}
+
+export function getFilledConciergeTeam(trip: Trip) {
+  return CONCIERGE_TEAM_FIELDS.map((row) => ({
+    ...row,
+    name: String(trip[row.nameField] ?? "").trim(),
+    phone: row.phoneField
+      ? String(trip[row.phoneField] ?? "").trim()
+      : "",
+  })).filter((r) => r.name || r.phone);
+}
+
+export function getFilledOptionalServices(trip: Trip) {
+  return OPTIONAL_SERVICE_FIELDS.map((f) => ({
+    ...f,
+    value: String(trip[f.tripField] ?? "").trim(),
+  })).filter((s) => s.value);
+}
+
+export function tripPayloadForApi(
+  trip: TripWithDays
+): Omit<Trip, "id" | "created_at" | "updated_at"> {
+  const {
+    id: _id,
+    created_at: _c,
+    updated_at: _u,
+    days: _d,
+    client: _cl,
+    ...rest
+  } = trip as TripWithDays & { days?: unknown; client?: unknown };
+  return { ...EMPTY_TRIP_HEADER, ...rest };
+}
+
+export const PLANNER_FOOTER =
+  "This itinerary is fully customisable and can be adjusted at any time according to your preferences. Chambellan Conciergerie remains at your disposal throughout your stay.";
+
+/** Unified brand mark — shared by planner preview and PDF export */
+export const PLANNER_BRAND_LOGO = "/brand/chambellan-logo-vertical.jpg";
+
+export const PLANNER_DOCUMENT_SUBTITLE = "Weekly Planner";
+
+/** Principal concierge host — shown on client itinerary footer */
+export const CLIENT_ITINERARY_HOST = {
+  name: "Matthieu Dubourg",
+  phone: "+1 332 733 9543",
+};
+
+export interface ClientItineraryContact {
+  key: string;
+  label: string;
+  name: string;
+  phone?: string;
+}
+
+function pushContact(
+  contacts: ClientItineraryContact[],
+  row: {
+    key: string;
+    label: string;
+    name: string;
+    phone?: string;
+  }
+) {
+  const name = row.name.trim();
+  const phone = row.phone?.trim();
+  if (name || phone) {
+    contacts.push({
+      key: row.key,
+      label: row.label,
+      name,
+      phone: phone || undefined,
+    });
+  }
+}
+
+export function getClientTravelInfoIcon(key: string): string {
+  switch (key) {
+    case "hotel":
+      return "◈";
+    case "driver":
+      return "◆";
+    case "host":
+      return "◇";
+    case "butler":
+      return "◦";
+    case "security":
+      return "▣";
+    case "emergency":
+      return "☎";
+    default:
+      return "";
+  }
+}
+
+export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[] {
+  const contacts: ClientItineraryContact[] = [];
+
+  pushContact(contacts, {
+    key: "hotel",
+    label: "Hotel",
+    name: String(trip.hotel ?? ""),
+  });
+
+  pushContact(contacts, {
+    key: "driver",
+    label: "Driver",
+    name: String(trip.driver_name ?? ""),
+    phone: String(trip.driver_phone ?? ""),
+  });
+
+  pushContact(contacts, {
+    key: "host",
+    label: "Host",
+    name: CLIENT_ITINERARY_HOST.name,
+    phone: CLIENT_ITINERARY_HOST.phone,
+  });
+
+  pushContact(contacts, {
+    key: "butler",
+    label: "Butler",
+    name: String(trip.butler_name ?? ""),
+    phone: String(trip.butler_phone ?? ""),
+  });
+
+  pushContact(contacts, {
+    key: "security",
+    label: "Security",
+    name: String(trip.security_contact ?? ""),
+  });
+
+  pushContact(contacts, {
+    key: "emergency",
+    label: "Emergency Contact",
+    name: String(trip.emergency_contact ?? ""),
+  });
+
+  return contacts;
+}

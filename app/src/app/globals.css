@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #faf8f5;
+  --beige: #f0ebe3;
+  --sand: #e5ddd2;
+  --gold: #9a7b4f;
+  --ink: #1c1c1c;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+}
+
+@layer components {
+  .field-label {
+    @apply text-[10px] uppercase tracking-[0.2em] text-muted mb-1.5 block;
+  }
+
+  .field-input {
+    @apply w-full bg-white border border-sand/80 rounded-sm px-3 py-2.5 text-sm text-ink
+      placeholder:text-muted/50 focus:outline-none focus:border-gold/60 transition-colors;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]
+      bg-ink text-cream rounded-sm hover:bg-ink/90 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]
+      border border-sand bg-white text-ink rounded-sm hover:border-gold/50 transition-colors;
+  }
+
+  .btn-ghost {
+    @apply text-[10px] uppercase tracking-[0.15em] text-muted hover:text-gold transition-colors;
+  }
+
+  .card {
+    @apply bg-white border border-sand/60 rounded-sm;
+  }
+
+  .section-title {
+    @apply text-[10px] uppercase tracking-[0.25em] text-gold font-medium;
+  }
+}

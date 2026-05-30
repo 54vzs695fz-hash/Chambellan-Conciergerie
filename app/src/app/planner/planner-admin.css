@@ -1,0 +1,409 @@
+/* Chambellan Concierge — back-office planner admin */
+
+.adm-root {
+  flex: 1;
+  overflow: auto;
+  background: #f4f2ef;
+}
+
+.adm-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .adm-content {
+    padding: 1.5rem 1.5rem 3rem;
+    gap: 1.15rem;
+  }
+}
+
+.adm-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: 0.5rem;
+  padding-left: 0.75rem;
+  border-left: 0.5px solid rgba(221, 212, 200, 0.8);
+}
+
+.adm-nav-logo {
+  width: 2rem;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.92;
+}
+
+.adm-nav-destination {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a2622;
+  font-weight: 500;
+}
+
+.adm-panel {
+  background: #fff;
+  border: 0.5px solid rgba(221, 212, 200, 0.65);
+  border-radius: 8px;
+  padding: 1.1rem 1.15rem 1.2rem;
+  box-shadow: 0 1px 2px rgba(42, 38, 34, 0.04);
+}
+
+.adm-panel--wide {
+  padding-bottom: 1rem;
+  overflow: hidden;
+}
+
+.adm-panel-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+}
+
+.adm-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.adm-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .adm-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.adm-grid--spaced {
+  margin-top: 0.75rem;
+}
+
+.adm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.adm-field-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a736c;
+}
+
+.adm-input,
+.adm-textarea {
+  width: 100%;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #2a2622;
+  background: #faf9f7;
+  border: 0.5px solid rgba(221, 212, 200, 0.85);
+  border-radius: 6px;
+  padding: 0.5rem 0.65rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.adm-input:focus,
+.adm-textarea:focus {
+  outline: none;
+  border-color: rgba(154, 123, 79, 0.65);
+  box-shadow: 0 0 0 3px rgba(154, 123, 79, 0.12);
+  background: #fff;
+}
+
+.adm-input--time {
+  max-width: 7rem;
+}
+
+.adm-input--type {
+  min-width: 0;
+  flex: 1;
+}
+
+.adm-input--section {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.adm-input--venue {
+  font-weight: 500;
+}
+
+.adm-input--detail,
+.adm-input--phone {
+  font-size: 0.76rem;
+  color: #5c5650;
+}
+
+.adm-textarea {
+  resize: vertical;
+  min-height: 5rem;
+  margin-top: 0.75rem;
+}
+
+.adm-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.adm-dates-sep {
+  color: #9a948c;
+  font-size: 0.85rem;
+}
+
+.adm-team-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  background: #faf9f7;
+  border-radius: 6px;
+  border: 0.5px solid rgba(221, 212, 200, 0.5);
+}
+
+.adm-team-role {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+}
+
+.adm-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #7a736c;
+}
+
+/* Activities grid */
+
+.adm-days {
+  display: grid;
+  grid-template-columns: repeat(var(--adm-days, 7), minmax(260px, 1fr));
+  gap: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.adm-days--wide {
+  grid-template-columns: repeat(var(--adm-days, 5), minmax(0, 1fr));
+}
+
+@media (max-width: 767px) {
+  .adm-days--wide {
+    grid-template-columns: repeat(var(--adm-days, 5), minmax(240px, 1fr));
+  }
+}
+
+.adm-day {
+  min-width: 0;
+  background: #faf9f7;
+  border: 0.5px solid rgba(221, 212, 200, 0.55);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.adm-day-head {
+  padding: 0.65rem 0.75rem;
+  text-align: center;
+  background: rgba(235, 227, 216, 0.45);
+  border-bottom: 0.5px solid rgba(221, 212, 200, 0.55);
+}
+
+.adm-day-name {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2a2622;
+}
+
+.adm-day-date {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: #9a948c;
+  margin-top: 0.2rem;
+}
+
+.adm-day-sections {
+  padding: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.adm-section {
+  background: #fff;
+  border: 0.5px solid rgba(221, 212, 200, 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.adm-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  background: rgba(250, 247, 242, 0.8);
+  border-bottom: 0.5px solid rgba(221, 212, 200, 0.45);
+}
+
+.adm-section-body {
+  padding: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.adm-section-actions,
+.adm-activity-actions {
+  display: flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.adm-drag-handle {
+  cursor: grab;
+  color: #b8b0a6;
+  font-size: 0.85rem;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.adm-icon-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0.5px solid rgba(221, 212, 200, 0.7);
+  border-radius: 4px;
+  background: #fff;
+  color: #7a736c;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.adm-icon-btn:hover {
+  border-color: #9a7b4f;
+  color: #9a7b4f;
+}
+
+.adm-icon-btn--danger:hover {
+  border-color: #c45c5c;
+  color: #c45c5c;
+}
+
+.adm-activity {
+  padding: 0.45rem;
+  background: #faf9f7;
+  border: 0.5px solid rgba(221, 212, 200, 0.45);
+  border-radius: 6px;
+}
+
+.adm-activity-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.adm-activity .adm-input {
+  margin-bottom: 0.35rem;
+}
+
+.adm-activity .adm-input:last-child {
+  margin-bottom: 0;
+}
+
+.adm-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+}
+
+.adm-add-btn {
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  padding: 0.28rem 0.45rem;
+  border: 0.5px dashed rgba(154, 123, 79, 0.45);
+  border-radius: 4px;
+  background: transparent;
+  color: #9a7b4f;
+  cursor: pointer;
+}
+
+.adm-add-btn:hover {
+  background: rgba(154, 123, 79, 0.08);
+  border-style: solid;
+}
+
+.adm-add-section {
+  width: 100%;
+  padding: 0.45rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 0.5px dashed rgba(221, 212, 200, 0.85);
+  border-radius: 6px;
+  background: transparent;
+  color: #7a736c;
+  cursor: pointer;
+}
+
+.adm-add-section:hover {
+  border-color: #9a7b4f;
+  color: #9a7b4f;
+}
+
+/* Studio modes */
+
+.lux-studio--concierge {
+  background: #f4f2ef;
+}
+
+.lux-studio--client {
+  background: #ebe3d8;
+}
+
+.lux-client-preview {
+  flex: 1;
+  overflow: auto;
+  padding: 0.75rem 0.5rem 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.lux-client-preview .lux-print-root {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .lux-client-preview {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .lux-client-preview .lux-print-root--client {
+    max-width: 100%;
+  }
+}

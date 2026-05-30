@@ -1,0 +1,11 @@
+node_modules
+.tools/
+.next
+out
+data/*.db
+data/*.db-journal
+!.gitkeep
+.DS_Store
+*.log
+.env*.local
+.env

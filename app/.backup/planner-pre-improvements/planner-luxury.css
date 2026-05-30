@@ -1,0 +1,801 @@
+/* Chambellan Weekly Planner — luxury concierge document */
+
+.lux-studio {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f0e9df;
+}
+
+.lux-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  background: rgba(250, 247, 242, 0.95);
+  border-bottom: 0.5px solid rgba(221, 212, 200, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.lux-toolbar-left,
+.lux-toolbar-center,
+.lux-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lux-toolbar-back {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7a736c;
+  text-decoration: none;
+}
+
+.lux-toolbar-back:hover {
+  color: #9a7b4f;
+}
+
+.lux-toolbar-status {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+}
+
+.lux-toolbar-select {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.6rem;
+  border: 0.5px solid rgba(221, 212, 200, 0.8);
+  background: #fff;
+  color: #2a2622;
+  border-radius: 2px;
+}
+
+.lux-toolbar-toggle {
+  display: flex;
+  border: 0.5px solid rgba(221, 212, 200, 0.8);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.lux-toolbar-toggle button {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none;
+  background: #fff;
+  color: #7a736c;
+  cursor: pointer;
+}
+
+.lux-toolbar-toggle button.is-active {
+  background: #ebe3d8;
+  color: #9a7b4f;
+}
+
+.lux-btn {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.9rem;
+  border-radius: 2px;
+  cursor: pointer;
+  border: 0.5px solid transparent;
+}
+
+.lux-btn--ghost {
+  background: transparent;
+  border-color: rgba(221, 212, 200, 0.8);
+  color: #2a2622;
+}
+
+.lux-btn--ghost:hover {
+  border-color: #9a7b4f;
+  color: #9a7b4f;
+}
+
+.lux-btn--gold {
+  background: #9a7b4f;
+  color: #faf7f2;
+}
+
+.lux-btn--gold:hover {
+  background: #856842;
+}
+
+.lux-canvas {
+  flex: 1;
+  overflow: auto;
+  padding: 1.5rem 1rem 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .lux-canvas {
+    padding: 2rem 1.75rem 3rem;
+  }
+}
+
+.lux-canvas-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+}
+
+/* ─── Document sheet ─── */
+
+.lux-document {
+  display: flex;
+  flex-direction: column;
+  background: #fffef9;
+  border: 0.5px solid rgba(229, 221, 210, 0.7);
+  box-shadow: 0 8px 48px rgba(42, 38, 34, 0.05);
+  padding: 2.5rem 1.75rem 2rem;
+  min-height: 640px;
+}
+
+@media (min-width: 1024px) {
+  .lux-document {
+    padding: 3rem 2.5rem 2.25rem;
+  }
+}
+
+.lux-document--grid-expanded .lux-main {
+  flex: 1;
+}
+
+.lux-document--grid-expanded .lux-days-row {
+  flex: 1;
+  min-height: 24rem;
+}
+
+.lux-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  flex-shrink: 0;
+}
+
+.lux-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.lux-logo-horizontal {
+  width: min(100%, 22rem);
+  height: auto;
+  max-height: 5.5rem;
+  object-fit: contain;
+}
+
+.lux-title {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(2rem, 4.5vw, 2.75rem);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: #2a2622;
+  margin: 0 0 1.35rem;
+}
+
+.lux-meta {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 2.2fr) 1fr;
+  align-items: end;
+  gap: 0.75rem 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 0.5px solid rgba(196, 165, 116, 0.55);
+}
+
+.lux-meta-left {
+  min-width: 0;
+}
+
+.lux-meta-center {
+  text-align: center;
+  min-width: 0;
+}
+
+.lux-meta-right {
+  text-align: right;
+  min-width: 0;
+}
+
+.lux-destination {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(1.1rem, 2.8vw, 1.45rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  margin: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.lux-dates {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(0.85rem, 2.2vw, 1rem);
+  letter-spacing: 0.12em;
+  color: #b8956a;
+  margin: 0.45rem 0 0;
+}
+
+.lux-client {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a2622;
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.lux-dates-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.lux-dates-sep {
+  font-family: var(--font-cormorant), Georgia, serif;
+  color: #b8956a;
+  font-size: 0.95rem;
+}
+
+.lux-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Inline document inputs */
+
+.lux-doc-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-family: var(--font-cormorant), Georgia, serif;
+  color: #2a2622;
+  outline: none;
+  text-align: inherit;
+  padding: 0.2rem 0.3rem;
+  border-radius: 2px;
+  transition: background 0.15s, box-shadow 0.15s;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.lux-doc-input:focus {
+  background: rgba(240, 235, 227, 0.55);
+  box-shadow: inset 0 -1px 0 rgba(196, 165, 116, 0.6);
+}
+
+.lux-doc-input::placeholder {
+  color: #c5bfb8;
+  font-style: italic;
+}
+
+.lux-doc-input--destination {
+  font-size: clamp(1.1rem, 2.8vw, 1.45rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  text-align: center;
+}
+
+.lux-doc-input--date {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: #b8956a;
+  width: auto;
+  max-width: 9.5rem;
+  text-align: center;
+}
+
+.lux-doc-input--client {
+  font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.lux-doc-input--section {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.lux-doc-input--service {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-align: left;
+}
+
+.lux-doc-input--team {
+  font-size: 0.82rem;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.lux-doc-input--team-phone {
+  font-size: 0.68rem;
+  text-align: center;
+  color: #7a736c;
+  margin-top: 0.25rem;
+}
+
+.lux-doc-textarea {
+  width: 100%;
+  border: none;
+  background: rgba(250, 247, 242, 0.65);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 0.78rem;
+  color: #2a2622;
+  line-height: 1.7;
+  padding: 0.85rem 1rem;
+  resize: vertical;
+  outline: none;
+  border-radius: 2px;
+}
+
+.lux-doc-textarea:focus {
+  box-shadow: inset 0 0 0 0.5px rgba(196, 165, 116, 0.5);
+}
+
+/* ─── Arrangements ─── */
+
+.lux-services {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 0.5px solid rgba(229, 221, 210, 0.7);
+  flex-shrink: 0;
+}
+
+.lux-services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .lux-services-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.lux-service-item {
+  padding: 0.5rem 0.25rem;
+  min-width: 0;
+}
+
+.lux-service-label {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  margin-bottom: 0.35rem;
+}
+
+.lux-service-value {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.92rem;
+  color: #2a2622;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  display: block;
+}
+
+/* ─── Day columns ─── */
+
+.lux-days-row {
+  display: grid;
+  grid-template-columns: repeat(var(--lux-days, 7), minmax(168px, 1fr));
+  gap: 0.9rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+  align-items: stretch;
+}
+
+@media (min-width: 1200px) {
+  .lux-days-row {
+    grid-template-columns: repeat(var(--lux-days, 7), minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .lux-days-row {
+    grid-template-columns: repeat(var(--lux-days, 7), minmax(172px, 1fr));
+  }
+}
+
+.lux-day-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.lux-day-column-head {
+  background: rgba(235, 227, 216, 0.75);
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  border-radius: 2px;
+}
+
+.lux-day-name {
+  display: block;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a2622;
+}
+
+.lux-day-date {
+  display: block;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.88rem;
+  letter-spacing: 0.1em;
+  color: #9a7b4f;
+  margin-top: 0.25rem;
+}
+
+.lux-day-section {
+  background: rgba(250, 247, 242, 0.45);
+  border-radius: 2px;
+  padding: 0.55rem 0.5rem 0.65rem;
+  min-width: 0;
+}
+
+.lux-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 0.5px solid rgba(229, 221, 210, 0.8);
+}
+
+.lux-section-name {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.lux-section-actions {
+  display: flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.lux-section-action {
+  border: none;
+  background: transparent;
+  color: #b8b0a6;
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0.1rem 0.25rem;
+  line-height: 1;
+}
+
+.lux-section-action:hover {
+  color: #9a7b4f;
+}
+
+.lux-section-action--remove:hover {
+  color: #8b4513;
+}
+
+.lux-section-body {
+  min-height: 2.5rem;
+  min-width: 0;
+}
+
+.lux-add-section {
+  margin-top: 0.25rem;
+  width: 100%;
+  border: 0.5px dashed rgba(196, 165, 116, 0.45);
+  background: transparent;
+  color: #b8956a;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.45rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.lux-add-section:hover {
+  border-color: #9a7b4f;
+  color: #9a7b4f;
+}
+
+.lux-grid-empty {
+  text-align: center;
+  padding: 3.5rem 1.25rem;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: #7a736c;
+  margin-bottom: 2rem;
+}
+
+/* ─── Activity cards ─── */
+
+.lux-activity-card {
+  background: rgba(255, 254, 249, 0.9);
+  padding: 0.55rem 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 2px;
+  min-width: 0;
+}
+
+.lux-activity-card--edit {
+  background: #fff;
+  box-shadow: inset 0 0 0 0.5px rgba(229, 221, 210, 0.7);
+}
+
+.lux-activity-time {
+  display: block;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.82rem;
+  color: #9a7b4f;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.lux-activity-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #2a2622;
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  white-space: normal;
+}
+
+.lux-activity-type {
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  margin: 0.15rem 0 0;
+}
+
+.lux-activity-detail {
+  font-size: 0.58rem;
+  color: #7a736c;
+  margin: 0.15rem 0 0;
+  letter-spacing: 0.03em;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.lux-activity-awaiting {
+  font-size: 0.55rem;
+  color: #b8956a;
+  font-style: italic;
+  margin: 0.2rem 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.lux-activity-edit-row {
+  display: flex;
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lux-doc-input--time {
+  width: 4.75rem;
+  font-size: 0.68rem;
+  flex-shrink: 0;
+}
+
+.lux-doc-input--type {
+  flex: 1;
+  font-size: 0.6rem;
+  min-width: 0;
+}
+
+.lux-doc-input--title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+  white-space: normal;
+}
+
+.lux-doc-input--detail {
+  font-size: 0.6rem;
+  color: #7a736c;
+  white-space: normal;
+}
+
+.lux-activity-remove {
+  border: none;
+  background: none;
+  color: #b8b0a6;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.lux-activity-remove:hover {
+  color: #8b4513;
+}
+
+.lux-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.45rem;
+  padding-top: 0.35rem;
+  border-top: 0.5px dashed rgba(235, 227, 216, 0.9);
+}
+
+.lux-add-btn {
+  font-size: 0.52rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.4rem;
+  border: none;
+  background: transparent;
+  color: #b8956a;
+  cursor: pointer;
+}
+
+.lux-add-btn:hover {
+  color: #9a7b4f;
+  text-decoration: underline;
+}
+
+/* ─── Team & notes ─── */
+
+.lux-team,
+.lux-notes {
+  margin-bottom: 1.5rem;
+  padding-top: 1.1rem;
+  border-top: 0.5px solid rgba(229, 221, 210, 0.7);
+  flex-shrink: 0;
+}
+
+.lux-notes--expanded {
+  margin-bottom: 2rem;
+}
+
+.lux-notes--expanded .lux-doc-textarea {
+  min-height: 7rem;
+}
+
+.lux-section-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  text-align: center;
+  margin: 0 0 1rem;
+  font-weight: 500;
+}
+
+.lux-team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .lux-team-grid {
+    grid-template-columns: repeat(
+      min(var(--team-count, 4), 4),
+      1fr
+    );
+  }
+}
+
+.lux-team-card {
+  background: rgba(250, 247, 242, 0.7);
+  padding: 0.75rem 0.65rem;
+  text-align: center;
+  border-radius: 2px;
+  min-width: 0;
+}
+
+.lux-team-card--edit {
+  background: rgba(250, 247, 242, 0.45);
+}
+
+.lux-team-role {
+  display: block;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  margin-bottom: 0.4rem;
+}
+
+.lux-team-name {
+  display: block;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.88rem;
+  color: #2a2622;
+  letter-spacing: 0.05em;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.lux-team-phone {
+  display: block;
+  font-size: 0.65rem;
+  color: #7a736c;
+  margin-top: 0.2rem;
+}
+
+.lux-notes-text {
+  font-size: 0.78rem;
+  color: #2a2622;
+  line-height: 1.7;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: rgba(250, 247, 242, 0.65);
+  border-radius: 2px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.lux-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 0.5px solid rgba(229, 221, 210, 0.7);
+  font-size: 0.65rem;
+  color: #7a736c;
+  text-align: center;
+  font-style: italic;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}

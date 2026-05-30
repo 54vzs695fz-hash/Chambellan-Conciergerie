@@ -1,0 +1,10 @@
+.DS_Store
+*.log
+
+# Parent folder — ignore app build artifacts when repo root is above app/
+app/node_modules/
+app/.next/
+app/out/
+app/data/*.db
+app/data/*.db-journal
+app/.env*.local
