@@ -32,7 +32,7 @@ export function ClientForm({
     const data = await res.json().catch(() => null);
     setSaving(false);
 
-    if (!res.ok || !data?.id) {
+    if (!res.ok) {
       setError(
         typeof data?.error === "string"
           ? data.error
@@ -41,7 +41,15 @@ export function ClientForm({
       return;
     }
 
-    router.push(`/clients/${data.id}`);
+    if (clientId) {
+      if (!data?.id) {
+        setError("Could not save client. Please try again.");
+        return;
+      }
+      router.push(`/clients/${data.id}`);
+    } else {
+      router.push("/clients");
+    }
     router.refresh();
   };
 
