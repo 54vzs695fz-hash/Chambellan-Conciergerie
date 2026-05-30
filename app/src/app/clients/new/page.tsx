@@ -1,6 +1,8 @@
 import { ClientForm } from "@/components/crm/ClientForm";
 import { EMPTY_CLIENT } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 export default function NewClientPage() {
   return (
     <div className="p-10">

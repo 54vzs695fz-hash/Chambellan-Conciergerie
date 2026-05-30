@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ClientForm } from "@/components/crm/ClientForm";
 import {
   getClient,
@@ -35,7 +35,15 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (id === "new") {
+    redirect("/clients/new");
+  }
+
   const clientId = Number(id);
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    notFound();
+  }
+
   const client = getClient(clientId);
   if (!client) notFound();
 

@@ -16,10 +16,12 @@ export function ClientForm({
   const router = useRouter();
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     const url = clientId ? `/api/clients/${clientId}` : "/api/clients";
     const method = clientId ? "PUT" : "POST";
     const res = await fetch(url, {
@@ -27,8 +29,18 @@ export function ClientForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
     setSaving(false);
+
+    if (!res.ok || !data?.id) {
+      setError(
+        typeof data?.error === "string"
+          ? data.error
+          : "Could not save client. Please try again."
+      );
+      return;
+    }
+
     router.push(`/clients/${data.id}`);
     router.refresh();
   };
@@ -45,6 +57,11 @@ export function ClientForm({
 
   return (
     <form onSubmit={submit} className="card p-8 max-w-xl space-y-5">
+      {error ? (
+        <p className="text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
       {fields.map(({ key, label, rows }) => (
         <div key={key}>
           <label className="field-label">{label}</label>

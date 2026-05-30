@@ -7,12 +7,22 @@ import {
   updateClient,
 } from "@/lib/db/clients";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  if (id === "new") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const clientId = Number(id);
+  if (!Number.isFinite(clientId) || clientId <= 0) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   const client = getClient(clientId);
   if (!client) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
