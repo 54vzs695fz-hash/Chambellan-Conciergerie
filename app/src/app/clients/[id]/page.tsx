@@ -12,7 +12,7 @@ import { formatDateRange } from "@/lib/planner-utils";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RESERVED_CLIENT_SLUGS = new Set(["new", "create"]);
+const RESERVED_CLIENT_SLUGS = new Set(["new"]);
 
 async function createPlannerForClient(clientId: number, clientName: string) {
   "use server";
@@ -39,7 +39,7 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
   if (RESERVED_CLIENT_SLUGS.has(id)) {
-    redirect("/clients/create");
+    redirect("/clients/new");
   }
 
   const clientId = Number(id);

@@ -26,7 +26,7 @@ export default function DashboardPage() {
         <Link href="/planner/new" className="btn-primary">
           New weekly planner
         </Link>
-        <Link href="/clients/create" className="btn-secondary">
+        <Link href="/clients/new" className="btn-secondary">
           New client
         </Link>
       </div>

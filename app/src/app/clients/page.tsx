@@ -22,7 +22,7 @@ export default function ClientsPage() {
           <h1 className="font-serif text-2xl tracking-wide">Clients</h1>
           <p className="text-sm text-muted mt-1">CRM · Private profiles</p>
         </div>
-        <Link href="/clients/create" className="btn-primary">
+        <Link href="/clients/new" className="btn-primary">
           New client
         </Link>
       </div>
