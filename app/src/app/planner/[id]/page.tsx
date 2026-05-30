@@ -11,7 +11,7 @@ export default async function PlannerEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const trip = getTrip(Number(id));
+  const trip = await getTrip(Number(id));
   if (!trip) notFound();
 
   return <PlannerEditor initialTrip={trip} />;

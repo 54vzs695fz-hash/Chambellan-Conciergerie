@@ -23,7 +23,7 @@ export async function GET(
   if (!Number.isFinite(clientId) || clientId <= 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const client = getClient(clientId);
+  const client = await getClient(clientId);
   if (!client) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -31,8 +31,8 @@ export async function GET(
   if (history === "1") {
     return NextResponse.json({
       client,
-      trips: getClientTripHistory(clientId),
-      destinations: getClientDestinations(clientId),
+      trips: await getClientTripHistory(clientId),
+      destinations: await getClientDestinations(clientId),
     });
   }
   return NextResponse.json(client);
@@ -44,7 +44,7 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const client = updateClient(Number(id), body);
+  const client = await updateClient(Number(id), body);
   if (!client) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -56,7 +56,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ok = deleteClient(Number(id));
+  const ok = await deleteClient(Number(id));
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

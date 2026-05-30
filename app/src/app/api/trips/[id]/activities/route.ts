@@ -8,7 +8,7 @@ export async function POST(
 ) {
   await params;
   const body = await req.json();
-  const activity = addActivity(
+  const activity = await addActivity(
     Number(body.trip_day_id),
     body.period as ActivityPeriod,
     (body.activity_type as ActivityType) ?? "activity"

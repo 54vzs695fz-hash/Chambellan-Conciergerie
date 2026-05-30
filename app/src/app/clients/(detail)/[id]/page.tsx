@@ -16,7 +16,7 @@ const RESERVED_CLIENT_SLUGS = new Set(["new"]);
 
 async function createPlannerForClient(clientId: number, clientName: string) {
   "use server";
-  const trip = createTrip({
+  const trip = await createTrip({
     client_id: clientId,
     client_name: clientName,
     destination: "",
@@ -47,11 +47,11 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const client = getClient(clientId);
+  const client = await getClient(clientId);
   if (!client) notFound();
 
-  const trips = getClientTripHistory(clientId);
-  const destinations = getClientDestinations(clientId);
+  const trips = await getClientTripHistory(clientId);
+  const destinations = await getClientDestinations(clientId);
 
   return (
     <div className="p-10 max-w-4xl">

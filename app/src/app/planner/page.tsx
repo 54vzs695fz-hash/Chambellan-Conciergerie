@@ -5,8 +5,8 @@ import { formatDateRange } from "@/lib/planner-utils";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default function PlannerListPage() {
-  const trips = listTrips();
+export default async function PlannerListPage() {
+  const trips = await listTrips();
 
   return (
     <div className="p-10">

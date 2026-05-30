@@ -15,7 +15,7 @@ export default async function PlannerPrintPage({
 }) {
   const { id } = await params;
   const { mode } = await searchParams;
-  const trip = getTrip(Number(id));
+  const trip = await getTrip(Number(id));
   if (!trip) notFound();
 
   const variant: PlannerExportVariant =

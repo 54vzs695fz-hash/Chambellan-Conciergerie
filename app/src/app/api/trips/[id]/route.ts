@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteTrip, duplicateTrip, getTrip, updateTrip } from "@/lib/db/trips";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const trip = getTrip(Number(id));
+  const trip = await getTrip(Number(id));
   if (!trip) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -19,7 +22,7 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const trip = updateTrip(Number(id), { ...body });
+  const trip = await updateTrip(Number(id), { ...body });
   if (!trip) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -31,7 +34,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ok = deleteTrip(Number(id));
+  const ok = await deleteTrip(Number(id));
   if (!ok) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -45,7 +48,7 @@ export async function POST(
   const { id } = await params;
   const body = await req.json();
   if (body.action === "duplicate") {
-    const copy = duplicateTrip(Number(id));
+    const copy = await duplicateTrip(Number(id));
     if (!copy) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

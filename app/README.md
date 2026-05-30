@@ -48,12 +48,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_APP_URL` | Vercel | Public URL of the app. Used by PDF generation to render the print view. On Vercel, set this to your deployment URL. |
+| `DATABASE_URL` | Vercel production | Postgres connection string (Vercel Postgres, Neon, etc.). When set, all client and planner data is stored in Postgres. When unset, local SQLite is used. |
 
 ## Data storage
 
-### Local development
+### Local development (default)
 
-SQLite database:
+When `DATABASE_URL` is **not** set, the app uses SQLite:
 
 ```
 data/chambellan.db
@@ -61,9 +62,22 @@ data/chambellan.db
 
 The database is created automatically on first run. Back up the `data/` folder to preserve clients and planners.
 
-### Vercel (serverless)
+### Production on Vercel
 
-On Vercel, SQLite runs in `/tmp` (ephemeral). Data does **not** persist across deployments or cold starts. Vercel is suitable for demos and staging. For production persistence, migrate to [Turso](https://turso.tech), Vercel Postgres, or another hosted database.
+Vercel serverless functions use **ephemeral filesystems** — local SQLite in `/tmp` is wiped on every deploy and cold start. **Clients and planners disappear after redeploy** unless you use a hosted database.
+
+**Set `DATABASE_URL`** to a Postgres connection string:
+
+1. **Vercel Postgres** — In your Vercel project: Storage → Create Database → Postgres. Vercel adds `POSTGRES_URL` / `DATABASE_URL` automatically.
+2. **Neon** — Create a free project at [neon.tech](https://neon.tech), copy the connection string, and add it as `DATABASE_URL` in Vercel Environment Variables.
+
+The schema is created automatically on first request. No manual migration step is required.
+
+### Previous note (SQLite-only)
+
+~~On Vercel, SQLite runs in `/tmp` (ephemeral). Data does **not** persist across deployments or cold starts.~~
+
+Use Postgres in production. SQLite remains for local development only.
 
 ## Features
 

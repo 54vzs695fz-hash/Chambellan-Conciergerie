@@ -6,9 +6,9 @@ import { formatDateRange } from "@/lib/planner-utils";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
-  const trips = listTrips().slice(0, 6);
-  const clients = listClients().slice(0, 5);
+export default async function DashboardPage() {
+  const trips = (await listTrips()).slice(0, 6);
+  const clients = (await listClients()).slice(0, 5);
 
   return (
     <div className="p-10 max-w-4xl">

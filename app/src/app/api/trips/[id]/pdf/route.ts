@@ -12,7 +12,7 @@ export async function GET(
 ) {
   const { id } = await params;
   const tripId = Number(id);
-  const trip = getTrip(tripId);
+  const trip = await getTrip(tripId);
   if (!trip) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

@@ -1,15 +1,43 @@
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
+import { isPostgres } from "./config";
+import { ensurePostgresMigrated } from "./postgres";
 
-const DATA_DIR = process.env.VERCEL
-  ? path.join("/tmp", "chambellan-data")
-  : path.join(process.cwd(), "data");
+const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "chambellan.db");
 
 let db: Database.Database | null = null;
 
-function migrate(database: Database.Database) {
+export async function ensureDb(): Promise<void> {
+  if (isPostgres()) {
+    await ensurePostgresMigrated();
+    return;
+  }
+  getSqliteDb();
+}
+
+export function getSqliteDb(): Database.Database {
+  if (isPostgres()) {
+    throw new Error("SQLite is disabled when DATABASE_URL is set");
+  }
+  if (db) return db;
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  db = new Database(DB_PATH);
+  db.pragma("journal_mode = WAL");
+  db.pragma("foreign_keys = ON");
+  migrateSqlite(db);
+  return db;
+}
+
+/** @deprecated Use getSqliteDb() or ensureDb() */
+export function getDb(): Database.Database {
+  return getSqliteDb();
+}
+
+function migrateSqlite(database: Database.Database) {
   database.exec(`
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -165,7 +193,6 @@ function migrateConciergeTeamColumns(database: Database.Database) {
   `);
 }
 
-/** Allow morning / afternoon / evening periods on existing databases */
 function migrateActivitiesPeriod(database: Database.Database) {
   const row = database
     .prepare(
@@ -198,16 +225,4 @@ function migrateActivitiesPeriod(database: Database.Database) {
     ALTER TABLE activities_new RENAME TO activities;
     CREATE INDEX IF NOT EXISTS idx_activities_day ON activities(trip_day_id);
   `);
-}
-
-export function getDb(): Database.Database {
-  if (db) return db;
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  db = new Database(DB_PATH);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-  migrate(db);
-  return db;
 }

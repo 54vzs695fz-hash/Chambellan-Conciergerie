@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const search = req.nextUrl.searchParams.get("q") ?? undefined;
-    return NextResponse.json(listClients(search));
+    return NextResponse.json(await listClients(search));
   } catch (err) {
     console.error("GET /api/clients failed:", err);
     return NextResponse.json(
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const client = createClient(body);
+    const client = await createClient(body);
     return NextResponse.json(client, { status: 201 });
   } catch (err) {
     console.error("POST /api/clients failed:", err);

@@ -28,7 +28,8 @@ See **[app/README.md](./app/README.md)** for:
 ## Stack
 
 - **Next.js 15** — App Router, React 19
-- **SQLite** — local-first data (`better-sqlite3`)
+- **SQLite** — local development (`better-sqlite3`)
+- **Postgres** — production persistence via `DATABASE_URL` (Vercel Postgres / Neon)
 - **Puppeteer** — luxury planner PDF export
 - **Tailwind CSS** — admin UI styling
 
@@ -37,8 +38,9 @@ See **[app/README.md](./app/README.md)** for:
 1. Push this repository to GitHub.
 2. Import the project in [Vercel](https://vercel.com/new).
 3. Set **Root Directory** to `app`.
-4. Add environment variable `NEXT_PUBLIC_APP_URL` = your production URL (e.g. `https://your-app.vercel.app`).
-5. Deploy.
+4. Add a **Postgres** database (Vercel Storage or [Neon](https://neon.tech)) and set **`DATABASE_URL`** in Environment Variables.
+5. Add **`NEXT_PUBLIC_APP_URL`** = your production URL (e.g. `https://your-app.vercel.app`).
+6. Deploy.
 
 ## License
 

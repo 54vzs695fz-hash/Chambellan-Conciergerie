@@ -12,7 +12,7 @@ export async function PUT(
   if (!Array.isArray(sections)) {
     return NextResponse.json({ error: "Invalid sections" }, { status: 400 });
   }
-  const day = updateDaySections(Number(id), sections);
+  const day = await updateDaySections(Number(id), sections);
   if (!day) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

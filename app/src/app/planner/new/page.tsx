@@ -4,7 +4,7 @@ import { createTrip } from "@/lib/db/trips";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default function NewPlannerPage() {
-  const trip = createTrip();
+export default async function NewPlannerPage() {
+  const trip = await createTrip();
   redirect(`/planner/${trip.id}`);
 }
