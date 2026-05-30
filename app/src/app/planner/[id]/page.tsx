@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { PlannerEditor } from "@/components/planner/PlannerEditor";
-import { listClients } from "@/lib/db/clients";
 import { getTrip } from "@/lib/db/trips";
 
 export const runtime = "nodejs";
@@ -14,7 +13,6 @@ export default async function PlannerEditPage({
   const { id } = await params;
   const trip = getTrip(Number(id));
   if (!trip) notFound();
-  const clients = listClients();
 
-  return <PlannerEditor initialTrip={trip} clients={clients} />;
+  return <PlannerEditor initialTrip={trip} />;
 }

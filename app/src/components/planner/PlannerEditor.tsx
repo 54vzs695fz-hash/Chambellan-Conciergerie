@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PlannerLuxuryDocument } from "./PlannerLuxuryDocument";
@@ -26,12 +26,12 @@ type ViewMode = "concierge" | "client";
 
 interface Props {
   initialTrip: TripWithDays;
-  clients: Client[];
 }
 
-export function PlannerEditor({ initialTrip, clients }: Props) {
+export function PlannerEditor({ initialTrip }: Props) {
   const router = useRouter();
   const [trip, setTrip] = useState(initialTrip);
+  const [clients, setClients] = useState<Client[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("concierge");
@@ -39,6 +39,15 @@ export function PlannerEditor({ initialTrip, clients }: Props) {
     null
   );
   const [pdfError, setPdfError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/clients")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setClients(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const persist = useCallback(
     async (next: TripWithDays) => {
