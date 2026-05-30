@@ -54,7 +54,7 @@ export function PlannerEditor({ initialTrip }: Props) {
   }, []);
 
   const persist = useCallback(
-    async (next: TripWithDays) => {
+    async (next: TripWithDays): Promise<TripWithDays | null> => {
       setSaving(true);
       try {
         const res = await fetch(`/api/trips/${trip.id}`, {
@@ -62,17 +62,30 @@ export function PlannerEditor({ initialTrip }: Props) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(tripPayloadForApi(next)),
         });
-        if (!res.ok) return;
+        if (!res.ok) return null;
         const updated: TripWithDays = await res.json();
         setTrip(updated);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
         router.refresh();
+        return updated;
       } finally {
         setSaving(false);
       }
     },
     [trip.id, router]
+  );
+
+  const resolveDayId = useCallback(
+    async (dayId: number, currentTrip: TripWithDays): Promise<number | null> => {
+      if (dayId > 0) return dayId;
+      const optimisticDay = currentTrip.days.find((d) => d.id === dayId);
+      if (!optimisticDay) return null;
+      const updated = await persist(currentTrip);
+      if (!updated) return null;
+      return updated.days.find((d) => d.date === optimisticDay.date)?.id ?? null;
+    },
+    [persist]
   );
 
   const updateField = <K extends keyof TripWithDays>(
@@ -117,7 +130,9 @@ export function PlannerEditor({ initialTrip }: Props) {
   };
 
   const updateSections = async (dayId: number, sections: DaySection[]) => {
-    const res = await fetch(`/api/trip-days/${dayId}`, {
+    const resolvedId = await resolveDayId(dayId, trip);
+    if (!resolvedId) return;
+    const res = await fetch(`/api/trip-days/${resolvedId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sections }),
@@ -127,7 +142,9 @@ export function PlannerEditor({ initialTrip }: Props) {
     setTrip((prev) => ({
       ...prev,
       days: prev.days.map((d) =>
-        d.id === dayId ? { ...d, sections: updated.sections ?? sections } : d
+        d.id === dayId || d.id === resolvedId
+          ? { ...d, id: resolvedId, sections: updated.sections ?? sections }
+          : d
       ),
     }));
   };
@@ -137,28 +154,37 @@ export function PlannerEditor({ initialTrip }: Props) {
     period: string,
     activity_type: ActivityType
   ) => {
+    const resolvedId = await resolveDayId(dayId, trip);
+    if (!resolvedId) return;
     const res = await fetch(`/api/trips/${trip.id}/activities`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trip_day_id: dayId, period, activity_type }),
+      body: JSON.stringify({ trip_day_id: resolvedId, period, activity_type }),
     });
+    if (!res.ok) return;
     const activity: Activity = await res.json();
     setTrip((prev) => ({
       ...prev,
       days: prev.days.map((d) =>
-        d.id === dayId
-          ? { ...d, activities: [...d.activities, activity] }
+        d.id === dayId || d.id === resolvedId
+          ? {
+              ...d,
+              id: resolvedId,
+              activities: [...d.activities, activity],
+            }
           : d
       ),
     }));
   };
 
   const patchActivity = async (id: number, fields: Partial<Activity>) => {
+    if (id <= 0) return;
     const res = await fetch(`/api/activities/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(fields),
     });
+    if (!res.ok) return;
     const updated: Activity = await res.json();
     setTrip((prev) => ({
       ...prev,
@@ -170,7 +196,9 @@ export function PlannerEditor({ initialTrip }: Props) {
   };
 
   const removeActivity = async (id: number) => {
-    await fetch(`/api/activities/${id}`, { method: "DELETE" });
+    if (id <= 0) return;
+    const res = await fetch(`/api/activities/${id}`, { method: "DELETE" });
+    if (!res.ok) return;
     setTrip((prev) => ({
       ...prev,
       days: prev.days.map((d) => ({
@@ -181,27 +209,31 @@ export function PlannerEditor({ initialTrip }: Props) {
   };
 
   const reorderActivities = async (
-    _dayId: number,
+    dayId: number,
     _sectionId: string,
     orderedIds: number[]
   ) => {
+    const validIds = orderedIds.filter((id) => id > 0);
+    if (!validIds.length) return;
     const updates = await Promise.all(
-      orderedIds.map((id, index) =>
+      validIds.map((id, index) =>
         fetch(`/api/activities/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sort_order: index }),
-        }).then((r) => r.json() as Promise<Activity>)
+        }).then((r) => (r.ok ? (r.json() as Promise<Activity>) : null))
       )
     );
+    const saved = updates.filter(Boolean) as Activity[];
+    if (!saved.length) return;
     setTrip((prev) => ({
       ...prev,
       days: prev.days.map((d) =>
-        d.id === _dayId
+        d.id === dayId
           ? {
               ...d,
               activities: d.activities.map((a) => {
-                const updated = updates.find((u) => u.id === a.id);
+                const updated = saved.find((u) => u.id === a.id);
                 return updated ?? a;
               }),
             }

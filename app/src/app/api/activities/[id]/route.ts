@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteActivity, updateActivity } from "@/lib/db/trips";
 
+export const runtime = "nodejs";
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

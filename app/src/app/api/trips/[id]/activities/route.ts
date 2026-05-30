@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { addActivity } from "@/lib/db/trips";
 import type { ActivityPeriod, ActivityType } from "@/lib/types";
 
+export const runtime = "nodejs";
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

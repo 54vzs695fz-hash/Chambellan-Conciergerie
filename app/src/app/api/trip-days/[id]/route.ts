@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateDaySections } from "@/lib/db/trips";
 import type { DaySection } from "@/lib/types";
 
+export const runtime = "nodejs";
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

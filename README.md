@@ -28,8 +28,7 @@ See **[app/README.md](./app/README.md)** for:
 ## Stack
 
 - **Next.js 15** — App Router, React 19
-- **SQLite** — local development (`better-sqlite3`)
-- **Postgres** — production persistence via `DATABASE_URL` (Vercel Postgres / Neon)
+- **Prisma + PostgreSQL** — persistent data (Vercel Prisma Postgres)
 - **Puppeteer** — luxury planner PDF export
 - **Tailwind CSS** — admin UI styling
 
@@ -38,9 +37,9 @@ See **[app/README.md](./app/README.md)** for:
 1. Push this repository to GitHub.
 2. Import the project in [Vercel](https://vercel.com/new).
 3. Set **Root Directory** to `app`.
-4. Add a **Postgres** database (Vercel Storage or [Neon](https://neon.tech)) and set **`DATABASE_URL`** in Environment Variables.
+4. Connect **Vercel Prisma Postgres** and ensure **`DATABASE_URL`** is set.
 5. Add **`NEXT_PUBLIC_APP_URL`** = your production URL (e.g. `https://your-app.vercel.app`).
-6. Deploy.
+6. Deploy — Prisma migrations run automatically during build.
 
 ## License
 

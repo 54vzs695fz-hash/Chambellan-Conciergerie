@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Client {
+  id          Int      @id @default(autoincrement())
+  full_name   String   @default("")
+  phone       String   @default("")
+  whatsapp    String   @default("")
+  email       String   @default("")
+  nationality String   @default("")
+  notes       String   @default("")
+  preferences String   @default("")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  trips       Trip[]
+
+  @@map("clients")
+}
+
+model Trip {
+  id                       Int       @id @default(autoincrement())
+  client_id                Int?
+  client_name              String    @default("")
+  destination              String    @default("")
+  arrival_date             String    @default("")
+  departure_date           String    @default("")
+  hotel                    String    @default("")
+  villa                    String    @default("")
+  driver                   String    @default("")
+  butler                   String    @default("")
+  security                 String    @default("")
+  notes                    String    @default("")
+  driver_name              String    @default("")
+  driver_phone             String    @default("")
+  butler_name              String    @default("")
+  butler_phone             String    @default("")
+  security_contact       String    @default("")
+  emergency_contact        String    @default("")
+  yacht                    String    @default("")
+  jet                      String    @default("")
+  restaurant_reservations  String    @default("")
+  club_reservations        String    @default("")
+  created_at               DateTime  @default(now())
+  updated_at               DateTime  @updatedAt
+  client                   Client?   @relation(fields: [client_id], references: [id], onDelete: SetNull)
+  days                     TripDay[]
+
+  @@index([client_id], map: "idx_trips_client")
+  @@map("trips")
+}
+
+model TripDay {
+  id         Int        @id @default(autoincrement())
+  trip_id    Int
+  date       String
+  sections   String     @default("[]")
+  trip       Trip       @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+  activities Activity[]
+
+  @@unique([trip_id, date])
+  @@index([trip_id], map: "idx_trip_days_trip")
+  @@map("trip_days")
+}
+
+model Activity {
+  id            Int     @id @default(autoincrement())
+  trip_day_id   Int
+  period        String
+  activity_type String  @default("activity")
+  time          String  @default("")
+  title         String  @default("")
+  details       String  @default("")
+  status        String  @default("confirmed")
+  sort_order    Int     @default(0)
+  trip_day      TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
+
+  @@index([trip_day_id], map: "idx_activities_day")
+  @@map("activities")
+}
