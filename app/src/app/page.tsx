@@ -3,6 +3,7 @@ import { listClients } from "@/lib/db/clients";
 import { listTrips } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default function DashboardPage() {
@@ -25,7 +26,7 @@ export default function DashboardPage() {
         <Link href="/planner/new" className="btn-primary">
           New weekly planner
         </Link>
-        <Link href="/clients/new" className="btn-secondary">
+        <Link href="/clients/create" className="btn-secondary">
           New client
         </Link>
       </div>

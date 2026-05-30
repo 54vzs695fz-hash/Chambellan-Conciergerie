@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listTrips } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default function PlannerListPage() {

@@ -9,7 +9,10 @@ import {
 import { createTrip } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const RESERVED_CLIENT_SLUGS = new Set(["new", "create"]);
 
 async function createPlannerForClient(clientId: number, clientName: string) {
   "use server";
@@ -35,8 +38,8 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (id === "new") {
-    redirect("/clients/new");
+  if (RESERVED_CLIENT_SLUGS.has(id)) {
+    redirect("/clients/create");
   }
 
   const clientId = Number(id);

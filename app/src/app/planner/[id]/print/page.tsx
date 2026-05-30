@@ -3,6 +3,7 @@ import { PlannerLuxuryDocument } from "@/components/planner/PlannerLuxuryDocumen
 import { getTrip } from "@/lib/db/trips";
 import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default async function PlannerPrintPage({
