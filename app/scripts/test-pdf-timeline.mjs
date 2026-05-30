@@ -16,63 +16,12 @@ const tripId = Number(process.env.TRIP_ID ?? "1");
 const outDir = path.join(__dirname, "..", "tmp");
 const standalone = process.env.STANDALONE === "1";
 
-const LOCK_LAYOUT = `
-(() => {
-  function cssVarPx(el, name) {
-    const raw = getComputedStyle(el).getPropertyValue(name).trim();
-    if (!raw) return null;
-    const probe = document.createElement("div");
-    probe.style.height = raw;
-    probe.style.position = "absolute";
-    probe.style.visibility = "hidden";
-    document.body.appendChild(probe);
-    const px = probe.getBoundingClientRect().height;
-    document.body.removeChild(probe);
-    return px > 0 ? px : null;
-  }
-  function applyFixedBox(el, heightPx) {
-    el.style.height = heightPx + "px";
-    el.style.minHeight = heightPx + "px";
-    el.style.maxHeight = heightPx + "px";
-    el.style.flex = "0 0 auto";
-    el.style.overflow = "hidden";
-  }
-  const root = document.querySelector(".lux-print-root--client");
-  const gridStage = document.querySelector(".lux-print-grid-stage");
-  const stay = document.querySelector(".lux-print-stay-reserved");
-  if (root && gridStage) {
-    const gridPx = cssVarPx(root, "--lux-print-grid-height");
-    if (gridPx) applyFixedBox(gridStage, gridPx);
-    const main = gridStage.querySelector(".lux-main");
-    const days = gridStage.querySelector(".lux-itinerary-days");
-    if (main) { main.style.height = "100%"; main.style.display = "flex"; main.style.flexDirection = "column"; }
-    if (days) { days.style.height = "100%"; days.style.flex = "1 1 auto"; }
-  }
-  if (root && stay) {
-    const stayPx = cssVarPx(root, "--lux-print-stay-height");
-    if (stayPx) applyFixedBox(stay, stayPx);
-  }
-  document.querySelectorAll(".lux-itinerary-days").forEach((row) => {
-    const rowHeight = row.getBoundingClientRect().height;
-    if (rowHeight < 40) return;
-    row.querySelectorAll(".lux-day-card").forEach((col) => {
-      col.style.height = rowHeight + "px";
-      col.style.minHeight = rowHeight + "px";
-    });
-  });
-  document.querySelectorAll(".lux-day-card").forEach((card) => {
-    const timeline = card.querySelector("[data-lux-timeline]");
-    if (!timeline) return;
-    const head = card.querySelector(".lux-day-card-head");
-    const bodyHeight = Math.round(card.getBoundingClientRect().height - (head ? head.getBoundingClientRect().height : 0));
-    if (bodyHeight < 40) return;
-    timeline.style.height = bodyHeight + "px";
-    timeline.style.minHeight = bodyHeight + "px";
-    timeline.style.overflow = "visible";
-  });
-  document.documentElement.setAttribute("data-lux-print-ready", "true");
-})();
-`;
+const LOCK_LAYOUT = fs.readFileSync(
+  path.join(__dirname, "../src/lib/pdf/lock-planner-print-layout-script.ts"),
+  "utf8"
+)
+  .replace(/^\/\*\*[\s\S]*?\*\/\s*export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `/, "")
+  .replace(/`;\s*$/, "");
 
 function stayFields(count) {
   const labels = ["Hotel", "Villa", "Driver", "Butler", "Security", "Yacht"];
@@ -91,43 +40,22 @@ function standaloneHtml(stayCount) {
 <html><head>
 <style>
   html, body { height: 794px; margin: 0; }
-  .lux-print-root--client {
-    --lux-print-grid-height: 86mm;
-    --lux-print-stay-height: 20mm;
-    height: 794px;
-    display: flex;
-    flex-direction: column;
-  }
+  .lux-print-root--client { height: 794px; display: flex; flex-direction: column; }
   .lux-document { height: 100%; display: flex; flex-direction: column; }
   .lux-header { height: 72px; flex-shrink: 0; }
-  .lux-print-grid-stage {
-    display: flex; flex-direction: column;
-    flex: 0 0 var(--lux-print-grid-height);
-    height: var(--lux-print-grid-height);
-    min-height: var(--lux-print-grid-height);
-    max-height: var(--lux-print-grid-height);
-    overflow: hidden;
-  }
-  .lux-print-grid-stage .lux-main { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
-  .lux-itinerary-days { flex: 1; height: 100%; display: flex; align-items: stretch; }
-  .lux-day-card { flex: 1; display: flex; flex-direction: column; height: 100%; }
+  .lux-print-body { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+  .lux-print-planner-block { display: flex; flex-direction: column; gap: 24px; }
+  .lux-print-grid-stage { display: flex; flex-direction: column; flex: 0 0 auto; overflow: visible; }
+  .lux-print-grid-stage .lux-main { height: 100%; display: flex; flex-direction: column; overflow: visible; }
+  .lux-itinerary-days { flex: 0 0 auto; display: flex; align-items: stretch; }
+  .lux-day-card { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   .lux-day-card-head { height: 36px; flex-shrink: 0; }
-  .lux-day-card-body--timeline { display: flex; flex-direction: column; flex: 1; height: 100%; overflow: visible; }
-  .lux-timeline-top-spacer { flex: 0 0 26%; flex-shrink: 0; }
-  .lux-timeline-bottom-spacer { flex: 0 0 12%; flex-shrink: 0; }
-  .lux-period-block { flex: 0 0 auto; }
-  .lux-period-block--evening { margin-top: auto; }
+  .lux-day-card-body--timeline { display: grid; grid-template-rows: 1fr 1fr 1fr; flex: 1; height: 100%; overflow: visible; }
+  .lux-timeline-zone--upper, .lux-timeline-zone--lower { display: flex; flex-direction: column; justify-content: center; }
   .lux-travel-card { background: #f3efe8; padding: 8px; }
-  .lux-print-stay-reserved {
-    display: flex; flex-direction: column; justify-content: center;
-    flex: 0 0 var(--lux-print-stay-height);
-    height: var(--lux-print-stay-height);
-    min-height: var(--lux-print-stay-height);
-    max-height: var(--lux-print-stay-height);
-    overflow: hidden;
-  }
-  .lux-travel-info { height: 100%; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-  .lux-travel-info-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1rem; overflow: hidden; }
+  .lux-print-stay-reserved { display: flex; flex-direction: column; flex: 0 0 auto; height: auto; overflow: visible; }
+  .lux-travel-info { display: flex; flex-direction: column; border-top: 1px solid #ccc; padding-top: 4px; }
+  .lux-travel-info-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.2rem 1rem; }
   .lux-print-stay-reserved--dense .lux-travel-info-name { font-size: 12px; }
   .lux-footer { height: 24px; flex-shrink: 0; }
 </style>
@@ -136,30 +64,37 @@ function standaloneHtml(stayCount) {
 <div class="lux-print-root lux-print-root--client">
   <div class="lux-document lux-document--client lux-document--travel lux-document--grid-expanded">
     <header class="lux-header"></header>
-    <div class="lux-print-grid-stage">
-      <div class="lux-main">
-        <div class="lux-itinerary-days">
-          <article class="lux-day-card">
-            <header class="lux-day-card-head"><span>Mon</span></header>
-            <div class="lux-day-card-body lux-day-card-body--timeline" data-lux-timeline>
-              <div class="lux-timeline-top-spacer"></div>
-              <div class="lux-period-block lux-period-block--afternoon">
-                <div class="lux-travel-card"><time class="lux-travel-time">15:30</time><p class="lux-travel-venue">Shellona</p></div>
-              </div>
-              <div class="lux-period-block lux-period-block--evening">
-                <div class="lux-travel-card"><time class="lux-travel-time">22:00</time><p class="lux-travel-venue">Gaia</p></div>
-              </div>
-              <div class="lux-timeline-bottom-spacer"></div>
+    <div class="lux-print-body">
+      <div class="lux-print-planner-block">
+        <div class="lux-print-grid-stage">
+          <div class="lux-main">
+            <div class="lux-itinerary-days">
+              <article class="lux-day-card">
+                <header class="lux-day-card-head"><span>Mon</span></header>
+                <div class="lux-day-card-body lux-day-card-body--timeline" data-lux-timeline>
+                  <div class="lux-timeline-zone lux-timeline-zone--upper">
+                    <div class="lux-period-block lux-period-block--afternoon">
+                      <div class="lux-travel-card"><time class="lux-travel-time">15:30</time><p class="lux-travel-venue">Shellona</p></div>
+                    </div>
+                  </div>
+                  <div class="lux-timeline-zone lux-timeline-zone--middle"></div>
+                  <div class="lux-timeline-zone lux-timeline-zone--lower">
+                    <div class="lux-period-block lux-period-block--evening">
+                      <div class="lux-travel-card"><time class="lux-travel-time">22:00</time><p class="lux-travel-venue">Gaia</p></div>
+                    </div>
+                  </div>
+                </div>
+              </article>
             </div>
-          </article>
+          </div>
+        </div>
+        <div class="lux-print-stay-reserved${dense}">
+          <section class="lux-travel-info">
+            <h2 class="lux-travel-info-heading">Your Stay</h2>
+            <div class="lux-travel-info-grid">${stayFields(stayCount)}</div>
+          </section>
         </div>
       </div>
-    </div>
-    <div class="lux-print-stay-reserved${dense}">
-      <section class="lux-travel-info">
-        <h2 class="lux-travel-info-heading">Your Stay</h2>
-        <div class="lux-travel-info-grid">${stayFields(stayCount)}</div>
-      </section>
     </div>
     <footer class="lux-footer">Footer</footer>
   </div>
@@ -174,40 +109,61 @@ async function runStandaloneLayoutTest(page) {
     await page.setContent(standaloneHtml(stayCount), {
       waitUntil: "domcontentloaded",
     });
-    await page.evaluate(LOCK_LAYOUT);
+    await page.evaluate((script) => eval(script), LOCK_LAYOUT);
     const result = await page.evaluate(() => {
+      const doc = document.querySelector(".lux-document");
+      const header = document.querySelector(".lux-header");
+      const footer = document.querySelector(".lux-footer");
+      const body = document.querySelector(".lux-print-body");
+      const planner = document.querySelector(".lux-print-planner-block");
       const grid = document.querySelector(".lux-print-grid-stage");
       const stay = document.querySelector(".lux-print-stay-reserved");
       const timeline = document.querySelector("[data-lux-timeline]");
       const afternoon = document.querySelector(
-        ".lux-period-block--afternoon .lux-travel-card"
+        ".lux-timeline-zone--upper .lux-travel-card"
       );
       const evening = document.querySelector(
-        ".lux-period-block--evening .lux-travel-card"
+        ".lux-timeline-zone--lower .lux-travel-card"
       );
-      if (!grid || !timeline || !afternoon || !evening) return null;
+      if (!doc || !planner || !grid || !timeline || !afternoon || !evening) return null;
+
+      const headerH = header.getBoundingClientRect().height;
+      const footerH = footer.getBoundingClientRect().height;
+      const contentTop = header.getBoundingClientRect().bottom;
+      const contentBottom = footer.getBoundingClientRect().top;
+      const contentArea = contentBottom - contentTop;
+      const plannerRect = planner.getBoundingClientRect();
+      const topMargin = plannerRect.top - contentTop;
+      const bottomMargin = contentBottom - plannerRect.bottom;
+      const stayGap = stay
+        ? stay.getBoundingClientRect().top - grid.getBoundingClientRect().bottom
+        : 0;
+
       const timelineRect = timeline.getBoundingClientRect();
       const afternoonRect = afternoon.getBoundingClientRect();
       const eveningRect = evening.getBoundingClientRect();
-      const gap = eveningRect.top - afternoonRect.bottom;
+      const zoneH = timelineRect.height / 3;
+
       return {
         gridHeight: Math.round(grid.getBoundingClientRect().height),
-        stayHeight: stay ? Math.round(stay.getBoundingClientRect().height) : 0,
-        timelineH: Math.round(timelineRect.height),
-        afternoonTopPct: Math.round(
-          ((afternoonRect.top - timelineRect.top) / timelineRect.height) * 100
+        contentArea: Math.round(contentArea),
+        dayMaxPct: Math.round((grid.getBoundingClientRect().height / contentArea) * 100),
+        stayGap: Math.round(stayGap),
+        centerBalance: Math.round(Math.abs(topMargin - bottomMargin)),
+        afternoonZonePct: Math.round(
+          (((afternoonRect.top + afternoonRect.bottom) / 2 - timelineRect.top) / zoneH) * 100
         ),
-        eveningTopPct: Math.round(
-          ((eveningRect.top - timelineRect.top) / timelineRect.height) * 100
+        eveningZonePct: Math.round(
+          (((eveningRect.top + eveningRect.bottom) / 2 - (timelineRect.top + zoneH * 2)) / zoneH) *
+            100
         ),
-        gapPct: Math.round((gap / timelineRect.height) * 100),
         stayFields: document.querySelectorAll(".lux-travel-info-item").length,
       };
     });
     if (!result) throw new Error("Standalone layout metrics missing");
     gridHeights.push(result);
     console.log(
-      `  Stay fields ${result.stayFields}: grid ${result.gridHeight}px, stay ${result.stayHeight}px, gap ${result.gapPct}%`
+      `  Stay fields ${result.stayFields}: grid ${result.gridHeight}px (${result.dayMaxPct}% of content), stay gap ${result.stayGap}px, balance ${result.centerBalance}px`
     );
   }
 
@@ -222,34 +178,23 @@ async function runStandaloneLayoutTest(page) {
     );
   }
 
-  if (
-    Math.abs(gridHeights[0].stayHeight - gridHeights[1].stayHeight) > 2
-  ) {
-    console.error(
-      `  FAIL: stay area height changed (${gridHeights[0].stayHeight}px vs ${gridHeights[1].stayHeight}px)`
-    );
-    process.exitCode = 1;
-  } else {
-    console.log(
-      `  PASS: stay area fixed at ${gridHeights[0].stayHeight}px with 2 vs 6 stay fields`
-    );
-  }
-
   const m = gridHeights[0];
-  const okAfternoon = m.afternoonTopPct >= 22 && m.afternoonTopPct <= 32;
-  const okEvening = m.eveningTopPct >= 52 && m.eveningTopPct <= 62;
-  const okGap = m.gapPct >= 3 && m.gapPct <= 35;
-  if (!okAfternoon || !okEvening || !okGap) {
+  const okDayMax = m.dayMaxPct <= 60;
+  const okStayGap = m.stayGap >= 18 && m.stayGap <= 34;
+  const okCenter = m.centerBalance <= 24;
+  const okAfternoon = m.afternoonZonePct >= 35 && m.afternoonZonePct <= 65;
+  const okEvening = m.eveningZonePct >= 35 && m.eveningZonePct <= 65;
+  if (!okDayMax || !okStayGap || !okCenter || !okAfternoon || !okEvening) {
     console.error(
-      `  FAIL: expected afternoon top 22-32%, evening top 52-62%, gap 3-35% (got ${m.afternoonTopPct}%, ${m.eveningTopPct}%, ${m.gapPct}%)`
+      `  FAIL: day max <=60% (${m.dayMaxPct}%), stay gap 18-34px (${m.stayGap}), balance <=24px (${m.centerBalance}), zones ~50% (${m.afternoonZonePct}/${m.eveningZonePct})`
     );
     process.exitCode = 1;
   } else {
-    console.log("  PASS: centered timeline positioning");
+    console.log("  PASS: centered planner composition and three-zone timeline");
   }
 
   await page.setContent(standaloneHtml(2), { waitUntil: "domcontentloaded" });
-  await page.evaluate(LOCK_LAYOUT);
+  await page.evaluate((script) => eval(script), LOCK_LAYOUT);
 }
 
 async function main() {
@@ -273,7 +218,7 @@ async function main() {
       await page.goto(printUrl, { waitUntil: "networkidle0", timeout: 60_000 });
       await page.waitForSelector(".lux-document", { timeout: 30_000 });
       await page.evaluate(() => document.fonts.ready);
-      await page.evaluate(LOCK_LAYOUT);
+      await page.evaluate((script) => eval(script), LOCK_LAYOUT);
     }
 
     const metrics = await page.evaluate(() => {
@@ -284,27 +229,30 @@ async function main() {
         if (!timeline) return;
         const timelineRect = timeline.getBoundingClientRect();
         const afternoon = timeline.querySelector(
-          ".lux-period-block--afternoon .lux-travel-card"
+          ".lux-timeline-zone--upper .lux-travel-card"
         );
         const evening = timeline.querySelector(
-          ".lux-period-block--evening .lux-travel-card"
+          ".lux-timeline-zone--lower .lux-travel-card"
         );
         if (!afternoon || !evening) return;
         const afternoonRect = afternoon.getBoundingClientRect();
         const eveningRect = evening.getBoundingClientRect();
-        const timelineH = timelineRect.height;
-        const gap = eveningRect.top - afternoonRect.bottom;
+        const zoneH = timelineRect.height / 3;
         results.push({
           day: index + 1,
           gridHeight: grid ? Math.round(grid.getBoundingClientRect().height) : 0,
-          timelineH: Math.round(timelineH),
-          afternoonTopPct: Math.round(
-            ((afternoonRect.top - timelineRect.top) / timelineH) * 100
+          timelineH: Math.round(timelineRect.height),
+          afternoonZonePct: Math.round(
+            (((afternoonRect.top + afternoonRect.bottom) / 2 - timelineRect.top) /
+              zoneH) *
+              100
           ),
-          eveningTopPct: Math.round(
-            ((eveningRect.top - timelineRect.top) / timelineH) * 100
+          eveningZonePct: Math.round(
+            (((eveningRect.top + eveningRect.bottom) / 2 -
+              (timelineRect.top + zoneH * 2)) /
+              zoneH) *
+              100
           ),
-          gapPct: Math.round((gap / timelineH) * 100),
         });
       });
       return results;
@@ -317,15 +265,13 @@ async function main() {
     }
     for (const m of metrics) {
       console.log(
-        `  Day ${m.day}: grid ${m.gridHeight}px | timeline ${m.timelineH}px | afternoon top ${m.afternoonTopPct}% | evening top ${m.eveningTopPct}% | gap ${m.gapPct}%`
+        `  Day ${m.day}: grid ${m.gridHeight}px | timeline ${m.timelineH}px | upper zone ${m.afternoonZonePct}% | lower zone ${m.eveningZonePct}%`
       );
       const ok =
-        m.afternoonTopPct >= 22 &&
-        m.afternoonTopPct <= 32 &&
-        m.eveningTopPct >= 52 &&
-        m.eveningTopPct <= 62 &&
-        m.gapPct >= 3 &&
-        m.gapPct <= 35;
+        m.afternoonZonePct >= 35 &&
+        m.afternoonZonePct <= 65 &&
+        m.eveningZonePct >= 35 &&
+        m.eveningZonePct <= 65;
       console.log(ok ? "  PASS" : "  FAIL");
       if (!ok) process.exitCode = 1;
     }

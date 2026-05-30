@@ -201,13 +201,16 @@ function ClientDayCard({ day }: { day: TripDay }) {
           className="lux-day-card-body lux-day-card-body--timeline"
           data-lux-timeline
         >
-          <div className="lux-timeline-top-spacer" aria-hidden="true" />
-          <ClientPeriodBlock period="afternoon" periodItems={afternoonItems} />
-          <ClientPeriodBlock period="evening" periodItems={eveningItems} />
-          <div className="lux-timeline-bottom-spacer" aria-hidden="true" />
+          <div className="lux-timeline-zone lux-timeline-zone--upper">
+            <ClientPeriodBlock period="afternoon" periodItems={afternoonItems} />
+          </div>
+          <div className="lux-timeline-zone lux-timeline-zone--middle" aria-hidden="true" />
+          <div className="lux-timeline-zone lux-timeline-zone--lower">
+            <ClientPeriodBlock period="evening" periodItems={eveningItems} />
+          </div>
         </div>
       ) : (
-        <div className="lux-day-card-body">
+        <div className="lux-day-card-body lux-day-card-body--centered">
           {LUXURY_DISPLAY_PERIOD_ORDER.map((period) => (
             <ClientPeriodBlock
               key={period}
@@ -328,30 +331,34 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
       <div className={`lux-day-section${splitTimeline ? " lux-day-section--timeline" : ""}`}>
         {splitTimeline ? (
           <div className="lux-section-body lux-section-body--timeline" data-lux-timeline>
-            <div className="lux-timeline-top-spacer" aria-hidden="true" />
-            {afternoonSection ? (
-              <ConciergeSectionBlock
-                section={afternoonSection}
-                acts={sectionActs(afternoonSection.id)}
-              />
-            ) : null}
-            {middleSections.map((section) => (
-              <ConciergeSectionBlock
-                key={section.id}
-                section={section}
-                acts={sectionActs(section.id)}
-              />
-            ))}
-            {eveningSection ? (
-              <ConciergeSectionBlock
-                section={eveningSection}
-                acts={sectionActs(eveningSection.id)}
-              />
-            ) : null}
-            <div className="lux-timeline-bottom-spacer" aria-hidden="true" />
+            <div className="lux-timeline-zone lux-timeline-zone--upper">
+              {afternoonSection ? (
+                <ConciergeSectionBlock
+                  section={afternoonSection}
+                  acts={sectionActs(afternoonSection.id)}
+                />
+              ) : null}
+            </div>
+            <div className="lux-timeline-zone lux-timeline-zone--middle">
+              {middleSections.map((section) => (
+                <ConciergeSectionBlock
+                  key={section.id}
+                  section={section}
+                  acts={sectionActs(section.id)}
+                />
+              ))}
+            </div>
+            <div className="lux-timeline-zone lux-timeline-zone--lower">
+              {eveningSection ? (
+                <ConciergeSectionBlock
+                  section={eveningSection}
+                  acts={sectionActs(eveningSection.id)}
+                />
+              ) : null}
+            </div>
           </div>
         ) : (
-          <div className="lux-section-body">
+          <div className="lux-section-body lux-section-body--centered">
             {orderedSections.map((section) => (
               <ConciergeSectionBlock
                 key={section.id}
@@ -445,114 +452,118 @@ export function PlannerLuxuryDocument({
         </div>
       </header>
 
-      <div className="lux-print-grid-stage">
-        <div className="lux-main">
-          {showServices ? (
-            <section
-              className={`lux-services${filledArrangements.length === 1 ? " lux-services--solo" : ""}`}
-            >
-              <div className="lux-services-grid">
-                {arrangementFields.map((field) => {
-                  const value = String(trip[field.tripField] ?? "").trim();
-                  if (!value) return null;
-                  return (
-                    <div key={field.key} className="lux-service-item">
-                      <span className="lux-service-label">{field.label}</span>
-                      <span className="lux-service-value">{value}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+      <div className="lux-print-body">
+        <div className="lux-print-planner-block">
+          <div className="lux-print-grid-stage">
+            <div className="lux-main">
+              {showServices ? (
+                <section
+                  className={`lux-services${filledArrangements.length === 1 ? " lux-services--solo" : ""}`}
+                >
+                  <div className="lux-services-grid">
+                    {arrangementFields.map((field) => {
+                      const value = String(trip[field.tripField] ?? "").trim();
+                      if (!value) return null;
+                      return (
+                        <div key={field.key} className="lux-service-item">
+                          <span className="lux-service-label">{field.label}</span>
+                          <span className="lux-service-value">{value}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : null}
+
+              {dayCount === 0 ? (
+                <p className="lux-grid-empty">No programme scheduled.</p>
+              ) : isClientItinerary ? (
+                <div
+                  className={`lux-itinerary-days${wideDays ? " lux-itinerary-days--wide" : ""}`}
+                  style={{ "--lux-days": dayCount } as CSSProperties}
+                >
+                  {trip.days.map((day) => (
+                    <ClientDayCard key={day.id} day={day} />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`lux-days-row${wideDays ? " lux-days-row--wide" : ""}`}
+                  style={{ "--lux-days": dayCount } as CSSProperties}
+                >
+                  {trip.days.map((day) => (
+                    <ConciergeDayColumn key={day.id} day={day} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {showTeam || showNotes ? (
+            <div className="lux-print-concierge-reserved">
+              {showTeam ? (
+                <section className="lux-team">
+                  <h2 className="lux-section-label">Concierge Team</h2>
+                  <div
+                    className="lux-team-grid"
+                    style={{ "--team-count": filledTeam.length } as CSSProperties}
+                  >
+                    {filledTeam.map((r) => (
+                      <div key={r.key} className="lux-team-card">
+                        <span className="lux-team-role">{r.label}</span>
+                        <span className="lux-team-name">{r.name}</span>
+                        {r.phone ? (
+                          <span className="lux-team-phone">{r.phone}</span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+
+              {showNotes ? (
+                <section className="lux-notes">
+                  <h2 className="lux-section-label">Notes</h2>
+                  <p className="lux-notes-text">{trip.notes}</p>
+                </section>
+              ) : null}
+            </div>
           ) : null}
 
-          {dayCount === 0 ? (
-            <p className="lux-grid-empty">No programme scheduled.</p>
-          ) : isClientItinerary ? (
+          {isClientItinerary && clientContacts.length > 0 ? (
             <div
-              className={`lux-itinerary-days${wideDays ? " lux-itinerary-days--wide" : ""}`}
-              style={{ "--lux-days": dayCount } as CSSProperties}
+              className={[
+                "lux-print-stay-reserved",
+                clientContacts.length > 4 ? "lux-print-stay-reserved--dense" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
-              {trip.days.map((day) => (
-                <ClientDayCard key={day.id} day={day} />
-              ))}
+              <section className="lux-travel-info">
+                <h2 className="lux-travel-info-heading">Your Stay</h2>
+                <div className="lux-travel-info-grid">
+                  {clientContacts.map((contact) => (
+                    <div key={contact.key} className="lux-travel-info-item">
+                      <span className="lux-travel-info-label">
+                        <span className="lux-travel-info-icon" aria-hidden>
+                          {getClientTravelInfoIcon(contact.key)}
+                        </span>
+                        {contact.label}
+                      </span>
+                      {contact.name ? (
+                        <span className="lux-travel-info-name">{contact.name}</span>
+                      ) : null}
+                      {contact.phone ? (
+                        <span className="lux-travel-info-phone">{contact.phone}</span>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
-          ) : (
-            <div
-              className={`lux-days-row${wideDays ? " lux-days-row--wide" : ""}`}
-              style={{ "--lux-days": dayCount } as CSSProperties}
-            >
-              {trip.days.map((day) => (
-                <ConciergeDayColumn key={day.id} day={day} />
-              ))}
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
-
-      {showTeam || showNotes ? (
-        <div className="lux-print-concierge-reserved">
-          {showTeam ? (
-            <section className="lux-team">
-              <h2 className="lux-section-label">Concierge Team</h2>
-              <div
-                className="lux-team-grid"
-                style={{ "--team-count": filledTeam.length } as CSSProperties}
-              >
-                {filledTeam.map((r) => (
-                  <div key={r.key} className="lux-team-card">
-                    <span className="lux-team-role">{r.label}</span>
-                    <span className="lux-team-name">{r.name}</span>
-                    {r.phone ? (
-                      <span className="lux-team-phone">{r.phone}</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {showNotes ? (
-            <section className="lux-notes">
-              <h2 className="lux-section-label">Notes</h2>
-              <p className="lux-notes-text">{trip.notes}</p>
-            </section>
-          ) : null}
-        </div>
-      ) : null}
-
-      {isClientItinerary && clientContacts.length > 0 ? (
-        <div
-          className={[
-            "lux-print-stay-reserved",
-            clientContacts.length > 4 ? "lux-print-stay-reserved--dense" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          <section className="lux-travel-info">
-            <h2 className="lux-travel-info-heading">Your Stay</h2>
-            <div className="lux-travel-info-grid">
-              {clientContacts.map((contact) => (
-                <div key={contact.key} className="lux-travel-info-item">
-                  <span className="lux-travel-info-label">
-                    <span className="lux-travel-info-icon" aria-hidden>
-                      {getClientTravelInfoIcon(contact.key)}
-                    </span>
-                    {contact.label}
-                  </span>
-                  {contact.name ? (
-                    <span className="lux-travel-info-name">{contact.name}</span>
-                  ) : null}
-                  {contact.phone ? (
-                    <span className="lux-travel-info-phone">{contact.phone}</span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      ) : null}
 
       <footer className="lux-footer">{PLANNER_FOOTER}</footer>
     </div>

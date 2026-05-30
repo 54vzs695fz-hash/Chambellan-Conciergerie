@@ -395,7 +395,17 @@
 
 .lux-client-preview .lux-print-root {
   width: 100%;
-  max-width: 100%;
+  max-width: 1123px;
+}
+
+.lux-client-preview .lux-print-root--client {
+  width: 100%;
+  max-width: 1123px;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 297 / 210;
+  margin: 0 auto;
+  box-shadow: 0 2px 24px rgba(28, 24, 20, 0.1);
 }
 
 @media (min-width: 768px) {
@@ -404,6 +414,6 @@
   }
 
   .lux-client-preview .lux-print-root--client {
-    max-width: 100%;
+    max-width: 1123px;
   }
 }

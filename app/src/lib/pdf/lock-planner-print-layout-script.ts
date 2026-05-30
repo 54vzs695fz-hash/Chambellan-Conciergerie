@@ -2,107 +2,112 @@
 export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
 (() => {
   try {
-    function cssVarPx(el, name) {
-      const raw = getComputedStyle(el).getPropertyValue(name).trim();
-      if (!raw) return null;
-      const probe = document.createElement("div");
-      probe.style.height = raw;
-      probe.style.position = "absolute";
-      probe.style.visibility = "hidden";
-      document.body.appendChild(probe);
-      const px = probe.getBoundingClientRect().height;
-      document.body.removeChild(probe);
-      return px > 0 ? px : null;
-    }
+    const PLANNER_GAP_PX = 24;
+    const DAY_MAX_RATIO = 0.52;
+    const DAY_MIN_PX = 140;
 
-    function availableGridHeight() {
-      const doc = document.querySelector(".lux-print-root .lux-document");
-      if (!doc) return null;
-      const docHeight = doc.getBoundingClientRect().height;
-      const header = doc.querySelector(".lux-header");
-      const stay = doc.querySelector(".lux-print-stay-reserved");
-      const concierge = doc.querySelector(".lux-print-concierge-reserved");
-      const footer = doc.querySelector(".lux-footer");
-      const used =
-        (header ? header.getBoundingClientRect().height : 0) +
-        (stay ? stay.getBoundingClientRect().height : 0) +
-        (concierge ? concierge.getBoundingClientRect().height : 0) +
-        (footer ? footer.getBoundingClientRect().height : 0) +
-        8;
-      return Math.max(120, Math.round(docHeight - used));
-    }
-
-    const gridStage = document.querySelector(".lux-print-grid-stage");
-    if (gridStage) {
-      const root =
-        gridStage.closest(".lux-print-root") ||
-        gridStage.closest(".lux-document") ||
-        document.documentElement;
-      const cssMax = cssVarPx(root, "--lux-print-grid-height");
-      const available = availableGridHeight();
-      const heightPx = cssMax && available
-        ? Math.min(cssMax, available)
-        : cssMax || available;
-      if (heightPx) {
-        gridStage.style.height = heightPx + "px";
-        gridStage.style.minHeight = heightPx + "px";
-        gridStage.style.maxHeight = heightPx + "px";
-        gridStage.style.flex = "0 0 auto";
-        gridStage.style.overflow = "hidden";
-      }
-      const main = gridStage.querySelector(".lux-main");
-      const daysRow = gridStage.querySelector(".lux-itinerary-days, .lux-days-row");
-      if (main) {
-        main.style.height = "100%";
-        main.style.display = "flex";
-        main.style.flexDirection = "column";
-        main.style.overflow = "hidden";
-      }
-      if (daysRow) {
-        daysRow.style.flex = "1 1 auto";
-        daysRow.style.height = "100%";
-        daysRow.style.maxHeight = "100%";
-        daysRow.style.overflow = "hidden";
-      }
-    }
-
-    const stay = document.querySelector(".lux-print-stay-reserved");
-    if (stay) {
-      const root =
-        stay.closest(".lux-print-root") ||
-        stay.closest(".lux-document") ||
-        document.documentElement;
-      const stayPx = cssVarPx(root, "--lux-print-stay-height");
-      if (stayPx) {
-        stay.style.height = stayPx + "px";
-        stay.style.minHeight = stayPx + "px";
-        stay.style.maxHeight = stayPx + "px";
-        stay.style.flex = "0 0 auto";
-      }
-    }
-
-    document.querySelectorAll(".lux-itinerary-days, .lux-days-row").forEach((row) => {
-      const rowHeight = row.getBoundingClientRect().height;
-      if (rowHeight < 40) return;
-      row.querySelectorAll(".lux-day-card, .lux-day-column").forEach((col) => {
-        col.style.height = rowHeight + "px";
-        col.style.minHeight = rowHeight + "px";
+    function resetAncillaryHeights(stay, concierge) {
+      [stay, concierge].forEach((el) => {
+        if (!el) return;
+        el.style.height = "auto";
+        el.style.minHeight = "0";
+        el.style.maxHeight = "none";
+        el.style.flex = "0 0 auto";
       });
-    });
+    }
 
-    document.querySelectorAll(".lux-day-card").forEach((card) => {
-      const timeline = card.querySelector("[data-lux-timeline]");
-      if (!timeline) return;
-      const head = card.querySelector(".lux-day-card-head");
-      const bodyHeight = Math.round(
-        card.getBoundingClientRect().height -
-          (head ? head.getBoundingClientRect().height : 0)
-      );
-      if (bodyHeight < 40) return;
-      timeline.style.height = bodyHeight + "px";
-      timeline.style.minHeight = bodyHeight + "px";
-      timeline.style.overflow = "visible";
-    });
+    function lockDayRows(dayH) {
+      document.querySelectorAll(".lux-itinerary-days, .lux-days-row").forEach((row) => {
+        row.style.height = dayH + "px";
+        row.style.minHeight = dayH + "px";
+        row.style.maxHeight = dayH + "px";
+        row.style.flex = "0 0 auto";
+        row.style.overflow = "visible";
+        row.querySelectorAll(".lux-day-card, .lux-day-column").forEach((col) => {
+          col.style.height = dayH + "px";
+          col.style.minHeight = dayH + "px";
+          col.style.maxHeight = dayH + "px";
+        });
+      });
+    }
+
+    function lockTimelineZones() {
+      document.querySelectorAll("[data-lux-timeline]").forEach((timeline) => {
+        const card = timeline.closest(".lux-day-card, .lux-day-column");
+        if (!card) return;
+        const head = card.querySelector(".lux-day-card-head, .lux-day-column-head");
+        const section = timeline.closest(".lux-day-section");
+        let bodyH;
+        if (timeline.closest(".lux-day-card")) {
+          bodyH = Math.round(
+            card.getBoundingClientRect().height -
+              (head ? head.getBoundingClientRect().height : 0)
+          );
+        } else {
+          const columnGap = parseFloat(getComputedStyle(card).gap) || 0;
+          const sectionStyles = section ? getComputedStyle(section) : null;
+          const sectionPad = sectionStyles
+            ? parseFloat(sectionStyles.paddingTop) +
+              parseFloat(sectionStyles.paddingBottom)
+            : 0;
+          bodyH = Math.round(
+            card.getBoundingClientRect().height -
+              (head ? head.getBoundingClientRect().height : 0) -
+              columnGap -
+              sectionPad
+          );
+        }
+        if (bodyH < 40) return;
+        timeline.style.height = bodyH + "px";
+        timeline.style.minHeight = bodyH + "px";
+        timeline.style.display = "grid";
+        timeline.style.gridTemplateRows = "1fr 1fr 1fr";
+        timeline.style.overflow = "visible";
+      });
+    }
+
+    const doc = document.querySelector(".lux-print-root .lux-document");
+    if (!doc) return;
+
+    const header = doc.querySelector(".lux-header");
+    const footer = doc.querySelector(".lux-footer");
+    const stay = doc.querySelector(".lux-print-stay-reserved");
+    const concierge = doc.querySelector(".lux-print-concierge-reserved");
+    const gridStage = doc.querySelector(".lux-print-grid-stage");
+
+    const docHeight = doc.getBoundingClientRect().height;
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+    const footerH = footer ? footer.getBoundingClientRect().height : 0;
+    const contentArea = Math.max(200, Math.round(docHeight - headerH - footerH));
+
+    resetAncillaryHeights(stay, concierge);
+
+    const stayH = stay ? Math.ceil(stay.getBoundingClientRect().height) : 0;
+    const conciergeH = concierge ? Math.ceil(concierge.getBoundingClientRect().height) : 0;
+    const gapCount = (stay ? 1 : 0) + (concierge && (stay || gridStage) ? 1 : 0);
+    const ancillaryH = stayH + conciergeH + gapCount * PLANNER_GAP_PX;
+
+    const maxDayH = Math.round(contentArea * DAY_MAX_RATIO);
+    const dayH = Math.max(
+      DAY_MIN_PX,
+      Math.min(maxDayH, contentArea - ancillaryH - 8)
+    );
+
+    doc.style.setProperty("--lux-content-area-height", contentArea + "px");
+    doc.style.setProperty("--lux-day-card-height", dayH + "px");
+    doc.style.setProperty("--lux-planner-gap", PLANNER_GAP_PX + "px");
+
+    if (gridStage) {
+      gridStage.style.height = dayH + "px";
+      gridStage.style.minHeight = dayH + "px";
+      gridStage.style.maxHeight = dayH + "px";
+      gridStage.style.flex = "0 0 auto";
+      gridStage.style.overflow = "visible";
+    }
+
+    lockDayRows(dayH);
+    lockTimelineZones();
+    resetAncillaryHeights(stay, concierge);
   } catch (err) {
     console.error("lockPlannerPrintLayout", err);
   }
