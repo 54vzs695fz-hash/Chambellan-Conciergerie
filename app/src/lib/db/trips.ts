@@ -15,17 +15,10 @@ import {
   serializeDaySections,
 } from "../planner/day-sections";
 
-function eachDayBetween(start: string, end: string): string[] {
-  const dates: string[] = [];
-  const cur = new Date(start + "T12:00:00");
-  const last = new Date(end + "T12:00:00");
-  if (last < cur) return dates;
-  while (cur <= last) {
-    dates.push(cur.toISOString().split("T")[0]);
-    cur.setDate(cur.getDate() + 1);
-  }
-  return dates;
-}
+import {
+  eachDayBetween,
+  serializeDefaultDaySections,
+} from "../planner/trip-days-sync";
 
 function loadActivitiesForDay(dayId: number): Activity[] {
   const db = getDb();
@@ -155,10 +148,9 @@ function syncTripDays(
 
   for (const date of wanted) {
     if (!existingByDate.has(date)) {
-      db.prepare("INSERT INTO trip_days (trip_id, date) VALUES (?, ?)").run(
-        tripId,
-        date
-      );
+      db.prepare(
+        "INSERT INTO trip_days (trip_id, date, sections) VALUES (?, ?, ?)"
+      ).run(tripId, date, serializeDefaultDaySections());
     }
   }
 

@@ -24,7 +24,11 @@ interface DashboardProps {
     value: TripWithDays[K]
   ) => void;
   onFieldBlur: () => void;
-  onDatesBlur: () => void;
+  onDateFieldChange: (
+    key: "arrival_date" | "departure_date",
+    value: string
+  ) => void;
+  onDatesCommit: () => void;
   onLinkClient: (clientId: string) => void;
   onAddActivity: (
     dayId: number,
@@ -69,7 +73,8 @@ export function PlannerConciergeDashboard({
   clients,
   onFieldChange,
   onFieldBlur,
-  onDatesBlur,
+  onDateFieldChange,
+  onDatesCommit,
   onLinkClient,
   onAddActivity,
   onPatchActivity,
@@ -129,9 +134,9 @@ export function PlannerConciergeDashboard({
                   className="adm-input"
                   value={trip.arrival_date}
                   onChange={(e) =>
-                    onFieldChange("arrival_date", e.target.value)
+                    onDateFieldChange("arrival_date", e.target.value)
                   }
-                  onBlur={onDatesBlur}
+                  onBlur={onDatesCommit}
                 />
                 <span className="adm-dates-sep">–</span>
                 <input
@@ -139,9 +144,9 @@ export function PlannerConciergeDashboard({
                   className="adm-input"
                   value={trip.departure_date}
                   onChange={(e) =>
-                    onFieldChange("departure_date", e.target.value)
+                    onDateFieldChange("departure_date", e.target.value)
                   }
-                  onBlur={onDatesBlur}
+                  onBlur={onDatesCommit}
                 />
               </div>
             </div>

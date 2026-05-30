@@ -19,6 +19,10 @@ import {
   tripPayloadForApi,
   type PlannerExportVariant,
 } from "@/lib/planner/planner-sheet-model";
+import {
+  datesMatchRange,
+  syncTripDaysInState,
+} from "@/lib/planner/trip-days-sync";
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
 
@@ -78,14 +82,38 @@ export function PlannerEditor({ initialTrip }: Props) {
     setTrip((prev) => ({ ...prev, [key]: value }));
   };
 
-  const onFieldBlur = () => persist(trip);
+  const onFieldBlur = () => {
+    setTrip((current) => {
+      void persist(current);
+      return current;
+    });
+  };
 
-  const onDatesBlur = async () => {
-    if (!trip.arrival_date || !trip.departure_date) return;
-    const a = new Date(trip.arrival_date + "T12:00:00");
-    const b = new Date(trip.departure_date + "T12:00:00");
-    if (b < a) return;
-    await persist(trip);
+  const onDateFieldChange = (
+    key: "arrival_date" | "departure_date",
+    value: string
+  ) => {
+    setTrip((prev) => {
+      const synced = syncTripDaysInState({ ...prev, [key]: value });
+      if (
+        synced.arrival_date &&
+        synced.departure_date &&
+        !datesMatchRange(prev.days, synced.arrival_date, synced.departure_date)
+      ) {
+        void persist(synced);
+      }
+      return synced;
+    });
+  };
+
+  const onDatesCommit = () => {
+    setTrip((current) => {
+      const synced = syncTripDaysInState(current);
+      if (synced.arrival_date && synced.departure_date) {
+        void persist(synced);
+      }
+      return synced;
+    });
   };
 
   const updateSections = async (dayId: number, sections: DaySection[]) => {
@@ -291,7 +319,8 @@ export function PlannerEditor({ initialTrip }: Props) {
           clients={clients}
           onFieldChange={updateField}
           onFieldBlur={onFieldBlur}
-          onDatesBlur={onDatesBlur}
+          onDateFieldChange={onDateFieldChange}
+          onDatesCommit={onDatesCommit}
           onLinkClient={linkClient}
           onAddActivity={addActivity}
           onPatchActivity={patchActivity}
