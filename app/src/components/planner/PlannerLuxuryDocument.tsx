@@ -44,6 +44,25 @@ function sortActivities(activities: Activity[]): Activity[] {
   );
 }
 
+function activityHasVisibleContent(activity: Activity): boolean {
+  return Boolean(
+    activity.time || activity.title?.trim() || activity.details?.trim()
+  );
+}
+
+function countSectionActivities(day: TripDay, sectionId: string): number {
+  return day.activities.filter(
+    (a) => a.period === sectionId && activityHasVisibleContent(a)
+  ).length;
+}
+
+function isSparseTimelineDay(day: TripDay): boolean {
+  return (
+    countSectionActivities(day, "afternoon") === 1 &&
+    countSectionActivities(day, "evening") === 1
+  );
+}
+
 function LuxuryVenueName({ name }: { name: string }) {
   const ref = useRef<HTMLParagraphElement>(null);
 
@@ -112,6 +131,31 @@ function ClientTravelCard({
   );
 }
 
+function ClientPeriodBlock({
+  period,
+  periodItems,
+}: {
+  period: (typeof LUXURY_DISPLAY_PERIOD_ORDER)[number];
+  periodItems: { activity: Activity; sectionLabel: string }[];
+}) {
+  if (periodItems.length === 0) return null;
+
+  return (
+    <div className={`lux-period-block lux-period-block--${period}`}>
+      <h3 className="lux-period-title">
+        {LUXURY_ITINERARY_PERIOD_TITLES[period]}
+      </h3>
+      {periodItems.map(({ activity, sectionLabel }) => (
+        <ClientTravelCard
+          key={activity.id}
+          activity={activity}
+          sectionLabel={sectionLabel}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ClientDayCard({ day }: { day: TripDay }) {
   const sections = getVisibleSections(day);
 
@@ -138,34 +182,44 @@ function ClientDayCard({ day }: { day: TripDay }) {
   if (items.length === 0) return null;
 
   const periodGroups = groupActivitiesByLuxuryPeriod(items);
+  const sparseDay = isSparseTimelineDay(day);
+  const afternoonItems = periodGroups.get("afternoon") ?? [];
+  const eveningItems = periodGroups.get("evening") ?? [];
+  const splitTimeline =
+    afternoonItems.length > 0 && eveningItems.length > 0;
 
   return (
-    <article className="lux-day-card">
+    <article
+      className={`lux-day-card${sparseDay ? " lux-day-card--sparse" : ""}`}
+    >
       <header className="lux-day-card-head">
         <span className="lux-day-card-name">{formatGridDayName(day.date)}</span>
         <span className="lux-day-card-date">{formatLuxuryDayDate(day.date)}</span>
       </header>
-      <div className="lux-day-card-body">
-        {LUXURY_DISPLAY_PERIOD_ORDER.map((period) => {
-          const periodItems = periodGroups.get(period) ?? [];
-          if (periodItems.length === 0) return null;
-
-          return (
-            <div key={period} className="lux-period-block">
-              <h3 className="lux-period-title">
-                {LUXURY_ITINERARY_PERIOD_TITLES[period]}
-              </h3>
-              {periodItems.map(({ activity, sectionLabel }) => (
-                <ClientTravelCard
-                  key={activity.id}
-                  activity={activity}
-                  sectionLabel={sectionLabel}
-                />
-              ))}
-            </div>
-          );
-        })}
-      </div>
+      {splitTimeline ? (
+        <div
+          className="lux-day-card-body lux-day-card-body--timeline"
+          data-lux-timeline
+        >
+          <div className="lux-timeline-zone lux-timeline-zone--upper">
+            <ClientPeriodBlock period="afternoon" periodItems={afternoonItems} />
+          </div>
+          <div className="lux-timeline-gap" aria-hidden="true" />
+          <div className="lux-timeline-zone lux-timeline-zone--lower">
+            <ClientPeriodBlock period="evening" periodItems={eveningItems} />
+          </div>
+        </div>
+      ) : (
+        <div className="lux-day-card-body">
+          {LUXURY_DISPLAY_PERIOD_ORDER.map((period) => (
+            <ClientPeriodBlock
+              key={period}
+              period={period}
+              periodItems={periodGroups.get(period) ?? []}
+            />
+          ))}
+        </div>
+      )}
     </article>
   );
 }
@@ -207,6 +261,31 @@ function ConciergeActivityCard({
   );
 }
 
+function ConciergeSectionBlock({
+  section,
+  acts,
+}: {
+  section: { id: string; label: string };
+  acts: Activity[];
+}) {
+  if (acts.length === 0) return null;
+
+  return (
+    <div className={`lux-itinerary-block lux-itinerary-block--${section.id}`}>
+      <p className="lux-itinerary-section-title lux-itinerary-section-title--concierge">
+        {section.label}
+      </p>
+      {acts.map((activity) => (
+        <ConciergeActivityCard
+          key={activity.id}
+          activity={activity}
+          sectionLabel={section.label}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ConciergeDayColumn({ day }: { day: TripDay }) {
   const sections = getVisibleSections(day);
 
@@ -222,41 +301,73 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
 
   if (orderedSections.length === 0) return null;
 
+  const hasAfternoon = orderedSections.some((s) => s.id === "afternoon");
+  const hasEvening = orderedSections.some((s) => s.id === "evening");
+  const splitTimeline = hasAfternoon && hasEvening;
+  const sparseDay = isSparseTimelineDay(day);
+
+  const afternoonSection = orderedSections.find((s) => s.id === "afternoon");
+  const eveningSection = orderedSections.find((s) => s.id === "evening");
+  const middleSections = orderedSections.filter(
+    (s) => s.id !== "afternoon" && s.id !== "evening"
+  );
+
+  const sectionActs = (sectionId: string) =>
+    sortActivities(
+      day.activities.filter(
+        (a) =>
+          a.period === sectionId &&
+          (a.time || a.title?.trim() || a.details?.trim())
+      )
+    );
+
   return (
-    <div className="lux-day-column">
+    <div className={`lux-day-column${sparseDay ? " lux-day-column--sparse" : ""}`}>
       <div className="lux-day-column-head">
         <span className="lux-day-name">{formatGridDayName(day.date)}</span>
         <span className="lux-day-date">{formatGridDayDate(day.date)}</span>
       </div>
 
-      <div className="lux-day-section">
-        <div className="lux-section-body">
-          {orderedSections.map((section) => {
-            const acts = sortActivities(
-              day.activities.filter(
-                (a) =>
-                  a.period === section.id &&
-                  (a.time || a.title?.trim() || a.details?.trim())
-              )
-            );
-            if (acts.length === 0) return null;
-
-            return (
-              <div key={section.id} className="lux-itinerary-block">
-                <p className="lux-itinerary-section-title lux-itinerary-section-title--concierge">
-                  {section.label}
-                </p>
-                {acts.map((activity) => (
-                  <ConciergeActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    sectionLabel={section.label}
-                  />
-                ))}
-              </div>
-            );
-          })}
-        </div>
+      <div className={`lux-day-section${splitTimeline ? " lux-day-section--timeline" : ""}`}>
+        {splitTimeline ? (
+          <div className="lux-section-body lux-section-body--timeline" data-lux-timeline>
+            <div className="lux-timeline-zone lux-timeline-zone--upper">
+              {afternoonSection ? (
+                <ConciergeSectionBlock
+                  section={afternoonSection}
+                  acts={sectionActs(afternoonSection.id)}
+                />
+              ) : null}
+            </div>
+            <div className="lux-timeline-gap" aria-hidden="true">
+              {middleSections.map((section) => (
+                <ConciergeSectionBlock
+                  key={section.id}
+                  section={section}
+                  acts={sectionActs(section.id)}
+                />
+              ))}
+            </div>
+            <div className="lux-timeline-zone lux-timeline-zone--lower">
+              {eveningSection ? (
+                <ConciergeSectionBlock
+                  section={eveningSection}
+                  acts={sectionActs(eveningSection.id)}
+                />
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div className="lux-section-body">
+            {orderedSections.map((section) => (
+              <ConciergeSectionBlock
+                key={section.id}
+                section={section}
+                acts={sectionActs(section.id)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -341,98 +452,113 @@ export function PlannerLuxuryDocument({
         </div>
       </header>
 
-      <div className="lux-main">
-        {showServices ? (
-          <section
-            className={`lux-services${filledArrangements.length === 1 ? " lux-services--solo" : ""}`}
-          >
-            <div className="lux-services-grid">
-              {arrangementFields.map((field) => {
-                const value = String(trip[field.tripField] ?? "").trim();
-                if (!value) return null;
-                return (
-                  <div key={field.key} className="lux-service-item">
-                    <span className="lux-service-label">{field.label}</span>
-                    <span className="lux-service-value">{value}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ) : null}
+      <div className="lux-print-grid-stage">
+        <div className="lux-main">
+          {showServices ? (
+            <section
+              className={`lux-services${filledArrangements.length === 1 ? " lux-services--solo" : ""}`}
+            >
+              <div className="lux-services-grid">
+                {arrangementFields.map((field) => {
+                  const value = String(trip[field.tripField] ?? "").trim();
+                  if (!value) return null;
+                  return (
+                    <div key={field.key} className="lux-service-item">
+                      <span className="lux-service-label">{field.label}</span>
+                      <span className="lux-service-value">{value}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
 
-        {dayCount === 0 ? (
-          <p className="lux-grid-empty">No programme scheduled.</p>
-        ) : isClientItinerary ? (
-          <div
-            className={`lux-itinerary-days${wideDays ? " lux-itinerary-days--wide" : ""}`}
-            style={{ "--lux-days": dayCount } as CSSProperties}
-          >
-            {trip.days.map((day) => (
-              <ClientDayCard key={day.id} day={day} />
-            ))}
-          </div>
-        ) : (
-          <div
-            className={`lux-days-row${wideDays ? " lux-days-row--wide" : ""}`}
-            style={{ "--lux-days": dayCount } as CSSProperties}
-          >
-            {trip.days.map((day) => (
-              <ConciergeDayColumn key={day.id} day={day} />
-            ))}
-          </div>
-        )}
+          {dayCount === 0 ? (
+            <p className="lux-grid-empty">No programme scheduled.</p>
+          ) : isClientItinerary ? (
+            <div
+              className={`lux-itinerary-days${wideDays ? " lux-itinerary-days--wide" : ""}`}
+              style={{ "--lux-days": dayCount } as CSSProperties}
+            >
+              {trip.days.map((day) => (
+                <ClientDayCard key={day.id} day={day} />
+              ))}
+            </div>
+          ) : (
+            <div
+              className={`lux-days-row${wideDays ? " lux-days-row--wide" : ""}`}
+              style={{ "--lux-days": dayCount } as CSSProperties}
+            >
+              {trip.days.map((day) => (
+                <ConciergeDayColumn key={day.id} day={day} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {showTeam ? (
-        <section className="lux-team">
-          <h2 className="lux-section-label">Concierge Team</h2>
-          <div
-            className="lux-team-grid"
-            style={{ "--team-count": filledTeam.length } as CSSProperties}
-          >
-            {filledTeam.map((r) => (
-              <div key={r.key} className="lux-team-card">
-                <span className="lux-team-role">{r.label}</span>
-                <span className="lux-team-name">{r.name}</span>
-                {r.phone ? (
-                  <span className="lux-team-phone">{r.phone}</span>
-                ) : null}
+      {showTeam || showNotes ? (
+        <div className="lux-print-concierge-reserved">
+          {showTeam ? (
+            <section className="lux-team">
+              <h2 className="lux-section-label">Concierge Team</h2>
+              <div
+                className="lux-team-grid"
+                style={{ "--team-count": filledTeam.length } as CSSProperties}
+              >
+                {filledTeam.map((r) => (
+                  <div key={r.key} className="lux-team-card">
+                    <span className="lux-team-role">{r.label}</span>
+                    <span className="lux-team-name">{r.name}</span>
+                    {r.phone ? (
+                      <span className="lux-team-phone">{r.phone}</span>
+                    ) : null}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
+            </section>
+          ) : null}
 
-      {showNotes ? (
-        <section className="lux-notes">
-          <h2 className="lux-section-label">Notes</h2>
-          <p className="lux-notes-text">{trip.notes}</p>
-        </section>
+          {showNotes ? (
+            <section className="lux-notes">
+              <h2 className="lux-section-label">Notes</h2>
+              <p className="lux-notes-text">{trip.notes}</p>
+            </section>
+          ) : null}
+        </div>
       ) : null}
 
       {isClientItinerary && clientContacts.length > 0 ? (
-        <section className="lux-travel-info">
-          <h2 className="lux-travel-info-heading">Your Stay</h2>
-          <div className="lux-travel-info-grid">
-            {clientContacts.map((contact) => (
-              <div key={contact.key} className="lux-travel-info-item">
-                <span className="lux-travel-info-label">
-                  <span className="lux-travel-info-icon" aria-hidden>
-                    {getClientTravelInfoIcon(contact.key)}
+        <div
+          className={[
+            "lux-print-stay-reserved",
+            clientContacts.length > 4 ? "lux-print-stay-reserved--dense" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <section className="lux-travel-info">
+            <h2 className="lux-travel-info-heading">Your Stay</h2>
+            <div className="lux-travel-info-grid">
+              {clientContacts.map((contact) => (
+                <div key={contact.key} className="lux-travel-info-item">
+                  <span className="lux-travel-info-label">
+                    <span className="lux-travel-info-icon" aria-hidden>
+                      {getClientTravelInfoIcon(contact.key)}
+                    </span>
+                    {contact.label}
                   </span>
-                  {contact.label}
-                </span>
-                {contact.name ? (
-                  <span className="lux-travel-info-name">{contact.name}</span>
-                ) : null}
-                {contact.phone ? (
-                  <span className="lux-travel-info-phone">{contact.phone}</span>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        </section>
+                  {contact.name ? (
+                    <span className="lux-travel-info-name">{contact.name}</span>
+                  ) : null}
+                  {contact.phone ? (
+                    <span className="lux-travel-info-phone">{contact.phone}</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       ) : null}
 
       <footer className="lux-footer">{PLANNER_FOOTER}</footer>

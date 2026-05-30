@@ -1,5 +1,6 @@
 import type { Browser } from "puppeteer-core";
 import type { PlannerExportVariant } from "../planner/planner-sheet-model";
+import { lockPlannerPrintLayout } from "./lock-planner-print-layout";
 
 function resolveBaseUrl(baseUrl?: string): string {
   if (baseUrl) return baseUrl.replace(/\/$/, "");
@@ -45,6 +46,11 @@ export async function generatePlannerPdf(
     await page.goto(url, { waitUntil: "networkidle0", timeout: 60_000 });
     await page.waitForSelector(".lux-document", { timeout: 30_000 });
     await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(lockPlannerPrintLayout);
+    await page.waitForFunction(
+      () => document.documentElement.getAttribute("data-lux-print-ready") === "true",
+      { timeout: 10_000 }
+    );
 
     const pdf = await page.pdf({
       format: "A4",

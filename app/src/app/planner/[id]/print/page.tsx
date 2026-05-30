@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PlannerLuxuryDocument } from "@/components/planner/PlannerLuxuryDocument";
+import { PlannerPrintLayoutLock } from "@/components/planner/PlannerPrintLayoutLock";
 import { getTrip } from "@/lib/db/trips";
 import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
 
@@ -22,8 +23,12 @@ export default async function PlannerPrintPage({
     mode === "concierge" ? "concierge" : "client";
 
   return (
-    <div className={`lux-print-root lux-print-root--${variant}`}>
-      <PlannerLuxuryDocument trip={trip} variant={variant} />
-    </div>
+    <>
+      <style>{`html, body { height: 100%; margin: 0; padding: 0; }`}</style>
+      <div className={`lux-print-root lux-print-root--${variant}`}>
+        <PlannerPrintLayoutLock />
+        <PlannerLuxuryDocument trip={trip} variant={variant} />
+      </div>
+    </>
   );
 }

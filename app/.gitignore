@@ -13,3 +13,4 @@ data/*.db-wal
 .env
 
 /src/generated/prisma
+tmp/

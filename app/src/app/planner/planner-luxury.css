@@ -4,8 +4,11 @@
   min-height: 100vh;
 }
 
-.lux-planner-root:has(.lux-print-root--client) {
+.lux-planner-root:has(.lux-print-root) {
   height: 100vh;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .lux-studio {
@@ -190,6 +193,13 @@
 .lux-document--grid-expanded .lux-days-row {
   flex: 1;
   min-height: 28rem;
+  align-items: stretch;
+}
+
+.lux-document--grid-expanded .lux-itinerary-days {
+  flex: 1;
+  min-height: 28rem;
+  align-items: stretch;
 }
 
 .lux-header {
@@ -529,6 +539,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .lux-day-column-head {
@@ -564,6 +576,10 @@
   border-radius: 2px;
   padding: 0.65rem 0.55rem 0.75rem;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .lux-document--preview .lux-day-column-head {
@@ -1122,8 +1138,30 @@
 
 .lux-print-root:not(.lux-print-root--client) .lux-document--grid-expanded .lux-main,
 .lux-print-root:not(.lux-print-root--client) .lux-document--grid-expanded .lux-days-row {
-  flex: none;
+  flex: 1 1 auto;
   min-height: 0;
+  align-items: stretch;
+}
+
+.lux-print-root:not(.lux-print-root--client) {
+  --lux-print-grid-height: 118mm;
+  --lux-print-concierge-footer-height: 24mm;
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lux-print-root:not(.lux-print-root--client)
+  .lux-document:not(:has(.lux-print-concierge-reserved)) {
+  --lux-print-grid-height: 138mm;
+}
+
+.lux-print-root:not(.lux-print-root--client) .lux-document {
+  flex: 1 1 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .lux-print-root .lux-header {
@@ -1177,6 +1215,9 @@
 .lux-print-root .lux-days-row {
   margin-bottom: 0.12rem;
   gap: 0.42rem;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .lux-print-root .lux-day-column {
@@ -1417,6 +1458,45 @@
   margin-top: 0.16rem;
 }
 
+/* Luxury itinerary timeline — upper 25% / middle 50% / lower 25% */
+.lux-day-card-body--timeline,
+.lux-section-body--timeline {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.lux-timeline-zone--upper {
+  flex: 0 0 25%;
+  height: 25%;
+  max-height: 25%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.lux-timeline-gap {
+  flex: 0 0 50%;
+  height: 50%;
+  min-height: 50%;
+  overflow: hidden;
+}
+
+.lux-timeline-zone--lower {
+  flex: 0 0 25%;
+  height: 25%;
+  max-height: 25%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
 .lux-period-title {
   margin: 0 0 0.14rem;
   padding-bottom: 0.06rem;
@@ -1448,6 +1528,26 @@
 
 .lux-travel-card + .lux-travel-card {
   margin-top: 0.05rem;
+}
+
+/* Lightly populated days — ~18% more vertical padding inside cards */
+.lux-day-card--sparse .lux-travel-card,
+.lux-day-column--sparse .lux-activity-card--itinerary {
+  --lux-card-pad-scale: 1.18;
+}
+
+.lux-day-card--sparse .lux-travel-card {
+  padding-top: calc(0.26rem * var(--lux-card-pad-scale));
+  padding-bottom: calc(0.28rem * var(--lux-card-pad-scale));
+}
+
+.lux-day-column--sparse .lux-activity-card--itinerary {
+  padding-top: calc(0.72rem * var(--lux-card-pad-scale));
+  padding-bottom: calc(0.78rem * var(--lux-card-pad-scale));
+}
+
+.lux-day-column--sparse .lux-activity-card--itinerary:last-child {
+  padding-bottom: calc(0.45rem * var(--lux-card-pad-scale));
 }
 
 .lux-travel-time {
@@ -1579,15 +1679,113 @@
   margin-top: 0.08rem;
 }
 
+/* Print shell — passthrough in editor, fixed regions in PDF */
+.lux-print-grid-stage,
+.lux-print-stay-reserved,
+.lux-print-concierge-reserved {
+  display: contents;
+}
+
 .lux-print-root--client {
   --lux-gold: #7d5c28;
   --lux-gold-rich: #6b4f22;
   --lux-gold-accent: #b8956a;
+  --lux-print-grid-height: 102mm;
+  --lux-print-stay-height: 22mm;
   min-height: 100vh;
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: #fffefb;
+}
+
+.lux-print-root--client .lux-document:not(:has(.lux-print-stay-reserved)) {
+  --lux-print-grid-height: 122mm;
+}
+
+.lux-print-root .lux-print-grid-stage {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 var(--lux-print-grid-height);
+  height: var(--lux-print-grid-height);
+  min-height: var(--lux-print-grid-height);
+  max-height: var(--lux-print-grid-height);
+  overflow: hidden;
+}
+
+.lux-print-root .lux-print-grid-stage .lux-main {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lux-print-root .lux-print-stay-reserved {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 0 0 var(--lux-print-stay-height);
+  height: var(--lux-print-stay-height);
+  min-height: var(--lux-print-stay-height);
+  max-height: var(--lux-print-stay-height);
+  overflow: hidden;
+}
+
+.lux-print-root .lux-print-stay-reserved .lux-travel-info {
+  margin-top: 0;
+  padding-top: 0.06rem;
+  border-top: 0.5px solid rgba(184, 149, 106, 0.45);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.lux-print-root .lux-print-stay-reserved .lux-travel-info-grid {
+  flex: 1 1 auto;
+  align-content: center;
+  overflow: hidden;
+}
+
+.lux-print-root .lux-print-stay-reserved--dense .lux-travel-info-heading {
+  font-size: 0.72rem;
+  margin-bottom: 0.12rem;
+}
+
+.lux-print-root .lux-print-stay-reserved--dense .lux-travel-info-label {
+  font-size: 0.56rem;
+}
+
+.lux-print-root .lux-print-stay-reserved--dense .lux-travel-info-name {
+  font-size: 0.88rem;
+  line-height: 1.18;
+}
+
+.lux-print-root .lux-print-stay-reserved--dense .lux-travel-info-phone {
+  font-size: 0.56rem;
+}
+
+.lux-print-root .lux-print-stay-reserved--dense .lux-travel-info-grid {
+  gap: 0.12rem 0.9rem;
+}
+
+.lux-print-root .lux-print-concierge-reserved {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex: 0 0 var(--lux-print-concierge-footer-height);
+  height: var(--lux-print-concierge-footer-height);
+  min-height: var(--lux-print-concierge-footer-height);
+  max-height: var(--lux-print-concierge-footer-height);
+  overflow: hidden;
+}
+
+.lux-print-root .lux-print-concierge-reserved .lux-team,
+.lux-print-root .lux-print-concierge-reserved .lux-notes {
+  margin: 0;
+  padding: 0.08rem 0 0;
+  overflow: hidden;
 }
 
 .lux-print-root--client .lux-document {
@@ -1611,12 +1809,14 @@
   min-height: 0;
   overflow: hidden;
   justify-content: flex-start;
+  height: 100%;
 }
 
 .lux-print-root--client .lux-document--grid-expanded .lux-main,
 .lux-print-root--client .lux-document--grid-expanded .lux-itinerary-days {
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
 }
 
 .lux-print-root--client .lux-header {
@@ -1702,6 +1902,7 @@
   width: 100%;
   gap: 0.22rem;
   min-height: 0;
+  height: 100%;
   max-height: 100%;
   overflow: hidden;
 }
@@ -1716,6 +1917,9 @@
   overflow: hidden;
   background: #f7f4ef;
   border: 1px solid #e5dfd4;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .lux-print-root--client .lux-day-card-head {
@@ -1729,6 +1933,29 @@
   gap: 0.18rem;
   min-height: 0;
   overflow: hidden;
+}
+
+.lux-print-root--client .lux-day-card-body--timeline,
+.lux-print-root .lux-section-body--timeline {
+  gap: 0;
+  display: flex;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.lux-print-root .lux-day-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.lux-print-root .lux-day-section--timeline {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .lux-print-root--client .lux-day-card-name {
@@ -1763,6 +1990,16 @@
   border-radius: 7px;
   border-left-color: var(--lux-gold-accent);
   background: #f3efe8;
+}
+
+.lux-print-root--client .lux-day-card--sparse .lux-travel-card {
+  padding-top: calc(0.26rem * 1.18);
+  padding-bottom: calc(0.28rem * 1.18);
+}
+
+.lux-print-root .lux-day-column--sparse .lux-activity-card--itinerary {
+  padding-top: calc(0.28rem * 1.18);
+  padding-bottom: calc(0.32rem * 1.18);
 }
 
 .lux-print-root--client .lux-travel-venue {
@@ -1812,8 +2049,8 @@
 }
 
 .lux-print-root--client .lux-travel-info {
-  padding-top: 0.1rem;
-  margin-top: 0.1rem;
+  padding-top: 0.06rem;
+  margin-top: 0;
   border-top-color: rgba(184, 149, 106, 0.45);
   flex-shrink: 0;
   position: relative;
