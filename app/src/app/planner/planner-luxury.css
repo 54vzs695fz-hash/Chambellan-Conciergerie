@@ -1713,6 +1713,8 @@
   --lux-gold: #7d5c28;
   --lux-gold-rich: #6b4f22;
   --lux-gold-accent: #b8956a;
+  --lux-planner-gap: 40px;
+  --lux-compose-lift: 100px;
   min-height: 100vh;
   height: 100vh;
   display: flex;
@@ -1748,6 +1750,11 @@
   justify-content: center;
   align-items: stretch;
   min-height: 0;
+  box-sizing: border-box;
+}
+
+.lux-print-root--client .lux-print-body {
+  padding-bottom: var(--lux-compose-lift);
 }
 
 .lux-print-root .lux-print-planner-block {
@@ -1886,12 +1893,12 @@
 }
 
 .lux-print-root--client .lux-header {
-  margin-bottom: 0.26rem;
+  margin-bottom: 0;
   flex-shrink: 0;
 }
 
 .lux-print-root--client .lux-logo-wrap {
-  margin-bottom: 0.68rem;
+  margin-bottom: 0.22rem;
 }
 
 .lux-print-root--client .lux-logo-unified {
@@ -1900,14 +1907,18 @@
 }
 
 .lux-print-root--client .lux-meta {
-  padding-bottom: 0.2rem;
+  padding-bottom: 0;
   border-bottom: none;
+}
+
+.lux-print-root--client .lux-header--travel .lux-meta--travel {
+  padding-bottom: 0;
 }
 
 .lux-print-root--client .lux-destination {
   font-size: 3.52rem;
   letter-spacing: 0.25em;
-  line-height: 1.06;
+  line-height: 1.02;
   color: var(--lux-gold-rich);
   font-weight: 500;
   font-feature-settings: "kern" 1, "liga" 1;
@@ -1917,7 +1928,7 @@
   color: #9a948c;
   font-size: 0.62rem;
   letter-spacing: 0.26em;
-  margin-top: 0.12rem;
+  margin-top: 0.06rem;
   font-weight: 400;
 }
 
@@ -1933,6 +1944,10 @@
 .lux-print-root--client .lux-header-dates-sep {
   font-size: 0.96rem;
   margin: 0.04rem 0 0;
+}
+
+.lux-print-root--client .lux-header-dates {
+  padding-top: 0.06rem;
 }
 
 .lux-print-root--client .lux-header-dates-start {
