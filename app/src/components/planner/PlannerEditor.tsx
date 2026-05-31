@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { PlannerLuxuryDocument } from "./PlannerLuxuryDocument";
 import {
   PlannerConciergeDashboard,
@@ -15,10 +14,7 @@ import type {
   DaySection,
   TripWithDays,
 } from "@/lib/types";
-import {
-  tripPayloadForApi,
-  type PlannerExportVariant,
-} from "@/lib/planner/planner-sheet-model";
+import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
 import {
   datesMatchRange,
   syncTripDaysInState,
@@ -26,6 +22,7 @@ import {
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
 import { PlannerPrintLayoutLock } from "./PlannerPrintLayoutLock";
+import { usePlannerSave } from "./use-planner-save";
 
 type ViewMode = "concierge" | "client";
 
@@ -33,17 +30,45 @@ interface Props {
   initialTrip: TripWithDays;
 }
 
+function patchActivityInTrip(
+  prev: TripWithDays,
+  activityId: number,
+  fields: Partial<Activity>
+): TripWithDays {
+  return {
+    ...prev,
+    days: prev.days.map((day) => {
+      const index = day.activities.findIndex((a) => a.id === activityId);
+      if (index < 0) return day;
+      const activities = [...day.activities];
+      activities[index] = { ...activities[index], ...fields };
+      return { ...day, activities };
+    }),
+  };
+}
+
 export function PlannerEditor({ initialTrip }: Props) {
-  const router = useRouter();
   const [trip, setTrip] = useState(initialTrip);
+  const [clientPreviewTrip, setClientPreviewTrip] =
+    useState<TripWithDays | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("concierge");
   const [pdfLoading, setPdfLoading] = useState<PlannerExportVariant | null>(
     null
   );
   const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const {
+    saveStatus,
+    tripRef,
+    persistTrip,
+    scheduleTripPersist,
+    flushTripPersist,
+    scheduleActivityPatch,
+    flushAll,
+  } = usePlannerSave(initialTrip.id);
+
+  tripRef.current = trip;
 
   useEffect(() => {
     fetch("/api/clients")
@@ -54,27 +79,34 @@ export function PlannerEditor({ initialTrip }: Props) {
       .catch(() => {});
   }, []);
 
+  const applyTripUpdate = useCallback(
+    (updater: (prev: TripWithDays) => TripWithDays, persistNow = false) => {
+      setTrip((prev) => {
+        const next = updater(prev);
+        tripRef.current = next;
+        if (persistNow) {
+          void persistTrip(next).then((updated) => {
+            if (updated) setTrip(updated);
+          });
+        } else {
+          scheduleTripPersist(next);
+        }
+        return next;
+      });
+    },
+    [persistTrip, scheduleTripPersist, tripRef]
+  );
+
   const persist = useCallback(
     async (next: TripWithDays): Promise<TripWithDays | null> => {
-      setSaving(true);
-      try {
-        const res = await fetch(`/api/trips/${trip.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(tripPayloadForApi(next)),
-        });
-        if (!res.ok) return null;
-        const updated: TripWithDays = await res.json();
+      const updated = await persistTrip(next);
+      if (updated) {
         setTrip(updated);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-        router.refresh();
-        return updated;
-      } finally {
-        setSaving(false);
+        if (viewMode === "client") setClientPreviewTrip(updated);
       }
+      return updated;
     },
-    [trip.id, router]
+    [persistTrip, viewMode]
   );
 
   const resolveDayId = useCallback(
@@ -93,13 +125,12 @@ export function PlannerEditor({ initialTrip }: Props) {
     key: K,
     value: TripWithDays[K]
   ) => {
-    setTrip((prev) => ({ ...prev, [key]: value }));
+    applyTripUpdate((prev) => ({ ...prev, [key]: value }));
   };
 
   const onFieldBlur = () => {
-    setTrip((current) => {
-      void persist(current);
-      return current;
+    void flushTripPersist().then((updated) => {
+      if (updated) setTrip(updated);
     });
   };
 
@@ -109,6 +140,7 @@ export function PlannerEditor({ initialTrip }: Props) {
   ) => {
     setTrip((prev) => {
       const synced = syncTripDaysInState({ ...prev, [key]: value });
+      tripRef.current = synced;
       if (
         synced.arrival_date &&
         synced.departure_date &&
@@ -123,6 +155,7 @@ export function PlannerEditor({ initialTrip }: Props) {
   const onDatesCommit = () => {
     setTrip((current) => {
       const synced = syncTripDaysInState(current);
+      tripRef.current = synced;
       if (synced.arrival_date && synced.departure_date) {
         void persist(synced);
       }
@@ -178,23 +211,17 @@ export function PlannerEditor({ initialTrip }: Props) {
     }));
   };
 
-  const patchActivity = async (id: number, fields: Partial<Activity>) => {
-    if (id <= 0) return;
-    const res = await fetch(`/api/activities/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(fields),
-    });
-    if (!res.ok) return;
-    const updated: Activity = await res.json();
-    setTrip((prev) => ({
-      ...prev,
-      days: prev.days.map((d) => ({
-        ...d,
-        activities: d.activities.map((a) => (a.id === id ? updated : a)),
-      })),
-    }));
-  };
+  const patchActivity = useCallback(
+    (
+      id: number,
+      fields: Partial<Activity>,
+      options?: { immediate?: boolean }
+    ) => {
+      setTrip((prev) => patchActivityInTrip(prev, id, fields));
+      scheduleActivityPatch(id, fields, options?.immediate ?? false);
+    },
+    [scheduleActivityPatch]
+  );
 
   const removeActivity = async (id: number) => {
     if (id <= 0) return;
@@ -248,6 +275,7 @@ export function PlannerEditor({ initialTrip }: Props) {
     setPdfError(null);
     setPdfLoading(mode);
     try {
+      await flushAll();
       await downloadPlannerPdf(trip.id, mode);
     } catch (err) {
       setPdfError(
@@ -262,7 +290,7 @@ export function PlannerEditor({ initialTrip }: Props) {
     if (!clientId) {
       const next = { ...trip, client_id: null };
       setTrip(next);
-      persist(next);
+      void persist(next);
       return;
     }
     const client = clients.find((c) => c.id === Number(clientId));
@@ -273,17 +301,26 @@ export function PlannerEditor({ initialTrip }: Props) {
         client_name: client.full_name,
       };
       setTrip(next);
-      persist(next);
+      void persist(next);
     }
+  };
+
+  const switchToClientPreview = async () => {
+    setPdfError(null);
+    await flushAll();
+    setClientPreviewTrip(tripRef.current ?? trip);
+    setViewMode("client");
   };
 
   const statusLabel = pdfLoading
     ? `Generating ${pdfLoading === "concierge" ? "concierge" : "client"} PDF…`
-    : saving
+    : saveStatus === "saving"
       ? "Saving…"
-      : saved
+      : saveStatus === "saved"
         ? "Saved"
         : "";
+
+  const previewTrip = clientPreviewTrip ?? trip;
 
   return (
     <div className={`lux-studio${viewMode === "client" ? " lux-studio--client" : " lux-studio--concierge"}`}>
@@ -311,10 +348,7 @@ export function PlannerEditor({ initialTrip }: Props) {
             <button
               type="button"
               className={viewMode === "client" ? "is-active" : ""}
-              onClick={() => {
-                setPdfError(null);
-                setViewMode("client");
-              }}
+              onClick={() => void switchToClientPreview()}
             >
               Client preview
             </button>
@@ -363,10 +397,10 @@ export function PlannerEditor({ initialTrip }: Props) {
         />
       ) : (
         <div className="lux-client-preview">
-          <PlannerPreviewErrorBoundary key={`preview-${trip.id}-${trip.updated_at}`}>
+          <PlannerPreviewErrorBoundary key={`preview-${trip.id}-${previewTrip.updated_at}`}>
             <div className="lux-print-root lux-print-root--client">
               <PlannerPrintLayoutLock />
-              <PlannerLuxuryDocument trip={trip} variant="client" />
+              <PlannerLuxuryDocument trip={previewTrip} variant="client" />
             </div>
           </PlannerPreviewErrorBoundary>
         </div>

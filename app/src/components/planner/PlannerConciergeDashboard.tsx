@@ -35,7 +35,11 @@ interface DashboardProps {
     sectionId: string,
     type: ActivityType
   ) => void;
-  onPatchActivity: (id: number, fields: Partial<Activity>) => void;
+  onPatchActivity: (
+    id: number,
+    fields: Partial<Activity>,
+    options?: { immediate?: boolean }
+  ) => void;
   onRemoveActivity: (id: number) => void;
   onUpdateSections: (dayId: number, sections: DaySection[]) => void;
   onReorderActivities: (

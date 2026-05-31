@@ -1,6 +1,6 @@
 "use client";
 
-import { type DragEvent } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import type { CSSProperties } from "react";
 import type { Activity, ActivityType, DaySection, TripDay } from "@/lib/types";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/types";
@@ -9,6 +9,7 @@ import {
   getEditableSections,
 } from "@/lib/planner/day-sections";
 import { PLANNER_ACTIVITY_TYPES } from "@/lib/planner/planner-sheet-model";
+import { PLANNER_AUTOSAVE_MS } from "./use-planner-save";
 import {
   formatGridDayDate,
   formatGridDayName,
@@ -35,7 +36,11 @@ interface Props {
     sectionId: string,
     type: ActivityType
   ) => void;
-  onPatchActivity: (id: number, fields: Partial<Activity>) => void;
+  onPatchActivity: (
+    id: number,
+    fields: Partial<Activity>,
+    options?: { immediate?: boolean }
+  ) => void;
   onRemoveActivity: (id: number) => void;
   onUpdateSections: (dayId: number, sections: DaySection[]) => void;
   onReorderActivities: (
@@ -45,7 +50,7 @@ interface Props {
   ) => void;
 }
 
-function ActivityEditRow({
+const ActivityEditRow = memo(function ActivityEditRow({
   activity,
   onPatch,
   onRemove,
@@ -57,7 +62,7 @@ function ActivityEditRow({
   onDrop,
 }: {
   activity: Activity;
-  onPatch: (id: number, fields: Partial<Activity>) => void;
+  onPatch: Props["onPatchActivity"];
   onRemove: (id: number) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -66,6 +71,67 @@ function ActivityEditRow({
   onDragOver?: (e: DragEvent) => void;
   onDrop?: (e: DragEvent) => void;
 }) {
+  const [time, setTime] = useState(activity.time);
+  const [title, setTitle] = useState(activity.title);
+  const [details, setDetails] = useState(activity.details);
+  const [activityType, setActivityType] = useState(activity.activity_type);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftRef = useRef({ time, title, details, activity_type: activityType });
+
+  useEffect(() => {
+    setTime(activity.time);
+    setTitle(activity.title);
+    setDetails(activity.details);
+    setActivityType(activity.activity_type);
+    draftRef.current = {
+      time: activity.time,
+      title: activity.title,
+      details: activity.details,
+      activity_type: activity.activity_type,
+    };
+  }, [activity.id]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const flush = useCallback(
+    (immediate = false) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      const payload = draftRef.current;
+      onPatch(
+        activity.id,
+        {
+          time: payload.time,
+          title: payload.title,
+          details: payload.details,
+          activity_type: payload.activity_type,
+        },
+        { immediate }
+      );
+    },
+    [activity.id, onPatch]
+  );
+
+  const schedule = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => flush(false), PLANNER_AUTOSAVE_MS);
+  }, [flush]);
+
+  const updateDraft = (
+    patch: Partial<Pick<Activity, "time" | "title" | "details" | "activity_type">>,
+    immediate = false
+  ) => {
+    draftRef.current = { ...draftRef.current, ...patch };
+    if (immediate) flush(true);
+    else schedule();
+  };
+
   return (
     <div
       className="adm-activity"
@@ -80,17 +146,21 @@ function ActivityEditRow({
         </span>
         <input
           type="time"
-          value={activity.time}
-          onChange={(e) => onPatch(activity.id, { time: e.target.value })}
+          value={time}
+          onChange={(e) => {
+            setTime(e.target.value);
+            updateDraft({ time: e.target.value });
+          }}
+          onBlur={() => flush(true)}
           className="adm-input adm-input--time"
         />
         <select
-          value={activity.activity_type}
-          onChange={(e) =>
-            onPatch(activity.id, {
-              activity_type: e.target.value as ActivityType,
-            })
-          }
+          value={activityType}
+          onChange={(e) => {
+            const activity_type = e.target.value as ActivityType;
+            setActivityType(activity_type);
+            updateDraft({ activity_type }, true);
+          }}
           className="adm-input adm-input--type"
         >
           {PLANNER_ACTIVITY_TYPES.map((t) => (
@@ -127,22 +197,30 @@ function ActivityEditRow({
         </div>
       </div>
       <input
-        value={activity.title}
+        value={title}
         placeholder="Venue"
-        onChange={(e) => onPatch(activity.id, { title: e.target.value })}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          updateDraft({ title: e.target.value });
+        }}
+        onBlur={() => flush(true)}
         className="adm-input adm-input--venue"
       />
       <input
-        value={activity.details}
+        value={details}
         placeholder="Notes (optional)"
-        onChange={(e) => onPatch(activity.id, { details: e.target.value })}
+        onChange={(e) => {
+          setDetails(e.target.value);
+          updateDraft({ details: e.target.value });
+        }}
+        onBlur={() => flush(true)}
         className="adm-input adm-input--detail"
       />
     </div>
   );
-}
+});
 
-function DayEditor({
+const DayEditor = memo(function DayEditor({
   day,
   onAddActivity,
   onPatchActivity,
@@ -151,36 +229,87 @@ function DayEditor({
   onReorderActivities,
 }: {
   day: TripDay;
-} & Props) {
-  const sections = getEditableSections(day);
+  onAddActivity: Props["onAddActivity"];
+  onPatchActivity: Props["onPatchActivity"];
+  onRemoveActivity: Props["onRemoveActivity"];
+  onUpdateSections: Props["onUpdateSections"];
+  onReorderActivities: Props["onReorderActivities"];
+}) {
+  const [sections, setSections] = useState(() => getEditableSections(day));
+  const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sectionsRef = useRef(sections);
 
-  const saveSections = (next: DaySection[]) => {
-    onUpdateSections(
-      day.id,
-      next.map((s, i) => ({ ...s, sort_order: i }))
-    );
-  };
+  useEffect(() => {
+    const next = getEditableSections(day);
+    setSections(next);
+    sectionsRef.current = next;
+  }, [day.id, day.sections]);
+
+  useEffect(() => {
+    sectionsRef.current = sections;
+  }, [sections]);
+
+  useEffect(() => {
+    return () => {
+      if (labelTimerRef.current) clearTimeout(labelTimerRef.current);
+    };
+  }, []);
+
+  const commitSections = useCallback(
+    (next: DaySection[], immediate = false) => {
+      const normalized = next.map((s, i) => ({ ...s, sort_order: i }));
+      setSections(normalized);
+      sectionsRef.current = normalized;
+
+      if (labelTimerRef.current) {
+        clearTimeout(labelTimerRef.current);
+        labelTimerRef.current = null;
+      }
+
+      if (immediate) {
+        onUpdateSections(day.id, normalized);
+        return;
+      }
+
+      labelTimerRef.current = setTimeout(() => {
+        labelTimerRef.current = null;
+        onUpdateSections(day.id, sectionsRef.current);
+      }, PLANNER_AUTOSAVE_MS);
+    },
+    [day.id, onUpdateSections]
+  );
 
   const renameSection = (sectionId: string, label: string) => {
-    saveSections(
-      sections.map((s) => (s.id === sectionId ? { ...s, label } : s))
+    commitSections(
+      sectionsRef.current.map((s) =>
+        s.id === sectionId ? { ...s, label } : s
+      )
     );
   };
 
   const removeSection = (sectionId: string) => {
-    saveSections(sections.filter((s) => s.id !== sectionId));
+    commitSections(
+      sectionsRef.current.filter((s) => s.id !== sectionId),
+      true
+    );
   };
 
   const moveSection = (sectionId: string, dir: -1 | 1) => {
-    const idx = sections.findIndex((s) => s.id === sectionId);
+    const idx = sectionsRef.current.findIndex((s) => s.id === sectionId);
     if (idx < 0) return;
     const target = idx + dir;
-    if (target < 0 || target >= sections.length) return;
-    saveSections(reorderItems(sections, idx, target));
+    if (target < 0 || target >= sectionsRef.current.length) return;
+    commitSections(reorderItems(sectionsRef.current, idx, target), true);
   };
 
   const addSection = () => {
-    saveSections([...sections, createSection("New Section", sections.length)]);
+    commitSections(
+      [
+        ...sectionsRef.current,
+        createSection("New Section", sectionsRef.current.length),
+      ],
+      true
+    );
   };
 
   const handleSectionDrop = (targetId: string, e: DragEvent) => {
@@ -189,10 +318,10 @@ function DayEditor({
     if (!raw) return;
     const sourceId = raw;
     if (sourceId === targetId) return;
-    const from = sections.findIndex((s) => s.id === sourceId);
-    const to = sections.findIndex((s) => s.id === targetId);
+    const from = sectionsRef.current.findIndex((s) => s.id === sourceId);
+    const to = sectionsRef.current.findIndex((s) => s.id === targetId);
     if (from < 0 || to < 0) return;
-    saveSections(reorderItems(sections, from, to));
+    commitSections(reorderItems(sectionsRef.current, from, to), true);
   };
 
   const reorderActs = (sectionId: string, ordered: Activity[]) => {
@@ -259,6 +388,9 @@ function DayEditor({
                 <input
                   value={section.label}
                   onChange={(e) => renameSection(section.id, e.target.value)}
+                  onBlur={() =>
+                    commitSections(sectionsRef.current, true)
+                  }
                   className="adm-input adm-input--section"
                 />
                 <div className="adm-section-actions">
@@ -338,9 +470,9 @@ function DayEditor({
       </div>
     </div>
   );
-}
+});
 
-export function PlannerActivitiesEditor({
+export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
   days,
   onAddActivity,
   onPatchActivity,
@@ -368,7 +500,6 @@ export function PlannerActivitiesEditor({
         <DayEditor
           key={day.id}
           day={day}
-          days={days}
           onAddActivity={onAddActivity}
           onPatchActivity={onPatchActivity}
           onRemoveActivity={onRemoveActivity}
@@ -378,4 +509,4 @@ export function PlannerActivitiesEditor({
       ))}
     </div>
   );
-}
+});
