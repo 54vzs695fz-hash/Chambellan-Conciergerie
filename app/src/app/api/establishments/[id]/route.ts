@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   deleteEstablishment,
   getEstablishment,
+  toggleEstablishmentFavorite,
   updateEstablishment,
   validateEstablishmentInput,
 } from "@/lib/db/establishments";
@@ -59,6 +60,28 @@ export async function PUT(
       { error: "Could not update establishment" },
       { status: 500 }
     );
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const establishmentId = Number(id);
+    const body = await req.json().catch(() => ({}));
+    if (body?.action === "toggle_favorite") {
+      const establishment = await toggleEstablishmentFavorite(establishmentId);
+      if (!establishment) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      return NextResponse.json(establishment);
+    }
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  } catch (err) {
+    console.error("PATCH /api/establishments/[id] failed:", err);
+    return NextResponse.json({ error: "Could not update" }, { status: 500 });
   }
 }
 

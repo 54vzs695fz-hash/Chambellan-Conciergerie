@@ -83,6 +83,11 @@ export const OPTIONAL_SERVICE_FIELDS: OptionalServiceField[] = [
   },
 ];
 
+export const EVENT_TRIP_FIELDS: OptionalServiceField[] = [
+  { key: "event_booking", label: "Event", tripField: "event_booking" },
+  { key: "event_venue", label: "Event Venue", tripField: "event_venue" },
+];
+
 /** Client-facing arrangements only (no staff or internal reservation flags) */
 export const CLIENT_DOCUMENT_ARRANGEMENTS: OptionalServiceField[] = [
   { key: "hotel", label: "Hotel", tripField: "hotel" },

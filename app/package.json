@@ -1,6 +1,6 @@
 {
   "name": "chambellan-concierge",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -17,7 +17,8 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:import-sqlite": "node scripts/migrate-sqlite-to-prisma.mjs",
     "test:mobile": "node scripts/test-mobile-flows.mjs",
-    "test:website-import": "node scripts/test-website-import.mjs"
+    "test:website-import": "node scripts/test-website-import.mjs",
+    "seed:library-v3": "node scripts/seed-library-v3.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

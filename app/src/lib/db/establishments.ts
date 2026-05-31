@@ -25,6 +25,7 @@ function mapEstablishment(row: PrismaEstablishment): Establishment {
     price_level: row.price_level,
     tags: row.tags,
     internal_notes: row.internal_notes,
+    is_favorite: row.is_favorite,
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
   };
@@ -35,18 +36,22 @@ export interface EstablishmentSearchOptions {
   category?: string;
   city?: string;
   prioritizeCity?: string;
+  favoritesOnly?: boolean;
   limit?: number;
 }
 
 export async function listEstablishments(
   options: EstablishmentSearchOptions = {}
 ): Promise<Establishment[]> {
-  const { q, category, city, prioritizeCity, limit = 50 } = options;
+  const { q, category, city, prioritizeCity, favoritesOnly, limit = 50 } = options;
   const where: {
     name?: { contains: string; mode: "insensitive" };
     category?: string;
     city?: { equals: string; mode: "insensitive" };
+    is_favorite?: boolean;
   } = {};
+
+  if (favoritesOnly) where.is_favorite = true;
 
   if (category && isEstablishmentCategory(category)) {
     where.category = category;
@@ -62,7 +67,7 @@ export async function listEstablishments(
 
   const rows = await prisma.establishment.findMany({
     where,
-    orderBy: [{ city: "asc" }, { name: "asc" }],
+    orderBy: [{ is_favorite: "desc" }, { city: "asc" }, { name: "asc" }],
     take: Math.min(Math.max(limit, 1), 200),
   });
 
@@ -104,6 +109,18 @@ export async function updateEstablishment(
   } catch {
     return undefined;
   }
+}
+
+export async function toggleEstablishmentFavorite(
+  id: number
+): Promise<Establishment | undefined> {
+  const current = await prisma.establishment.findUnique({ where: { id } });
+  if (!current) return undefined;
+  const row = await prisma.establishment.update({
+    where: { id },
+    data: { is_favorite: !current.is_favorite },
+  });
+  return mapEstablishment(row);
 }
 
 export async function deleteEstablishment(id: number): Promise<boolean> {

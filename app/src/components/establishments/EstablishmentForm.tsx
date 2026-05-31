@@ -245,6 +245,15 @@ export function EstablishmentForm({
         />
       </div>
 
+      <label className="flex items-center gap-2 min-h-[44px] cursor-pointer">
+        <input
+          type="checkbox"
+          checked={form.is_favorite}
+          onChange={(e) => set("is_favorite", e.target.checked)}
+        />
+        <span className="text-sm">Favorite</span>
+      </label>
+
       <div className="flex flex-wrap gap-3 pt-2">
         <button type="submit" className="btn-primary min-h-[44px]" disabled={saving}>
           {saving ? "Saving…" : establishmentId ? "Save changes" : "Create establishment"}

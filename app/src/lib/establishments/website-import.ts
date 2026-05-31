@@ -1,11 +1,11 @@
 import type { EstablishmentCategory } from "@/lib/establishments/categories";
+import type { EventCategory } from "@/lib/events/categories";
 import {
   establishmentDedupKey,
   normalizeDestination,
   type LibraryDestination,
 } from "@/lib/establishments/destinations";
 import type { EstablishmentInput } from "@/lib/types";
-import { getExistingEstablishmentKeys } from "@/lib/db/establishments";
 
 const WEBSITE_BASE = "https://www.chambellan-conciergerie.fr";
 const ANNONCES_URL = `${WEBSITE_BASE}/wp-json/wp/v2/annonces?per_page=100&status=publish`;
@@ -25,6 +25,8 @@ export interface WebsiteImportRow {
   name: string;
   city: LibraryDestination;
   category: EstablishmentCategory;
+  event_category?: EventCategory;
+  import_target: "establishment" | "event";
   website_category: string;
   website_city_slug: string;
   notes: string;
@@ -51,6 +53,37 @@ function slugFromClassList(
 ): string | undefined {
   const match = classList.find((c) => c.startsWith(prefix));
   return match?.slice(prefix.length);
+}
+
+function inferEventCategory(name: string): EventCategory | null {
+  const lower = name.toLowerCase();
+  if (/grand prix|formula\s*1|\bf1\b|gp monaco|formula e/.test(lower)) {
+    return "grand_prix";
+  }
+  if (/film festival|cannes festival/.test(lower)) return "festival";
+  if (/yacht show|boat show/.test(lower)) return "yacht_event";
+  if (/white party|night event|amber lounge|house 44|turbo monaco/.test(lower)) {
+    return "night_event";
+  }
+  if (/paddock|hospitality suite|vip experience/.test(lower)) {
+    return "hospitality";
+  }
+  if (/art basel/.test(lower)) return "festival";
+  return null;
+}
+
+function detectImportTarget(
+  name: string,
+  websiteCategory: string
+): { import_target: "establishment" | "event"; event_category?: EventCategory } {
+  const eventCategory = inferEventCategory(name);
+  if (eventCategory) {
+    return { import_target: "event", event_category: eventCategory };
+  }
+  if (websiteCategory === "event" || websiteCategory === "events") {
+    return { import_target: "event", event_category: "other" };
+  }
+  return { import_target: "establishment" };
 }
 
 function mapWebsiteCategory(
@@ -121,6 +154,7 @@ function toPayload(
     price_level: "",
     tags: row.tags,
     internal_notes: row.internal_notes,
+    is_favorite: false,
   };
 }
 
@@ -147,6 +181,10 @@ export async function fetchWebsiteEstablishments(): Promise<
     const name = decodeHtml(item.title.rendered);
     const category = mapWebsiteCategory(websiteCategory, name);
     const city = mapWebsiteCity(websiteCitySlug, websiteCitySlug);
+    const { import_target, event_category } = detectImportTarget(
+      name,
+      websiteCategory
+    );
     const tags = [
       websiteCategory && websiteCategory !== category.replace("_", "-")
         ? `website:${websiteCategory}`
@@ -163,6 +201,8 @@ export async function fetchWebsiteEstablishments(): Promise<
       name,
       city,
       category,
+      event_category,
+      import_target,
       website_category: websiteCategory,
       website_city_slug: websiteCitySlug,
       notes: `Curated selection from Chambellan Conciergerie website.`,
@@ -180,14 +220,17 @@ export async function fetchWebsiteEstablishments(): Promise<
 
 export function buildImportPreview(
   websiteRows: Omit<WebsiteImportRow, "status" | "selected">[],
-  existingKeys: Set<string>
+  existingEstablishmentKeys: Set<string>,
+  existingEventKeys: Set<string> = new Set()
 ): WebsiteImportRow[] {
   const seenBatch = new Set<string>();
   const rows: WebsiteImportRow[] = [];
 
   for (const row of websiteRows) {
+    const keySet =
+      row.import_target === "event" ? existingEventKeys : existingEstablishmentKeys;
     let status: WebsiteImportRow["status"] = "new";
-    if (existingKeys.has(row.dedup_key)) {
+    if (keySet.has(row.dedup_key)) {
       status = "exists";
     } else if (seenBatch.has(row.dedup_key)) {
       status = "duplicate_batch";

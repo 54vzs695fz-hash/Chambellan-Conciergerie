@@ -3,6 +3,7 @@ export type ActivityType =
   | "beach_club"
   | "club"
   | "activity"
+  | "event"
   | "transfer"
   | "note";
 
@@ -57,6 +58,8 @@ export interface Trip {
   jet: string;
   restaurant_reservations: string;
   club_reservations: string;
+  event_booking: string;
+  event_venue: string;
   host_name: string;
   host_phone: string;
   host_contact: string;
@@ -106,6 +109,7 @@ export interface Establishment {
   price_level: string;
   tags: string;
   internal_notes: string;
+  is_favorite: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -113,6 +117,53 @@ export interface Establishment {
 export type EstablishmentInput = Omit<
   Establishment,
   "id" | "created_at" | "updated_at"
+>;
+
+export interface ConciergeEventRecord {
+  id: number;
+  name: string;
+  category: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  contact_name: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  notes: string;
+  internal_notes: string;
+  is_favorite: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ConciergeEventInput = Omit<
+  ConciergeEventRecord,
+  "id" | "created_at" | "updated_at"
+>;
+
+export interface EventVenueRecord {
+  id: number;
+  event_id: number | null;
+  name: string;
+  destination: string;
+  contact_name: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  notes: string;
+  internal_notes: string;
+  is_favorite: boolean;
+  created_at: string;
+  updated_at: string;
+  event_name?: string;
+}
+
+export type EventVenueInput = Omit<
+  EventVenueRecord,
+  "id" | "created_at" | "updated_at" | "event_name"
 >;
 
 export const EMPTY_ESTABLISHMENT: EstablishmentInput = {
@@ -130,6 +181,37 @@ export const EMPTY_ESTABLISHMENT: EstablishmentInput = {
   price_level: "",
   tags: "",
   internal_notes: "",
+  is_favorite: false,
+};
+
+export const EMPTY_EVENT: ConciergeEventInput = {
+  name: "",
+  category: "grand_prix",
+  destination: "",
+  start_date: "",
+  end_date: "",
+  contact_name: "",
+  phone: "",
+  whatsapp: "",
+  email: "",
+  website: "",
+  notes: "",
+  internal_notes: "",
+  is_favorite: false,
+};
+
+export const EMPTY_EVENT_VENUE: EventVenueInput = {
+  event_id: null,
+  name: "",
+  destination: "",
+  contact_name: "",
+  phone: "",
+  whatsapp: "",
+  email: "",
+  website: "",
+  notes: "",
+  internal_notes: "",
+  is_favorite: false,
 };
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
@@ -137,6 +219,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   beach_club: "Beach Club",
   club: "Club",
   activity: "Activity",
+  event: "Event",
   transfer: "Transfer",
   note: "Notes",
 };
@@ -176,6 +259,8 @@ export const EMPTY_TRIP_HEADER: Omit<
   jet: "",
   restaurant_reservations: "",
   club_reservations: "",
+  event_booking: "",
+  event_venue: "",
   host_name: "Matthieu Dubourg",
   host_phone: "+1 332 733 9543",
   host_contact: "",

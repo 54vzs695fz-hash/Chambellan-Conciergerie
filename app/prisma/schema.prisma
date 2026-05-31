@@ -50,6 +50,8 @@ model Trip {
   host_phone               String    @default("+1 332 733 9543")
   host_contact             String    @default("")
   tailored_for             String    @default("")
+  event_booking            String    @default("")
+  event_venue              String    @default("")
   created_at               DateTime  @default(now())
   updated_at               DateTime  @updatedAt
   client                   Client?   @relation(fields: [client_id], references: [id], onDelete: SetNull)
@@ -104,6 +106,7 @@ model Establishment {
   price_level    String   @default("")
   tags           String   @default("")
   internal_notes String   @default("")
+  is_favorite    Boolean  @default(false)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -111,4 +114,52 @@ model Establishment {
   @@index([city], map: "idx_establishments_city")
   @@index([name], map: "idx_establishments_name")
   @@map("establishments")
+}
+
+model ConciergeEvent {
+  id             Int          @id @default(autoincrement())
+  name           String
+  category       String
+  destination    String
+  start_date     String       @default("")
+  end_date       String       @default("")
+  contact_name   String       @default("")
+  phone          String       @default("")
+  whatsapp       String       @default("")
+  email          String       @default("")
+  website        String       @default("")
+  notes          String       @default("")
+  internal_notes String       @default("")
+  is_favorite    Boolean      @default(false)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  venues         EventVenue[]
+
+  @@index([category], map: "idx_events_category")
+  @@index([destination], map: "idx_events_destination")
+  @@index([name], map: "idx_events_name")
+  @@map("concierge_events")
+}
+
+model EventVenue {
+  id             Int             @id @default(autoincrement())
+  event_id       Int?
+  name           String
+  destination    String
+  contact_name   String          @default("")
+  phone          String          @default("")
+  whatsapp       String          @default("")
+  email          String          @default("")
+  website        String          @default("")
+  notes          String          @default("")
+  internal_notes String          @default("")
+  is_favorite    Boolean         @default(false)
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @updatedAt
+  event          ConciergeEvent? @relation(fields: [event_id], references: [id], onDelete: SetNull)
+
+  @@index([event_id], map: "idx_event_venues_event")
+  @@index([destination], map: "idx_event_venues_destination")
+  @@index([name], map: "idx_event_venues_name")
+  @@map("event_venues")
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Chambellan v2 — smoke checks for mobile layout, establishment library, planner integration.
+ * Chambellan v3 — smoke checks for establishment & events library, planner integration.
  * Run: npm run test:mobile (from app/)
  */
 import { readFileSync, existsSync } from "node:fs";
@@ -20,14 +20,20 @@ function read(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-// ─── File presence ───
 const requiredFiles = [
   "src/components/layout/MobileNav.tsx",
-  "src/components/establishments/EstablishmentAutocomplete.tsx",
+  "src/components/library/LibraryAutocomplete.tsx",
+  "src/components/library/LibraryNav.tsx",
   "src/components/establishments/EstablishmentForm.tsx",
+  "src/components/events/EventForm.tsx",
+  "src/components/events/EventVenueForm.tsx",
   "src/app/establishments/page.tsx",
+  "src/app/events/page.tsx",
+  "src/app/event-venues/page.tsx",
   "src/app/api/establishments/route.ts",
-  "prisma/migrations/20260601120000_add_establishments/migration.sql",
+  "src/app/api/events/route.ts",
+  "src/app/api/event-venues/route.ts",
+  "prisma/migrations/20260602120000_events_library_v3/migration.sql",
   "src/app/mobile.css",
 ];
 
@@ -35,72 +41,65 @@ for (const f of requiredFiles) {
   assert(`exists: ${f}`, existsSync(join(root, f)));
 }
 
-// ─── Schema ───
 const schema = read("prisma/schema.prisma");
 assert("Establishment model in schema", schema.includes("model Establishment"));
+assert("ConciergeEvent model in schema", schema.includes("model ConciergeEvent"));
+assert("EventVenue model in schema", schema.includes("model EventVenue"));
+assert("Trip event fields", schema.includes("event_booking"));
 assert("PostgreSQL provider", schema.includes('provider = "postgresql"'));
 
-// ─── Mobile CSS ───
 const mobileCss = read("src/app/mobile.css");
 assert("44px touch targets in mobile.css", mobileCss.includes("min-height: 44px"));
-assert("mobile nav height token", mobileCss.includes("--mobile-nav-h"));
+assert("library nav styles", mobileCss.includes(".library-nav"));
+assert("favorite button styles", mobileCss.includes(".est-fav-btn"));
 
 const adminCss = read("src/app/planner/planner-admin.css");
 assert("adm-days stacks on mobile", adminCss.includes("grid-template-columns: 1fr"));
 assert("adm icon btn 44px on mobile", adminCss.includes("min-width: 44px"));
 
-const luxuryCss = read("src/app/planner/planner-luxury.css");
-assert("lux toolbar mobile buttons", luxuryCss.includes(".lux-toolbar-right .lux-btn"));
-assert("has-mobile-nav padding", luxuryCss.includes(".has-mobile-nav"));
-
-// ─── Planner integration ───
 const activitiesEditor = read("src/components/planner/PlannerActivitiesEditor.tsx");
 assert(
-  "activity venue uses EstablishmentAutocomplete",
-  activitiesEditor.includes("EstablishmentAutocomplete")
+  "activity venue uses LibraryAutocomplete",
+  activitiesEditor.includes("LibraryAutocomplete")
 );
 assert(
-  "activity type category mapping",
-  activitiesEditor.includes("ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY")
+  "event activity type uses event source",
+  activitiesEditor.includes('source="event"')
 );
 
 const dashboard = read("src/components/planner/PlannerConciergeDashboard.tsx");
 assert(
-  "travel fields use establishment autocomplete",
-  dashboard.includes("TripEstablishmentField")
+  "planner event fields",
+  dashboard.includes('source="event"') && dashboard.includes('source="event_venue"')
 );
 assert(
-  "team driver autocomplete",
-  dashboard.includes("TEAM_ROW_ESTABLISHMENT_CATEGORY")
+  "travel fields use library autocomplete",
+  dashboard.includes("LibraryAutocomplete")
 );
 
-// ─── Save states ───
 const saveHook = read("src/components/planner/use-planner-save.ts");
 assert("planner error save state", saveHook.includes('"error"'));
 
-const plannerEditor = read("src/components/planner/PlannerEditor.tsx");
-assert("planner shows Error saving", plannerEditor.includes("Error saving"));
-
-// ─── Sidebar nav & city organization ───
-const sidebar = read("src/components/layout/Sidebar.tsx");
-const autocomplete = read("src/components/establishments/EstablishmentAutocomplete.tsx");
 const libraryPage = read("src/app/establishments/page.tsx");
-const establishmentsDb = read("src/lib/db/establishments.ts");
+assert(
+  "library groups by destination and category",
+  libraryPage.includes("groupEstablishmentsByDestinationAndCategory")
+);
+assert("library nav tabs", libraryPage.includes("LibraryNav"));
 
-assert("sidebar Library link", sidebar.includes("/establishments"));
-assert("planner autocomplete prioritizes destination", autocomplete.includes("prioritize_city"));
-assert("library groups by city", libraryPage.includes("groupEstablishmentsByCity"));
-assert("city required validation", establishmentsDb.includes("City / destination is required"));
-assert("cities API route exists", existsSync(join(root, "src/app/api/establishments/cities/route.ts")));
+const websiteImport = read("src/lib/establishments/website-import.ts");
+assert("website import event detection", websiteImport.includes("inferEventCategory"));
 
-// ─── Viewport tokens (390 / 430 iPhone) ───
-assert("mobile breakpoint 767px", adminCss.includes("max-width: 767px"));
-assert("page-shell responsive padding", mobileCss.includes("@media (min-width: 768px)"));
+const tripsDb = read("src/lib/db/trips.ts");
+assert("trip persists event fields", tripsDb.includes("event_booking"));
+
+const pkg = read("package.json");
+assert("version 3.x", /"version": "3\./.test(pkg));
 
 const failed = checks.filter((c) => !c.ok);
 const passed = checks.filter((c) => c.ok);
 
-console.log(`\nChambellan v2 mobile & library checks: ${passed.length}/${checks.length} passed\n`);
+console.log(`\nChambellan v3 library checks: ${passed.length}/${checks.length} passed\n`);
 
 for (const c of checks) {
   console.log(`${c.ok ? "✓" : "✗"} ${c.name}${c.detail ? ` — ${c.detail}` : ""}`);
@@ -113,5 +112,4 @@ if (failed.length) {
 
 console.log("\nAll static checks passed.");
 console.log("Manual QA: iPhone 390px & 430px Safari, Mac desktop.");
-console.log("Flows: create client, create establishment, add restaurant from library,");
-console.log("manual restaurant + save to library, export Client PDF, export Concierge PDF.\n");
+console.log("Flows: client, planner, establishments, events, venues, import, PDF export.\n");

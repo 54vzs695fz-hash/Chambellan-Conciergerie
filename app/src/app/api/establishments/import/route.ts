@@ -3,8 +3,10 @@ import {
   bulkImportEstablishments,
   validateEstablishmentInput,
 } from "@/lib/db/establishments";
+import { bulkImportEvents, validateEventInput } from "@/lib/db/events";
 import type { EstablishmentInput } from "@/lib/types";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
+import { isEventCategory } from "@/lib/events/categories";
 import { normalizeDestination } from "@/lib/establishments/destinations";
 
 export const runtime = "nodejs";
@@ -14,13 +16,15 @@ interface ImportItemBody {
   name: string;
   city: string;
   category: string;
+  import_target?: "establishment" | "event";
+  event_category?: string;
   website_url?: string;
   notes?: string;
   tags?: string;
   internal_notes?: string;
 }
 
-function sanitizeItem(raw: ImportItemBody): EstablishmentInput | null {
+function sanitizeEstablishment(raw: ImportItemBody): EstablishmentInput | null {
   if (!raw?.name?.trim() || !raw?.city?.trim() || !raw?.category?.trim()) {
     return null;
   }
@@ -41,9 +45,34 @@ function sanitizeItem(raw: ImportItemBody): EstablishmentInput | null {
     price_level: "",
     tags: raw.tags?.trim() ?? "",
     internal_notes: raw.internal_notes?.trim() ?? "",
+    is_favorite: false,
   };
 
   return validateEstablishmentInput(item) ? null : item;
+}
+
+function sanitizeEvent(raw: ImportItemBody) {
+  if (!raw?.name?.trim() || !raw?.city?.trim()) return null;
+  const category = raw.event_category?.trim() || "other";
+  if (!isEventCategory(category)) return null;
+
+  const item = {
+    name: raw.name.trim(),
+    destination: normalizeDestination(raw.city),
+    category,
+    start_date: "",
+    end_date: "",
+    contact_name: "",
+    phone: "",
+    whatsapp: "",
+    email: "",
+    website: raw.website_url?.trim() ?? "",
+    notes: raw.notes?.trim() ?? "",
+    internal_notes: raw.internal_notes?.trim() ?? "",
+    is_favorite: false,
+  };
+
+  return validateEventInput(item) ? null : item;
 }
 
 export async function POST(req: NextRequest) {
@@ -52,24 +81,47 @@ export async function POST(req: NextRequest) {
     const items = Array.isArray(body?.items) ? body.items : [];
     if (!items.length) {
       return NextResponse.json(
-        { error: "No establishments selected for import" },
+        { error: "No items selected for import" },
         { status: 400 }
       );
     }
 
-    const sanitized = items
-      .map((item: ImportItemBody) => sanitizeItem(item))
-      .filter(Boolean) as EstablishmentInput[];
+    const establishments: EstablishmentInput[] = [];
+    const events: NonNullable<ReturnType<typeof sanitizeEvent>>[] = [];
 
-    if (!sanitized.length) {
+    for (const item of items as ImportItemBody[]) {
+      if (item.import_target === "event") {
+        const event = sanitizeEvent(item);
+        if (event) events.push(event);
+      } else {
+        const est = sanitizeEstablishment(item);
+        if (est) establishments.push(est);
+      }
+    }
+
+    if (!establishments.length && !events.length) {
       return NextResponse.json(
-        { error: "No valid establishments to import" },
+        { error: "No valid items to import" },
         { status: 400 }
       );
     }
 
-    const result = await bulkImportEstablishments(sanitized);
-    return NextResponse.json(result);
+    const [estResult, eventResult] = await Promise.all([
+      establishments.length
+        ? bulkImportEstablishments(establishments)
+        : Promise.resolve({ created: 0, skipped: 0, errors: [] as string[] }),
+      events.length
+        ? bulkImportEvents(events)
+        : Promise.resolve({ created: 0, skipped: 0, errors: [] as string[] }),
+    ]);
+
+    return NextResponse.json({
+      created: estResult.created + eventResult.created,
+      skipped: estResult.skipped + eventResult.skipped,
+      establishments_created: estResult.created,
+      events_created: eventResult.created,
+      errors: [...estResult.errors, ...eventResult.errors],
+    });
   } catch (err) {
     console.error("POST /api/establishments/import failed:", err);
     return NextResponse.json(

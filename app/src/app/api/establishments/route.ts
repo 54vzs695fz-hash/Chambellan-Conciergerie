@@ -15,9 +15,10 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") ?? undefined;
     const city = searchParams.get("city") ?? undefined;
     const prioritizeCity = searchParams.get("prioritize_city") ?? undefined;
+    const favoritesOnly = searchParams.get("favorites") === "1";
     const limit = Number(searchParams.get("limit") ?? "100");
     return NextResponse.json(
-      await listEstablishments({ q, category, city, prioritizeCity, limit })
+      await listEstablishments({ q, category, city, prioritizeCity, favoritesOnly, limit })
     );
   } catch (err) {
     console.error("GET /api/establishments failed:", err);

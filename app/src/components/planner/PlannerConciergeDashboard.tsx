@@ -7,6 +7,7 @@ import type {
   ActivityType,
   Client,
   DaySection,
+  Establishment,
   TripWithDays,
 } from "@/lib/types";
 import {
@@ -21,7 +22,7 @@ import {
   type EstablishmentCategory,
 } from "@/lib/establishments/categories";
 import { teamAutofillFromEstablishment } from "@/lib/establishments/autofill";
-import { EstablishmentAutocomplete } from "@/components/establishments/EstablishmentAutocomplete";
+import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
 
 interface DashboardProps {
@@ -99,9 +100,10 @@ function TripEstablishmentField({
 }) {
   return (
     <Field label={label}>
-      <EstablishmentAutocomplete
+      <LibraryAutocomplete
+        source="establishment"
         value={value}
-        category={category}
+        establishmentCategory={category}
         destination={destination}
         placeholder={`${label} — search or type freely`}
         onChange={(next) => onChange(tripField, next)}
@@ -228,6 +230,32 @@ export function PlannerConciergeDashboard({
           </div>
         </section>
 
+        <section className="adm-panel">
+          <h2 className="adm-panel-title">Events</h2>
+          <div className="adm-grid adm-grid--2">
+            <Field label="Event">
+              <LibraryAutocomplete
+                source="event"
+                value={String(trip.event_booking ?? "")}
+                destination={trip.destination}
+                placeholder="Event — search or type freely"
+                onChange={(next) => onFieldChange("event_booking", next)}
+                onBlur={onFieldBlur}
+              />
+            </Field>
+            <Field label="Event Venue">
+              <LibraryAutocomplete
+                source="event_venue"
+                value={String(trip.event_venue ?? "")}
+                destination={trip.destination}
+                placeholder="Event venue — search or type freely"
+                onChange={(next) => onFieldChange("event_venue", next)}
+                onBlur={onFieldBlur}
+              />
+            </Field>
+          </div>
+        </section>
+
         <section className="adm-panel adm-panel--wide">
           <h2 className="adm-panel-title">Activities</h2>
           <PlannerActivitiesEditor
@@ -273,20 +301,34 @@ export function PlannerConciergeDashboard({
                 <div key={row.key} className="adm-team-card">
                   <span className="adm-team-role">{row.label}</span>
                   {category ? (
-                    <EstablishmentAutocomplete
+                    <LibraryAutocomplete
+                      source="establishment"
                       value={String(trip[row.nameField] ?? "")}
-                      category={category}
+                      establishmentCategory={category}
                       destination={trip.destination}
                       placeholder="Name / Contact — search or type freely"
                       onChange={(next) => onFieldChange(row.nameField, next)}
                       onBlur={onFieldBlur}
-                      onEstablishmentSelect={(est) => {
-                        const autofill = teamAutofillFromEstablishment(est);
-                        onFieldChange(row.nameField, autofill.name);
-                        if (row.phoneField && autofill.phone) {
-                          onFieldChange(row.phoneField, autofill.phone);
-                        }
-                        onFieldBlur();
+                      onSelect={({ name }) => {
+                        void (async () => {
+                          const params = new URLSearchParams({
+                            q: name,
+                            category,
+                            limit: "5",
+                          });
+                          const res = await fetch(`/api/establishments?${params}`);
+                          const data = (await res.json()) as Establishment[];
+                          const est =
+                            Array.isArray(data) &&
+                            (data.find((row) => row.name === name) ?? data[0]);
+                          if (!est) return;
+                          const autofill = teamAutofillFromEstablishment(est);
+                          onFieldChange(row.nameField, autofill.name);
+                          if (row.phoneField && autofill.phone) {
+                            onFieldChange(row.phoneField, autofill.phone);
+                          }
+                          onFieldBlur();
+                        })();
                       }}
                     />
                   ) : (

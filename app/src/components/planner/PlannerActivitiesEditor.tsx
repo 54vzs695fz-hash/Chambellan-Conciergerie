@@ -2,13 +2,13 @@
 
 import { memo, useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import type { CSSProperties } from "react";
-import type { Activity, ActivityType, DaySection, TripDay } from "@/lib/types";
+import type { Activity, ActivityType, DaySection, Establishment, TripDay } from "@/lib/types";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/types";
 import {
   ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY,
 } from "@/lib/establishments/categories";
 import { formatEstablishmentDetails } from "@/lib/establishments/autofill";
-import { EstablishmentAutocomplete } from "@/components/establishments/EstablishmentAutocomplete";
+import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import {
   createSection,
   getEditableSections,
@@ -206,10 +206,24 @@ const ActivityEditRow = memo(function ActivityEditRow({
           </button>
         </div>
       </div>
-      {category ? (
-        <EstablishmentAutocomplete
+      {activityType === "event" ? (
+        <LibraryAutocomplete
+          source="event"
           value={title}
-          category={category}
+          destination={destination}
+          placeholder="Event — search library or type freely"
+          className="adm-input adm-input--venue"
+          onChange={(next) => {
+            setTitle(next);
+            updateDraft({ title: next });
+          }}
+          onBlur={() => flush(true)}
+        />
+      ) : category ? (
+        <LibraryAutocomplete
+          source="establishment"
+          value={title}
+          establishmentCategory={category}
           destination={destination}
           placeholder="Venue — search library or type freely"
           className="adm-input adm-input--venue"
@@ -218,19 +232,32 @@ const ActivityEditRow = memo(function ActivityEditRow({
             updateDraft({ title: next });
           }}
           onBlur={() => flush(true)}
-          onEstablishmentSelect={(est) => {
-            const autofillDetails = formatEstablishmentDetails(est);
-            const nextDetails = details.trim() ? details : autofillDetails;
-            setTitle(est.name);
-            if (!details.trim() && autofillDetails) {
-              setDetails(autofillDetails);
-            }
-            draftRef.current = {
-              ...draftRef.current,
-              title: est.name,
-              details: nextDetails,
-            };
-            flush(true);
+          onSelect={({ name }) => {
+            void (async () => {
+              const params = new URLSearchParams({
+                q: name,
+                category,
+                limit: "5",
+              });
+              const res = await fetch(`/api/establishments?${params}`);
+              const data = (await res.json()) as Establishment[];
+              const est =
+                Array.isArray(data) &&
+                (data.find((row) => row.name === name) ?? data[0]);
+              if (!est) return;
+              const autofillDetails = formatEstablishmentDetails(est);
+              const nextDetails = details.trim() ? details : autofillDetails;
+              setTitle(est.name);
+              if (!details.trim() && autofillDetails) {
+                setDetails(autofillDetails);
+              }
+              draftRef.current = {
+                ...draftRef.current,
+                title: est.name,
+                details: nextDetails,
+              };
+              flush(true);
+            })();
           }}
         />
       ) : (

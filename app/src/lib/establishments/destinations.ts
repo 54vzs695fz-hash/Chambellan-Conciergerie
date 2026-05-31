@@ -4,8 +4,10 @@ export const LIBRARY_DESTINATIONS = [
   "Cannes",
   "Ibiza",
   "Courchevel",
-  "Dubai",
   "New York",
+  "Dubai",
+  "Saint Barth",
+  "Mykonos",
   "Other",
 ] as const;
 
@@ -23,6 +25,10 @@ const WEBSITE_CITY_MAP: Record<string, LibraryDestination> = {
   "new york": "New York",
   nyc: "New York",
   ibiza: "Ibiza",
+  "saint barth": "Saint Barth",
+  "saint-barth": "Saint Barth",
+  "st barth": "Saint Barth",
+  mykonos: "Mykonos",
 };
 
 export function normalizeDestination(value: string): LibraryDestination {

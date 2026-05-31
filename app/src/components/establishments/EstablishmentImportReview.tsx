@@ -8,6 +8,11 @@ import {
   type EstablishmentCategory,
 } from "@/lib/establishments/categories";
 import {
+  EVENT_CATEGORIES,
+  EVENT_CATEGORY_LABELS,
+  type EventCategory,
+} from "@/lib/events/categories";
+import {
   LIBRARY_DESTINATIONS,
   type LibraryDestination,
 } from "@/lib/establishments/destinations";
@@ -45,6 +50,8 @@ export function EstablishmentImportReview() {
   const [result, setResult] = useState<{
     created: number;
     skipped: number;
+    establishments_created?: number;
+    events_created?: number;
     errors: string[];
   } | null>(null);
 
@@ -119,6 +126,8 @@ export function EstablishmentImportReview() {
             name: row.name,
             city: row.city,
             category: row.category,
+            import_target: row.import_target,
+            event_category: row.event_category,
             website_url: row.website_url,
             notes: row.notes,
             tags: row.tags,
@@ -186,6 +195,12 @@ export function EstablishmentImportReview() {
           <p className="text-gold font-medium mb-1">Import complete</p>
           <p>
             {result.created} created · {result.skipped} skipped (duplicates)
+            {typeof result.events_created === "number" ? (
+              <> · {result.events_created} events</>
+            ) : null}
+            {typeof result.establishments_created === "number" ? (
+              <> · {result.establishments_created} establishments</>
+            ) : null}
           </p>
           {result.errors.length ? (
             <ul className="mt-2 text-red-700 list-disc pl-5">
@@ -275,6 +290,9 @@ export function EstablishmentImportReview() {
                     Destination
                   </th>
                   <th scope="col" className="est-import-th">
+                    Type
+                  </th>
+                  <th scope="col" className="est-import-th">
                     Category
                   </th>
                   <th scope="col" className="est-import-th">
@@ -324,22 +342,46 @@ export function EstablishmentImportReview() {
                       </select>
                     </td>
                     <td className="est-import-td">
-                      <select
-                        className="field-input est-import-select"
-                        value={row.category}
-                        onChange={(e) =>
-                          updateRow(row.website_id, {
-                            category: e.target.value as EstablishmentCategory,
-                          })
-                        }
-                        disabled={!row.selected}
-                      >
-                        {ESTABLISHMENT_CATEGORIES.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {ESTABLISHMENT_CATEGORY_LABELS[cat]}
-                          </option>
-                        ))}
-                      </select>
+                      <span className="text-xs uppercase tracking-wider text-muted">
+                        {row.import_target === "event" ? "Event" : "Establishment"}
+                      </span>
+                    </td>
+                    <td className="est-import-td">
+                      {row.import_target === "event" ? (
+                        <select
+                          className="field-input est-import-select"
+                          value={row.event_category ?? "other"}
+                          onChange={(e) =>
+                            updateRow(row.website_id, {
+                              event_category: e.target.value as EventCategory,
+                            })
+                          }
+                          disabled={!row.selected}
+                        >
+                          {EVENT_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {EVENT_CATEGORY_LABELS[cat]}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <select
+                          className="field-input est-import-select"
+                          value={row.category}
+                          onChange={(e) =>
+                            updateRow(row.website_id, {
+                              category: e.target.value as EstablishmentCategory,
+                            })
+                          }
+                          disabled={!row.selected}
+                        >
+                          {ESTABLISHMENT_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {ESTABLISHMENT_CATEGORY_LABELS[cat]}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </td>
                     <td className="est-import-td">
                       <span

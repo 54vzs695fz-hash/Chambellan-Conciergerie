@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getExistingEstablishmentKeys } from "@/lib/db/establishments";
+import { getExistingEventKeys } from "@/lib/db/events";
 import {
   buildImportPreview,
   fetchWebsiteEstablishments,
@@ -10,11 +11,17 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const [websiteRows, existingKeys] = await Promise.all([
-      fetchWebsiteEstablishments(),
-      getExistingEstablishmentKeys(),
-    ]);
-    const rows = buildImportPreview(websiteRows, existingKeys);
+    const [websiteRows, existingEstablishmentKeys, existingEventKeys] =
+      await Promise.all([
+        fetchWebsiteEstablishments(),
+        getExistingEstablishmentKeys(),
+        getExistingEventKeys(),
+      ]);
+    const rows = buildImportPreview(
+      websiteRows,
+      existingEstablishmentKeys,
+      existingEventKeys
+    );
     const summary = {
       total: rows.length,
       new: rows.filter((r) => r.status === "new").length,
