@@ -60,6 +60,7 @@ export interface Trip {
   host_name: string;
   host_phone: string;
   host_contact: string;
+  tailored_for: string;
   created_at: string;
   updated_at: string;
 }
@@ -136,4 +137,5 @@ export const EMPTY_TRIP_HEADER: Omit<
   host_name: "Matthieu Dubourg",
   host_phone: "+1 332 733 9543",
   host_contact: "",
+  tailored_for: "",
 };

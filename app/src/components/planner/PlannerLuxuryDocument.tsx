@@ -378,9 +378,7 @@ export function PlannerLuxuryDocument({
   variant = "client",
 }: PlannerLuxuryDocumentProps) {
   const isClientItinerary = variant === "client";
-  const clientContacts = isClientItinerary
-    ? getClientItineraryContacts(trip)
-    : [];
+  const stayContacts = getClientItineraryContacts(trip);
   const filledTeam = getFilledConciergeTeam(trip);
   const showTeam = variant === "concierge" && filledTeam.length > 0;
   const arrangementFields = getDocumentArrangementFields(variant);
@@ -530,11 +528,11 @@ export function PlannerLuxuryDocument({
             </div>
           ) : null}
 
-          {isClientItinerary && clientContacts.length > 0 ? (
+          {stayContacts.length > 0 ? (
             <div
               className={[
                 "lux-print-stay-reserved",
-                clientContacts.length > 4 ? "lux-print-stay-reserved--dense" : "",
+                stayContacts.length > 4 ? "lux-print-stay-reserved--dense" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -542,8 +540,18 @@ export function PlannerLuxuryDocument({
               <section className="lux-travel-info">
                 <h2 className="lux-travel-info-heading">Your Stay</h2>
                 <div className="lux-travel-info-grid">
-                  {clientContacts.map((contact) => (
-                    <div key={contact.key} className="lux-travel-info-item">
+                  {stayContacts.map((contact) => (
+                    <div
+                      key={contact.key}
+                      className={[
+                        "lux-travel-info-item",
+                        contact.key === "tailored_for"
+                          ? "lux-travel-info-item--tailored"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
                       <span className="lux-travel-info-label">
                         <span className="lux-travel-info-icon" aria-hidden>
                           {getClientTravelInfoIcon(contact.key)}

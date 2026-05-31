@@ -40,12 +40,17 @@ export const CONCIERGE_TEAM_FIELDS: ConciergeTeamRow[] = [
 ];
 
 export interface HostStayField {
-  key: "name" | "phone" | "contact";
+  key: "name" | "phone" | "contact" | "tailored";
   label: string;
   tripField: keyof Trip;
 }
 
 export const HOST_STAY_FIELDS: HostStayField[] = [
+  {
+    key: "tailored",
+    label: "Number of guests / Tailored for",
+    tripField: "tailored_for",
+  },
   { key: "name", label: "Host name", tripField: "host_name" },
   { key: "phone", label: "Host phone", tripField: "host_phone" },
   {
@@ -191,6 +196,8 @@ export function getClientTravelInfoIcon(key: string): string {
       return "◆";
     case "host":
       return "◇";
+    case "tailored_for":
+      return "◌";
     case "butler":
       return "◦";
     case "security":
@@ -209,6 +216,12 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
     key: "hotel",
     label: "Hotel",
     name: String(trip.hotel ?? ""),
+  });
+
+  pushContact(contacts, {
+    key: "tailored_for",
+    label: "Tailored for",
+    name: String(trip.tailored_for ?? ""),
   });
 
   pushContact(contacts, {

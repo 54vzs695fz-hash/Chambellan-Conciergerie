@@ -111,6 +111,7 @@ const tripDataFields = (
   host_name: payload.host_name,
   host_phone: payload.host_phone,
   host_contact: payload.host_contact,
+  tailored_for: payload.tailored_for,
 });
 
 export async function createTrip(

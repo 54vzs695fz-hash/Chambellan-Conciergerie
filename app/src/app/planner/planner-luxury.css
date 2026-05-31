@@ -1694,6 +1694,23 @@
   margin-top: 0.08rem;
 }
 
+.lux-travel-info-item--tailored .lux-travel-info-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: #a89888;
+}
+
+.lux-travel-info-item--tailored .lux-travel-info-icon {
+  opacity: 0.55;
+}
+
+.lux-travel-info-item--tailored .lux-travel-info-name {
+  font-size: 0.92rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #6f6963;
+}
+
 /* Print shell — passthrough in editor, centered composition in PDF */
 .lux-print-body,
 .lux-print-planner-block,
@@ -2168,6 +2185,20 @@
 
 .lux-print-root--client .lux-travel-info-grid {
   gap: 0.24rem 1.5rem;
+}
+
+.lux-print-root--client .lux-travel-info-item--tailored .lux-travel-info-label {
+  font-size: 0.56rem;
+  color: #b0a498;
+}
+
+.lux-print-root--client .lux-travel-info-item--tailored .lux-travel-info-name {
+  font-size: 0.78rem;
+  color: #7a746e;
+}
+
+.lux-print-root .lux-print-stay-reserved .lux-travel-info-item--tailored .lux-travel-info-name {
+  font-size: 0.78rem;
 }
 
 .lux-print-root--client .lux-footer {

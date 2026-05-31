@@ -186,7 +186,7 @@ export function PlannerConciergeDashboard({
         </section>
 
         <section className="adm-panel">
-          <h2 className="adm-panel-title">Your Stay — Host</h2>
+          <h2 className="adm-panel-title">Your Stay</h2>
           <div className="adm-grid adm-grid--2">
             {HOST_STAY_FIELDS.map((field) => (
               <Field key={field.key} label={field.label}>
@@ -197,7 +197,11 @@ export function PlannerConciergeDashboard({
                     onFieldChange(field.tripField, e.target.value)
                   }
                   onBlur={onFieldBlur}
-                  placeholder={field.label}
+                  placeholder={
+                    field.key === "tailored"
+                      ? "e.g. 4 guests, 2 persons, Family of 4"
+                      : field.label
+                  }
                 />
               </Field>
             ))}
