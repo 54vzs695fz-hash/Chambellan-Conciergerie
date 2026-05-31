@@ -108,6 +108,9 @@ const tripDataFields = (
   jet: payload.jet,
   restaurant_reservations: payload.restaurant_reservations,
   club_reservations: payload.club_reservations,
+  host_name: payload.host_name,
+  host_phone: payload.host_phone,
+  host_contact: payload.host_contact,
 });
 
 export async function createTrip(

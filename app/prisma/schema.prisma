@@ -46,6 +46,9 @@ model Trip {
   jet                      String    @default("")
   restaurant_reservations  String    @default("")
   club_reservations        String    @default("")
+  host_name                String    @default("Matthieu Dubourg")
+  host_phone               String    @default("+1 332 733 9543")
+  host_contact             String    @default("")
   created_at               DateTime  @default(now())
   updated_at               DateTime  @updatedAt
   client                   Client?   @relation(fields: [client_id], references: [id], onDelete: SetNull)

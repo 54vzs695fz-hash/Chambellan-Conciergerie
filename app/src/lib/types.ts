@@ -57,6 +57,9 @@ export interface Trip {
   jet: string;
   restaurant_reservations: string;
   club_reservations: string;
+  host_name: string;
+  host_phone: string;
+  host_contact: string;
   created_at: string;
   updated_at: string;
 }
@@ -130,4 +133,7 @@ export const EMPTY_TRIP_HEADER: Omit<
   jet: "",
   restaurant_reservations: "",
   club_reservations: "",
+  host_name: "Matthieu Dubourg",
+  host_phone: "+1 332 733 9543",
+  host_contact: "",
 };

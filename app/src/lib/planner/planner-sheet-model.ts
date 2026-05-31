@@ -39,6 +39,22 @@ export const CONCIERGE_TEAM_FIELDS: ConciergeTeamRow[] = [
   },
 ];
 
+export interface HostStayField {
+  key: "name" | "phone" | "contact";
+  label: string;
+  tripField: keyof Trip;
+}
+
+export const HOST_STAY_FIELDS: HostStayField[] = [
+  { key: "name", label: "Host name", tripField: "host_name" },
+  { key: "phone", label: "Host phone", tripField: "host_phone" },
+  {
+    key: "contact",
+    label: "Email or WhatsApp",
+    tripField: "host_contact",
+  },
+];
+
 export interface OptionalServiceField {
   key: string;
   label: string;
@@ -140,6 +156,7 @@ export interface ClientItineraryContact {
   label: string;
   name: string;
   phone?: string;
+  detail?: string;
 }
 
 function pushContact(
@@ -149,16 +166,19 @@ function pushContact(
     label: string;
     name: string;
     phone?: string;
+    detail?: string;
   }
 ) {
   const name = row.name.trim();
   const phone = row.phone?.trim();
-  if (name || phone) {
+  const detail = row.detail?.trim();
+  if (name || phone || detail) {
     contacts.push({
       key: row.key,
       label: row.label,
       name,
       phone: phone || undefined,
+      detail: detail || undefined,
     });
   }
 }
@@ -201,8 +221,10 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
   pushContact(contacts, {
     key: "host",
     label: "Host",
-    name: CLIENT_ITINERARY_HOST.name,
-    phone: CLIENT_ITINERARY_HOST.phone,
+    name: String(trip.host_name ?? "").trim() || CLIENT_ITINERARY_HOST.name,
+    phone:
+      String(trip.host_phone ?? "").trim() || CLIENT_ITINERARY_HOST.phone,
+    detail: String(trip.host_contact ?? "").trim() || undefined,
   });
 
   pushContact(contacts, {

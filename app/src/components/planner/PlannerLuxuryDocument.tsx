@@ -556,6 +556,9 @@ export function PlannerLuxuryDocument({
                       {contact.phone ? (
                         <span className="lux-travel-info-phone">{contact.phone}</span>
                       ) : null}
+                      {contact.detail ? (
+                        <span className="lux-travel-info-phone">{contact.detail}</span>
+                      ) : null}
                     </div>
                   ))}
                 </div>

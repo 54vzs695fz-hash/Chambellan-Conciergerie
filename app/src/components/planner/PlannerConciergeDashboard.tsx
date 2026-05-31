@@ -11,6 +11,7 @@ import type {
 } from "@/lib/types";
 import {
   CONCIERGE_TEAM_FIELDS,
+  HOST_STAY_FIELDS,
   OPTIONAL_SERVICE_FIELDS,
   PLANNER_BRAND_LOGO,
 } from "@/lib/planner/planner-sheet-model";
@@ -182,6 +183,25 @@ export function PlannerConciergeDashboard({
             onUpdateSections={onUpdateSections}
             onReorderActivities={onReorderActivities}
           />
+        </section>
+
+        <section className="adm-panel">
+          <h2 className="adm-panel-title">Your Stay — Host</h2>
+          <div className="adm-grid adm-grid--2">
+            {HOST_STAY_FIELDS.map((field) => (
+              <Field key={field.key} label={field.label}>
+                <input
+                  className="adm-input"
+                  value={String(trip[field.tripField] ?? "")}
+                  onChange={(e) =>
+                    onFieldChange(field.tripField, e.target.value)
+                  }
+                  onBlur={onFieldBlur}
+                  placeholder={field.label}
+                />
+              </Field>
+            ))}
+          </div>
         </section>
 
         <section className="adm-panel">
