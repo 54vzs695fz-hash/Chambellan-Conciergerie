@@ -17,6 +17,7 @@ import {
   type PlannerExportVariant,
 } from "@/lib/planner/planner-sheet-model";
 import { GuestNameDisplay } from "@/components/planner/GuestNameDisplay";
+import { applyPlannerHeaderFit } from "@/lib/planner/fit-planner-header";
 import {
   formatDateRange,
   formatHeaderTravelDates,
@@ -401,6 +402,35 @@ export function PlannerLuxuryDocument({
   const clientGuestCount = formatClientGuestCount(trip.tailored_for);
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
+  const metaRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const meta = metaRef.current;
+    if (!meta) return;
+
+    const runFit = () => applyPlannerHeaderFit(meta);
+    runFit();
+
+    const observer = new ResizeObserver(() => runFit());
+    observer.observe(meta);
+    const left = meta.querySelector(".lux-meta-left");
+    const right = meta.querySelector(".lux-meta-right");
+    if (left) observer.observe(left);
+    if (right) observer.observe(right);
+
+    document.fonts?.ready.then(runFit).catch(() => runFit());
+
+    return () => observer.disconnect();
+  }, [
+    trip.client_name,
+    trip.tailored_for,
+    trip.arrival_date,
+    trip.departure_date,
+    trip.destination,
+    variant,
+    showHeaderDates,
+    showClientIdentity,
+  ]);
 
   return (
     <div
@@ -419,7 +449,7 @@ export function PlannerLuxuryDocument({
           />
         </div>
 
-        <div className="lux-meta lux-meta--travel">
+        <div ref={metaRef} className="lux-meta lux-meta--travel">
           <div className="lux-meta-left">
             {showHeaderDates ? (
               <div className="lux-header-dates">

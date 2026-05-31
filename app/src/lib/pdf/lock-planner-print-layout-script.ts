@@ -122,29 +122,54 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
     applyTimelineLayout();
     resetAncillaryHeights(stay, concierge);
 
-    function fitGuestNames() {
-      document.querySelectorAll(".lux-client-name").forEach((block) => {
-        block.classList.remove(
-          "lux-client-name--tight",
-          "lux-client-name--compact",
-          "lux-client-name--min"
-        );
-        const lines = block.querySelectorAll(".lux-client-line");
-        if (!lines.length) return;
-        const fits = () => {
-          const width = block.clientWidth;
-          return [...lines].every((line) => line.scrollWidth <= width + 1);
-        };
-        if (fits()) return;
-        block.classList.add("lux-client-name--tight");
-        if (fits()) return;
-        block.classList.add("lux-client-name--compact");
-        if (fits()) return;
-        block.classList.add("lux-client-name--min");
+    function fitPlannerHeader() {
+      document.querySelectorAll(".lux-meta--travel").forEach((meta) => {
+        const leftCol = meta.querySelector(".lux-meta-left");
+        const rightCol = meta.querySelector(".lux-meta-right");
+        const leftWidth = leftCol ? leftCol.clientWidth : 0;
+        const rightWidth = rightCol ? rightCol.clientWidth : 0;
+        const fitClasses = ["lux-header-fit--tight", "lux-header-fit--compact", "lux-header-fit--min"];
+
+        function clearFit(el) {
+          fitClasses.forEach((cls) => el.classList.remove(cls));
+        }
+
+        function applyFit(el, maxWidth) {
+          clearFit(el);
+          if (maxWidth <= 0) return;
+          const fits = () => el.scrollWidth <= maxWidth + 1;
+          if (fits()) return;
+          el.classList.add("lux-header-fit--tight");
+          if (fits()) return;
+          el.classList.add("lux-header-fit--compact");
+          if (fits()) return;
+          el.classList.add("lux-header-fit--min");
+        }
+
+        if (leftCol && leftWidth > 0) {
+          leftCol.querySelectorAll(".lux-header-dates-start, .lux-header-dates-end").forEach((line) => {
+            applyFit(line, leftWidth);
+          });
+        }
+
+        if (rightCol && rightWidth > 0) {
+          const nameBlock = rightCol.querySelector(".lux-client-name");
+          if (nameBlock) {
+            nameBlock.style.maxWidth = rightWidth + "px";
+            nameBlock.querySelectorAll(".lux-client-line").forEach((line) => {
+              applyFit(line, rightWidth);
+            });
+          }
+          const guests = rightCol.querySelector(".lux-client-guests");
+          if (guests) {
+            guests.style.maxWidth = rightWidth + "px";
+            applyFit(guests, rightWidth);
+          }
+        }
       });
     }
 
-    fitGuestNames();
+    fitPlannerHeader();
   } catch (err) {
     console.error("lockPlannerPrintLayout", err);
   }
