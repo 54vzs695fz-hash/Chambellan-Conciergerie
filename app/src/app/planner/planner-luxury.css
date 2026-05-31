@@ -2032,7 +2032,7 @@
   align-self: stretch;
   min-height: 0;
   max-height: var(--lux-day-card-height, none);
-  overflow: hidden;
+  overflow: visible;
   background: #f7f4ef;
   border: 1px solid #e5dfd4;
   display: flex;
@@ -2050,17 +2050,40 @@
   flex: 1 1 auto;
   gap: 0.18rem;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .lux-print-root--client .lux-day-card-body--timeline,
 .lux-print-root .lux-section-body--timeline {
-  gap: 0;
+  gap: 0.08rem;
   display: grid;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
   flex: 1 1 auto;
-  height: 100%;
+  height: auto;
   min-height: 0;
+  overflow: visible;
+}
+
+.lux-print-root--client .lux-timeline-zone--upper,
+.lux-print-root--client .lux-timeline-zone--lower {
+  justify-content: flex-start;
+}
+
+.lux-print-root--client .lux-document--compact .lux-day-card-body--timeline,
+.lux-print-root--client .lux-document--compact .lux-section-body--timeline {
+  gap: 0.04rem;
+}
+
+.lux-print-root--client .lux-document--compact .lux-period-block + .lux-period-block {
+  margin-top: 0.08rem;
+}
+
+.lux-print-root--client .lux-document--compact .lux-travel-card + .lux-travel-card {
+  margin-top: 0.02rem;
+}
+
+.lux-print-root--client .lux-document--compact .lux-period-title {
+  margin-bottom: 0.06rem;
 }
 
 .lux-print-root .lux-days-row {

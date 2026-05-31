@@ -34,6 +34,7 @@ async function exportPdf(page, mode) {
   const manifest = await page.evaluate(() => ({
     expected: document.documentElement.getAttribute("data-lux-export-expected"),
     actual: document.documentElement.getAttribute("data-lux-export-actual"),
+    debug: document.documentElement.getAttribute("data-lux-export-debug"),
   }));
 
   const pdf = await page.pdf({
@@ -75,16 +76,21 @@ async function main() {
         const actual = JSON.parse(result.manifest.actual ?? "{}");
         console.log(`  PASS: ${result.bytes} bytes -> ${result.file}`);
         console.log(
-          `  activities: expected ${expected.activities}, rendered ${actual.activities}`
+          `  activities: expected ${expected.activities}, rendered ${actual.activities}, visible ${actual.visibleActivities}`
         );
         console.log(
-          `  day columns: expected ${expected.dayColumns}, rendered ${actual.dayColumns}`
+          `  evening: expected ${expected.evening}, rendered ${actual.evening}, visible ${actual.visibleEvening}`
         );
+        if (result.manifest.debug) {
+          console.log(result.manifest.debug.split("\n").map((line) => `  ${line}`).join("\n"));
+        }
         if (
           expected.activities !== actual.activities ||
-          expected.dayColumns !== actual.dayColumns
+          expected.activities !== actual.visibleActivities ||
+          expected.evening !== actual.evening ||
+          expected.evening !== actual.visibleEvening
         ) {
-          console.error("  FAIL: export manifest mismatch");
+          console.error("  FAIL: export manifest or visibility mismatch");
           exitCode = 1;
         }
         console.log(`  screenshot: ${result.screenshot}`);

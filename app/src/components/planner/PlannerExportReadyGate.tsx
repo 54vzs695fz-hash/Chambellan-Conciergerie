@@ -9,6 +9,7 @@ import {
 } from "@/lib/planner/planner-sheet-model";
 import { lockPlannerPrintLayout } from "@/lib/pdf/lock-planner-print-layout";
 import {
+  formatPlannerExportDebugLog,
   getPlannerExportManifest,
   measurePlannerExportDom,
   plannerExportDomMatchesManifest,
@@ -100,6 +101,10 @@ export function PlannerExportReadyGate({
       document.documentElement.setAttribute(
         "data-lux-export-actual",
         JSON.stringify(afterLock)
+      );
+      document.documentElement.setAttribute(
+        "data-lux-export-debug",
+        formatPlannerExportDebugLog(expected, afterLock)
       );
       document.documentElement.setAttribute("data-lux-export-ready", "true");
       document.documentElement.setAttribute("data-lux-print-ready", "true");

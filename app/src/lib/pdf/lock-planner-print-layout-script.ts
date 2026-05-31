@@ -3,7 +3,7 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
 (() => {
   try {
     const PLANNER_GAP_PX = 24;
-    const DAY_MAX_RATIO = 0.52;
+    const PLANNER_GAP_COMPACT_PX = 16;
     const DAY_MIN_PX = 140;
 
     function resetAncillaryHeights(stay, concierge) {
@@ -14,6 +14,33 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
         el.style.maxHeight = "none";
         el.style.flex = "0 0 auto";
       });
+    }
+
+    function unlockDayLayout(doc) {
+      doc.classList.remove("lux-document--compact");
+      doc.style.removeProperty("--lux-day-card-height");
+      doc.style.setProperty("--lux-planner-gap", PLANNER_GAP_PX + "px");
+      doc.querySelectorAll(".lux-itinerary-days, .lux-days-row, .lux-day-card, .lux-day-column, .lux-print-grid-stage, [data-lux-timeline]").forEach((node) => {
+        node.style.height = "";
+        node.style.minHeight = "";
+        node.style.maxHeight = "";
+        node.style.overflow = "";
+        node.style.display = "";
+        node.style.gridTemplateRows = "";
+        node.style.flex = "";
+      });
+    }
+
+    function measureMaxDayScrollHeight(doc) {
+      let max = DAY_MIN_PX;
+      doc.querySelectorAll(".lux-day-card, .lux-day-column").forEach((card) => {
+        card.style.height = "auto";
+        card.style.minHeight = "0";
+        card.style.maxHeight = "none";
+        card.style.overflow = "visible";
+        max = Math.max(max, Math.ceil(card.scrollHeight));
+      });
+      return max;
     }
 
     function lockDayRows(dayH) {
@@ -27,42 +54,20 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
           col.style.height = dayH + "px";
           col.style.minHeight = dayH + "px";
           col.style.maxHeight = dayH + "px";
+          col.style.overflow = "visible";
         });
       });
     }
 
-    function lockTimelineZones() {
+    function applyTimelineLayout() {
       document.querySelectorAll("[data-lux-timeline]").forEach((timeline) => {
-        const card = timeline.closest(".lux-day-card, .lux-day-column");
-        if (!card) return;
-        const head = card.querySelector(".lux-day-card-head, .lux-day-column-head");
-        const section = timeline.closest(".lux-day-section");
-        let bodyH;
-        if (timeline.closest(".lux-day-card")) {
-          bodyH = Math.round(
-            card.getBoundingClientRect().height -
-              (head ? head.getBoundingClientRect().height : 0)
-          );
-        } else {
-          const columnGap = parseFloat(getComputedStyle(card).gap) || 0;
-          const sectionStyles = section ? getComputedStyle(section) : null;
-          const sectionPad = sectionStyles
-            ? parseFloat(sectionStyles.paddingTop) +
-              parseFloat(sectionStyles.paddingBottom)
-            : 0;
-          bodyH = Math.round(
-            card.getBoundingClientRect().height -
-              (head ? head.getBoundingClientRect().height : 0) -
-              columnGap -
-              sectionPad
-          );
-        }
-        if (bodyH < 40) return;
-        timeline.style.height = bodyH + "px";
-        timeline.style.minHeight = bodyH + "px";
+        timeline.style.height = "auto";
+        timeline.style.minHeight = "0";
+        timeline.style.maxHeight = "none";
         timeline.style.display = "grid";
-        timeline.style.gridTemplateRows = "1fr 1fr 1fr";
+        timeline.style.gridTemplateRows = "auto auto auto";
         timeline.style.overflow = "visible";
+        timeline.style.gap = "0";
       });
     }
 
@@ -75,6 +80,8 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
     const concierge = doc.querySelector(".lux-print-concierge-reserved");
     const gridStage = doc.querySelector(".lux-print-grid-stage");
 
+    unlockDayLayout(doc);
+
     const docHeight = doc.getBoundingClientRect().height;
     const headerH = header ? header.getBoundingClientRect().height : 0;
     const footerH = footer ? footer.getBoundingClientRect().height : 0;
@@ -86,16 +93,22 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
     const conciergeH = concierge ? Math.ceil(concierge.getBoundingClientRect().height) : 0;
     const gapCount = (stay ? 1 : 0) + (concierge && (stay || gridStage) ? 1 : 0);
     const ancillaryH = stayH + conciergeH + gapCount * PLANNER_GAP_PX;
+    const availableForDays = Math.max(DAY_MIN_PX, contentArea - ancillaryH - 8);
 
-    const maxDayH = Math.round(contentArea * DAY_MAX_RATIO);
-    const dayH = Math.max(
-      DAY_MIN_PX,
-      Math.min(maxDayH, contentArea - ancillaryH - 8)
-    );
+    let maxContent = measureMaxDayScrollHeight(doc);
+    if (maxContent > availableForDays) {
+      doc.classList.add("lux-document--compact");
+      doc.style.setProperty("--lux-planner-gap", PLANNER_GAP_COMPACT_PX + "px");
+      maxContent = measureMaxDayScrollHeight(doc);
+    }
+
+    const dayH = Math.max(DAY_MIN_PX, maxContent);
 
     doc.style.setProperty("--lux-content-area-height", contentArea + "px");
     doc.style.setProperty("--lux-day-card-height", dayH + "px");
-    doc.style.setProperty("--lux-planner-gap", PLANNER_GAP_PX + "px");
+    if (!doc.classList.contains("lux-document--compact")) {
+      doc.style.setProperty("--lux-planner-gap", PLANNER_GAP_PX + "px");
+    }
 
     if (gridStage) {
       gridStage.style.height = dayH + "px";
@@ -106,7 +119,7 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
     }
 
     lockDayRows(dayH);
-    lockTimelineZones();
+    applyTimelineLayout();
     resetAncillaryHeights(stay, concierge);
   } catch (err) {
     console.error("lockPlannerPrintLayout", err);
