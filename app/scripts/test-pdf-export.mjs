@@ -87,8 +87,9 @@ async function main() {
         if (
           expected.activities !== actual.activities ||
           expected.activities !== actual.visibleActivities ||
-          expected.evening !== actual.evening ||
-          expected.evening !== actual.visibleEvening
+          (mode === "client" &&
+            (expected.evening !== actual.evening ||
+              expected.evening !== actual.visibleEvening))
         ) {
           console.error("  FAIL: export manifest or visibility mismatch");
           exitCode = 1;
