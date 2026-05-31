@@ -126,6 +126,8 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
       document.querySelectorAll(".lux-meta--travel").forEach((meta) => {
         const leftCol = meta.querySelector(".lux-meta-left");
         const rightCol = meta.querySelector(".lux-meta-right");
+        const centerCol = meta.querySelector(".lux-meta-center");
+        const destination = centerCol ? centerCol.querySelector(".lux-destination") : null;
         const fitClasses = [
           "lux-header-fit--tight",
           "lux-header-fit--compact",
@@ -142,12 +144,13 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
 
         const leftWidth = leftCol ? columnInnerWidth(leftCol) : 0;
         const rightWidth = rightCol ? columnInnerWidth(rightCol) : 0;
+        const centerWidth = centerCol ? columnInnerWidth(centerCol) : 0;
 
         function clearFit(el) {
           fitClasses.forEach((cls) => el.classList.remove(cls));
         }
 
-        function applyFit(el, maxWidth) {
+        function applyFit(el, maxWidth, allowWrap) {
           clearFit(el);
           if (maxWidth <= 0) return;
           const fits = () => el.scrollWidth <= maxWidth + 1;
@@ -158,7 +161,9 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
           if (fits()) return;
           el.classList.add("lux-header-fit--min");
           if (fits()) return;
-          el.classList.add("lux-header-fit--wrap");
+          if (allowWrap !== false) {
+            el.classList.add("lux-header-fit--wrap");
+          }
         }
 
         if (leftCol && leftWidth > 0) {
@@ -168,13 +173,22 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
         }
 
         if (rightCol && rightWidth > 0) {
-          rightCol.querySelectorAll(".lux-client-line").forEach((line) => {
-            applyFit(line, rightWidth);
-          });
+          const nameBlock = rightCol.querySelector(".lux-client-name");
+          if (nameBlock) {
+            nameBlock.style.maxWidth = rightWidth + "px";
+            nameBlock.querySelectorAll(".lux-client-line").forEach((line) => {
+              applyFit(line, rightWidth);
+            });
+          }
           const guests = rightCol.querySelector(".lux-client-guests");
           if (guests) {
+            guests.style.maxWidth = rightWidth + "px";
             applyFit(guests, rightWidth);
           }
+        }
+
+        if (destination && centerWidth > 0) {
+          applyFit(destination, centerWidth, false);
         }
       });
     }

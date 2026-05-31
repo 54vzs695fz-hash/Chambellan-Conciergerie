@@ -415,8 +415,10 @@ export function PlannerLuxuryDocument({
     observer.observe(meta);
     const left = meta.querySelector(".lux-meta-left");
     const right = meta.querySelector(".lux-meta-right");
+    const center = meta.querySelector(".lux-meta-center");
     if (left) observer.observe(left);
     if (right) observer.observe(right);
+    if (center) observer.observe(center);
 
     document.fonts?.ready.then(runFit).catch(() => runFit());
 
