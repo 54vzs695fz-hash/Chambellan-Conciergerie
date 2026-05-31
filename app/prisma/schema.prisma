@@ -87,3 +87,28 @@ model Activity {
   @@index([trip_day_id], map: "idx_activities_day")
   @@map("activities")
 }
+
+model Establishment {
+  id             Int      @id @default(autoincrement())
+  name           String
+  category       String
+  city           String   @default("")
+  address        String   @default("")
+  contact_name   String   @default("")
+  phone          String   @default("")
+  whatsapp       String   @default("")
+  email          String   @default("")
+  website        String   @default("")
+  instagram      String   @default("")
+  notes          String   @default("")
+  price_level    String   @default("")
+  tags           String   @default("")
+  internal_notes String   @default("")
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@index([category], map: "idx_establishments_category")
+  @@index([city], map: "idx_establishments_city")
+  @@index([name], map: "idx_establishments_name")
+  @@map("establishments")
+}

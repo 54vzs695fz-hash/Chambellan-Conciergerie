@@ -5,6 +5,11 @@ import type { CSSProperties } from "react";
 import type { Activity, ActivityType, DaySection, TripDay } from "@/lib/types";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/types";
 import {
+  ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY,
+} from "@/lib/establishments/categories";
+import { formatEstablishmentDetails } from "@/lib/establishments/autofill";
+import { EstablishmentAutocomplete } from "@/components/establishments/EstablishmentAutocomplete";
+import {
   createSection,
   getEditableSections,
 } from "@/lib/planner/day-sections";
@@ -31,6 +36,7 @@ function sortActivities(activities: Activity[]): Activity[] {
 
 interface Props {
   days: TripDay[];
+  destination?: string;
   onAddActivity: (
     dayId: number,
     sectionId: string,
@@ -52,6 +58,7 @@ interface Props {
 
 const ActivityEditRow = memo(function ActivityEditRow({
   activity,
+  destination,
   onPatch,
   onRemove,
   onMoveUp,
@@ -62,6 +69,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
   onDrop,
 }: {
   activity: Activity;
+  destination?: string;
   onPatch: Props["onPatchActivity"];
   onRemove: (id: number) => void;
   onMoveUp: () => void;
@@ -132,6 +140,8 @@ const ActivityEditRow = memo(function ActivityEditRow({
     else schedule();
   };
 
+  const category = ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY[activityType];
+
   return (
     <div
       className="adm-activity"
@@ -196,16 +206,45 @@ const ActivityEditRow = memo(function ActivityEditRow({
           </button>
         </div>
       </div>
-      <input
-        value={title}
-        placeholder="Venue"
-        onChange={(e) => {
-          setTitle(e.target.value);
-          updateDraft({ title: e.target.value });
-        }}
-        onBlur={() => flush(true)}
-        className="adm-input adm-input--venue"
-      />
+      {category ? (
+        <EstablishmentAutocomplete
+          value={title}
+          category={category}
+          city={destination}
+          placeholder="Venue — search library or type freely"
+          className="adm-input adm-input--venue"
+          onChange={(next) => {
+            setTitle(next);
+            updateDraft({ title: next });
+          }}
+          onBlur={() => flush(true)}
+          onEstablishmentSelect={(est) => {
+            const autofillDetails = formatEstablishmentDetails(est);
+            const nextDetails = details.trim() ? details : autofillDetails;
+            setTitle(est.name);
+            if (!details.trim() && autofillDetails) {
+              setDetails(autofillDetails);
+            }
+            draftRef.current = {
+              ...draftRef.current,
+              title: est.name,
+              details: nextDetails,
+            };
+            flush(true);
+          }}
+        />
+      ) : (
+        <input
+          value={title}
+          placeholder="Venue"
+          onChange={(e) => {
+            setTitle(e.target.value);
+            updateDraft({ title: e.target.value });
+          }}
+          onBlur={() => flush(true)}
+          className="adm-input adm-input--venue"
+        />
+      )}
       <input
         value={details}
         placeholder="Notes (optional)"
@@ -222,6 +261,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
 
 const DayEditor = memo(function DayEditor({
   day,
+  destination,
   onAddActivity,
   onPatchActivity,
   onRemoveActivity,
@@ -229,6 +269,7 @@ const DayEditor = memo(function DayEditor({
   onReorderActivities,
 }: {
   day: TripDay;
+  destination?: string;
   onAddActivity: Props["onAddActivity"];
   onPatchActivity: Props["onPatchActivity"];
   onRemoveActivity: Props["onRemoveActivity"];
@@ -426,6 +467,7 @@ const DayEditor = memo(function DayEditor({
                   <ActivityEditRow
                     key={a.id}
                     activity={a}
+                    destination={destination}
                     onPatch={onPatchActivity}
                     onRemove={onRemoveActivity}
                     onMoveUp={() => moveActivity(a.id, -1)}
@@ -474,6 +516,7 @@ const DayEditor = memo(function DayEditor({
 
 export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
   days,
+  destination,
   onAddActivity,
   onPatchActivity,
   onRemoveActivity,
@@ -500,6 +543,7 @@ export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
         <DayEditor
           key={day.id}
           day={day}
+          destination={destination}
           onAddActivity={onAddActivity}
           onPatchActivity={onPatchActivity}
           onRemoveActivity={onRemoveActivity}

@@ -6,7 +6,7 @@ import { tripPayloadForApi } from "@/lib/planner/planner-sheet-model";
 
 export const PLANNER_AUTOSAVE_MS = 800;
 
-type SaveStatus = "idle" | "saving" | "saved";
+type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export function usePlannerSave(tripId: number) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -22,12 +22,21 @@ export function usePlannerSave(tripId: number) {
     setSaveStatus("saving");
   }, []);
 
-  const markIdle = useCallback(() => {
+  const markSuccess = useCallback(() => {
     inFlight.current = Math.max(0, inFlight.current - 1);
     if (inFlight.current === 0) {
       setSaveStatus("saved");
       if (savedTimer.current) clearTimeout(savedTimer.current);
       savedTimer.current = setTimeout(() => setSaveStatus("idle"), 2000);
+    }
+  }, []);
+
+  const markError = useCallback(() => {
+    inFlight.current = Math.max(0, inFlight.current - 1);
+    if (inFlight.current === 0) {
+      setSaveStatus("error");
+      if (savedTimer.current) clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSaveStatus("idle"), 4000);
     }
   }, []);
 
@@ -40,15 +49,20 @@ export function usePlannerSave(tripId: number) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(tripPayloadForApi(next)),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          markError();
+          return null;
+        }
         const updated: TripWithDays = await res.json();
         tripRef.current = updated;
+        markSuccess();
         return updated;
-      } finally {
-        markIdle();
+      } catch {
+        markError();
+        return null;
       }
     },
-    [tripId, markSaving, markIdle]
+    [tripId, markSaving, markSuccess, markError]
   );
 
   const scheduleTripPersist = useCallback(
@@ -86,13 +100,18 @@ export function usePlannerSave(tripId: number) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(fields),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          markError();
+          return null;
+        }
+        markSuccess();
         return (await res.json()) as Activity;
-      } finally {
-        markIdle();
+      } catch {
+        markError();
+        return null;
       }
     },
-    [markSaving, markIdle]
+    [markSaving, markSuccess, markError]
   );
 
   const scheduleActivityPatch = useCallback(

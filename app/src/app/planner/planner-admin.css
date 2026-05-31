@@ -56,7 +56,7 @@
 
 .adm-panel--wide {
   padding-bottom: 1rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .adm-panel-title {
@@ -415,5 +415,49 @@
 
   .lux-client-preview .lux-print-root--client {
     max-width: 1123px;
+  }
+}
+
+/* Mobile — iPhone Safari */
+@media (max-width: 767px) {
+  .adm-days,
+  .adm-days--wide {
+    grid-template-columns: 1fr;
+    overflow-x: visible;
+  }
+
+  .adm-icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 0.85rem;
+  }
+
+  .adm-add-btn {
+    min-height: 44px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.62rem;
+  }
+
+  .adm-add-section {
+    min-height: 44px;
+  }
+
+  .adm-section-actions,
+  .adm-activity-actions {
+    flex-wrap: nowrap;
+  }
+
+  .adm-activity-toolbar {
+    gap: 0.5rem;
+  }
+
+  .adm-input {
+    min-height: 44px;
+  }
+
+  .adm-content {
+    padding-bottom: calc(var(--mobile-nav-h) + 1rem);
   }
 }

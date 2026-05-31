@@ -8,13 +8,14 @@ const NAV = [
   { href: "/", label: "Dashboard" },
   { href: "/planner", label: "Weekly Planner" },
   { href: "/clients", label: "Clients" },
+  { href: "/establishments", label: "Library" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-56 min-h-screen border-r border-sand/80 bg-white flex flex-col shrink-0">
+    <aside className="hidden md:flex w-56 min-h-screen border-r border-sand/80 bg-white flex-col shrink-0">
       <div className="px-5 pt-8 pb-6 border-b border-sand/60 text-center">
         <Image
           src="/brand/logo.jpg"
@@ -38,7 +39,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-4 py-2.5 text-[11px] uppercase tracking-[0.14em] rounded-sm transition-colors ${
+              className={`block px-4 py-2.5 min-h-[44px] text-[11px] uppercase tracking-[0.14em] rounded-sm transition-colors ${
                 active
                   ? "bg-beige text-gold"
                   : "text-muted hover:text-ink hover:bg-cream"

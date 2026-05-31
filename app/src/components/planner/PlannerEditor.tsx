@@ -318,12 +318,14 @@ export function PlannerEditor({ initialTrip }: Props) {
       ? "Saving…"
       : saveStatus === "saved"
         ? "Saved"
-        : "";
+        : saveStatus === "error"
+          ? "Error saving"
+          : "";
 
   const previewTrip = clientPreviewTrip ?? trip;
 
   return (
-    <div className={`lux-studio${viewMode === "client" ? " lux-studio--client" : " lux-studio--concierge"}`}>
+    <div className={`lux-studio has-mobile-nav${viewMode === "client" ? " lux-studio--client" : " lux-studio--concierge"}`}>
       <div className="lux-toolbar">
         <div className="lux-toolbar-left">
           <Link href="/planner" className="lux-toolbar-back">
@@ -333,7 +335,11 @@ export function PlannerEditor({ initialTrip }: Props) {
             <PlannerConciergeNav destination={trip.destination} />
           ) : null}
           {statusLabel ? (
-            <span className="lux-toolbar-status">{statusLabel}</span>
+            <span
+              className={`lux-toolbar-status${saveStatus === "error" ? " lux-toolbar-status--error" : ""}`}
+            >
+              {statusLabel}
+            </span>
           ) : null}
         </div>
         <div className="lux-toolbar-center">

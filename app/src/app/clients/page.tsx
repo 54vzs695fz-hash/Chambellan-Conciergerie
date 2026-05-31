@@ -16,13 +16,13 @@ export default function ClientsPage() {
   }, [q]);
 
   return (
-    <div className="p-10">
-      <div className="flex items-center justify-between mb-8">
+    <div className="page-shell">
+      <div className="page-header">
         <div>
           <h1 className="font-serif text-2xl tracking-wide">Clients</h1>
           <p className="text-sm text-muted mt-1">CRM · Private profiles</p>
         </div>
-        <Link href="/clients/new" className="btn-primary">
+        <Link href="/clients/new" className="btn-primary min-h-[44px]">
           New client
         </Link>
       </div>

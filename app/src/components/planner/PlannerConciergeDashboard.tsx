@@ -15,6 +15,13 @@ import {
   OPTIONAL_SERVICE_FIELDS,
   PLANNER_BRAND_LOGO,
 } from "@/lib/planner/planner-sheet-model";
+import {
+  TRIP_FIELD_ESTABLISHMENT_CATEGORY,
+  TEAM_ROW_ESTABLISHMENT_CATEGORY,
+  type EstablishmentCategory,
+} from "@/lib/establishments/categories";
+import { teamAutofillFromEstablishment } from "@/lib/establishments/autofill";
+import { EstablishmentAutocomplete } from "@/components/establishments/EstablishmentAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
 
 interface DashboardProps {
@@ -70,6 +77,37 @@ function Field({
       <span className="adm-field-label">{label}</span>
       {children}
     </label>
+  );
+}
+
+function TripEstablishmentField({
+  label,
+  tripField,
+  value,
+  category,
+  city,
+  onChange,
+  onBlur,
+}: {
+  label: string;
+  tripField: keyof TripWithDays;
+  value: string;
+  category: EstablishmentCategory;
+  city?: string;
+  onChange: (key: keyof TripWithDays, value: string) => void;
+  onBlur: () => void;
+}) {
+  return (
+    <Field label={label}>
+      <EstablishmentAutocomplete
+        value={value}
+        category={category}
+        city={city}
+        placeholder={`${label} — search or type freely`}
+        onChange={(next) => onChange(tripField, next)}
+        onBlur={onBlur}
+      />
+    </Field>
   );
 }
 
@@ -157,19 +195,36 @@ export function PlannerConciergeDashboard({
             </div>
           </div>
           <div className="adm-grid adm-grid--2 adm-grid--spaced">
-            {TRAVEL_FIELDS.map((field) => (
-              <Field key={field.key} label={field.label}>
-                <input
-                  className="adm-input"
-                  value={String(trip[field.tripField] ?? "")}
-                  onChange={(e) =>
-                    onFieldChange(field.tripField, e.target.value)
-                  }
-                  onBlur={onFieldBlur}
-                  placeholder={field.label}
-                />
-              </Field>
-            ))}
+            {TRAVEL_FIELDS.map((field) => {
+              const category = TRIP_FIELD_ESTABLISHMENT_CATEGORY[field.key];
+              if (category) {
+                return (
+                  <TripEstablishmentField
+                    key={field.key}
+                    label={field.label}
+                    tripField={field.tripField}
+                    value={String(trip[field.tripField] ?? "")}
+                    category={category}
+                    city={trip.destination}
+                    onChange={onFieldChange}
+                    onBlur={onFieldBlur}
+                  />
+                );
+              }
+              return (
+                <Field key={field.key} label={field.label}>
+                  <input
+                    className="adm-input"
+                    value={String(trip[field.tripField] ?? "")}
+                    onChange={(e) =>
+                      onFieldChange(field.tripField, e.target.value)
+                    }
+                    onBlur={onFieldBlur}
+                    placeholder={field.label}
+                  />
+                </Field>
+              );
+            })}
           </div>
         </section>
 
@@ -177,6 +232,7 @@ export function PlannerConciergeDashboard({
           <h2 className="adm-panel-title">Activities</h2>
           <PlannerActivitiesEditor
             days={trip.days}
+            destination={trip.destination}
             onAddActivity={onAddActivity}
             onPatchActivity={onPatchActivity}
             onRemoveActivity={onRemoveActivity}
@@ -211,31 +267,53 @@ export function PlannerConciergeDashboard({
         <section className="adm-panel">
           <h2 className="adm-panel-title">Concierge Team</h2>
           <div className="adm-grid adm-grid--2">
-            {CONCIERGE_TEAM_FIELDS.map((row) => (
-              <div key={row.key} className="adm-team-card">
-                <span className="adm-team-role">{row.label}</span>
-                <input
-                  className="adm-input"
-                  value={String(trip[row.nameField] ?? "")}
-                  onChange={(e) =>
-                    onFieldChange(row.nameField, e.target.value)
-                  }
-                  onBlur={onFieldBlur}
-                  placeholder="Name / Contact"
-                />
-                {row.phoneField ? (
-                  <input
-                    className="adm-input adm-input--phone"
-                    value={String(trip[row.phoneField] ?? "")}
-                    onChange={(e) =>
-                      onFieldChange(row.phoneField!, e.target.value)
-                    }
-                    onBlur={onFieldBlur}
-                    placeholder="Phone"
-                  />
-                ) : null}
-              </div>
-            ))}
+            {CONCIERGE_TEAM_FIELDS.map((row) => {
+              const category = TEAM_ROW_ESTABLISHMENT_CATEGORY[row.key];
+              return (
+                <div key={row.key} className="adm-team-card">
+                  <span className="adm-team-role">{row.label}</span>
+                  {category ? (
+                    <EstablishmentAutocomplete
+                      value={String(trip[row.nameField] ?? "")}
+                      category={category}
+                      city={trip.destination}
+                      placeholder="Name / Contact — search or type freely"
+                      onChange={(next) => onFieldChange(row.nameField, next)}
+                      onBlur={onFieldBlur}
+                      onEstablishmentSelect={(est) => {
+                        const autofill = teamAutofillFromEstablishment(est);
+                        onFieldChange(row.nameField, autofill.name);
+                        if (row.phoneField && autofill.phone) {
+                          onFieldChange(row.phoneField, autofill.phone);
+                        }
+                        onFieldBlur();
+                      }}
+                    />
+                  ) : (
+                    <input
+                      className="adm-input"
+                      value={String(trip[row.nameField] ?? "")}
+                      onChange={(e) =>
+                        onFieldChange(row.nameField, e.target.value)
+                      }
+                      onBlur={onFieldBlur}
+                      placeholder="Name / Contact"
+                    />
+                  )}
+                  {row.phoneField ? (
+                    <input
+                      className="adm-input adm-input--phone"
+                      value={String(trip[row.phoneField] ?? "")}
+                      onChange={(e) =>
+                        onFieldChange(row.phoneField!, e.target.value)
+                      }
+                      onBlur={onFieldBlur}
+                      placeholder="Phone"
+                    />
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </section>
 

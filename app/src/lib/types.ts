@@ -90,6 +90,48 @@ export interface TripWithDays extends Trip {
   client?: Client | null;
 }
 
+export interface Establishment {
+  id: number;
+  name: string;
+  category: string;
+  city: string;
+  address: string;
+  contact_name: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  instagram: string;
+  notes: string;
+  price_level: string;
+  tags: string;
+  internal_notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type EstablishmentInput = Omit<
+  Establishment,
+  "id" | "created_at" | "updated_at"
+>;
+
+export const EMPTY_ESTABLISHMENT: EstablishmentInput = {
+  name: "",
+  category: "restaurant",
+  city: "",
+  address: "",
+  contact_name: "",
+  phone: "",
+  whatsapp: "",
+  email: "",
+  website: "",
+  instagram: "",
+  notes: "",
+  price_level: "",
+  tags: "",
+  internal_notes: "",
+};
+
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   restaurant: "Restaurant",
   beach_club: "Beach Club",

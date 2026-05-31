@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const clients = (await listClients()).slice(0, 5);
 
   return (
-    <div className="p-10 max-w-4xl">
+    <div className="page-shell max-w-4xl">
       <header className="mb-10">
         <h1 className="font-serif text-3xl tracking-wide text-ink mb-2">
           Chambellan Concierge
@@ -23,11 +23,14 @@ export default async function DashboardPage() {
       </header>
 
       <div className="flex flex-wrap gap-3 mb-12">
-        <Link href="/planner/new" className="btn-primary">
+        <Link href="/planner/new" className="btn-primary min-h-[44px]">
           New weekly planner
         </Link>
-        <Link href="/clients/new" className="btn-secondary">
+        <Link href="/clients/new" className="btn-secondary min-h-[44px]">
           New client
+        </Link>
+        <Link href="/establishments/new" className="btn-secondary min-h-[44px]">
+          New establishment
         </Link>
       </div>
 

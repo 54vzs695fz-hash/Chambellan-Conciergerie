@@ -54,7 +54,7 @@ export default async function ClientDetailPage({
   const destinations = await getClientDestinations(clientId);
 
   return (
-    <div className="p-10 max-w-4xl">
+    <div className="page-shell max-w-4xl">
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="font-serif text-2xl tracking-wide">{client.full_name}</h1>
