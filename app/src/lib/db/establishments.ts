@@ -2,6 +2,7 @@ import type { Establishment as PrismaEstablishment } from "@/generated/prisma/cl
 import { prisma } from "@/lib/prisma";
 import type { Establishment } from "@/lib/types";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
+import { establishmentDedupKey } from "@/lib/establishments/destinations";
 import {
   sortEstablishmentsAlphabetically,
   sortEstablishmentsWithPrioritizedCity,
@@ -131,4 +132,46 @@ export function validateEstablishmentInput(
   if (!data.city?.trim()) return "City / destination is required";
   if (!data.category?.trim()) return "Category is required";
   return null;
+}
+
+export async function getExistingEstablishmentKeys(): Promise<Set<string>> {
+  const rows = await prisma.establishment.findMany({
+    select: { name: true, city: true },
+  });
+  return new Set(rows.map((r) => establishmentDedupKey(r.name, r.city)));
+}
+
+export async function bulkImportEstablishments(
+  items: Omit<Establishment, "id" | "created_at" | "updated_at">[]
+): Promise<{ created: number; skipped: number; errors: string[] }> {
+  const existingKeys = await getExistingEstablishmentKeys();
+  let created = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const item of items) {
+    const validationError = validateEstablishmentInput(item);
+    if (validationError) {
+      errors.push(`${item.name}: ${validationError}`);
+      continue;
+    }
+
+    const key = establishmentDedupKey(item.name, item.city);
+    if (existingKeys.has(key)) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await prisma.establishment.create({
+        data: { ...item, city: item.city.trim(), name: item.name.trim() },
+      });
+      existingKeys.add(key);
+      created++;
+    } catch {
+      errors.push(`${item.name}: could not save`);
+    }
+  }
+
+  return { created, skipped, errors };
 }

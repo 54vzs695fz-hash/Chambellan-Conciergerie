@@ -16,7 +16,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:import-sqlite": "node scripts/migrate-sqlite-to-prisma.mjs",
-    "test:mobile": "node scripts/test-mobile-flows.mjs"
+    "test:mobile": "node scripts/test-mobile-flows.mjs",
+    "test:website-import": "node scripts/test-website-import.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

@@ -52,9 +52,14 @@ export default function EstablishmentsPage() {
             Organized by destination · Restaurants, hotels, drivers &amp; partners
           </p>
         </div>
-        <Link href="/establishments/new" className="btn-primary min-h-[44px]">
-          New establishment
-        </Link>
+        <div className="page-header-actions">
+          <Link href="/establishments/import" className="btn-secondary min-h-[44px]">
+            Import from website
+          </Link>
+          <Link href="/establishments/new" className="btn-primary min-h-[44px]">
+            New establishment
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3 mb-6">
