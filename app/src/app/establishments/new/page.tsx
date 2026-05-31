@@ -10,7 +10,9 @@ export default function NewEstablishmentPage() {
           ← Library
         </Link>
         <h1 className="font-serif text-2xl tracking-wide">New establishment</h1>
-        <p className="text-sm text-muted mt-1">Add to your concierge library</p>
+        <p className="text-sm text-muted mt-1">
+          Essential details only — expand Advanced details for more fields.
+        </p>
       </div>
       <EstablishmentForm initial={EMPTY_ESTABLISHMENT} />
     </div>

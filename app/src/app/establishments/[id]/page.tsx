@@ -27,7 +27,9 @@ export default async function EstablishmentDetailPage({
           ← Library
         </Link>
         <h1 className="font-serif text-2xl tracking-wide">{establishment.name}</h1>
-        <p className="text-sm text-muted mt-1">Edit establishment details</p>
+        <p className="text-sm text-muted mt-1">
+          Essential details — expand Advanced details for address, social, tags, and internal notes.
+        </p>
       </div>
       <EstablishmentForm initial={initial} establishmentId={establishment.id} />
     </div>

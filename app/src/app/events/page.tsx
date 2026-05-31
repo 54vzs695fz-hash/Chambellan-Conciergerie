@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { ConciergeEventRecord } from "@/lib/types";
 import { EVENT_CATEGORY_LABELS, type EventCategory } from "@/lib/events/categories";
 import { LibraryNav } from "@/components/library/LibraryNav";
+import { LibraryItemRow } from "@/components/library/LibraryItemRow";
+import { LibraryDeleteDialog } from "@/components/library/LibraryDeleteDialog";
 
 export default function EventsPage() {
   const [items, setItems] = useState<ConciergeEventRecord[]>([]);
@@ -12,6 +14,9 @@ export default function EventsPage() {
   const [category, setCategory] = useState("");
   const [destination, setDestination] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -39,6 +44,11 @@ export default function EventsPage() {
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [items]);
 
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2500);
+  };
+
   const toggleFavorite = async (id: number) => {
     await fetch(`/api/events/${id}`, {
       method: "PATCH",
@@ -48,6 +58,22 @@ export default function EventsPage() {
     setItems((prev) =>
       prev.map((e) => (e.id === id ? { ...e, is_favorite: !e.is_favorite } : e))
     );
+  };
+
+  const performDelete = async () => {
+    if (deleteId === null) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/events/${deleteId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setItems((prev) => prev.filter((e) => e.id !== deleteId));
+      setDeleteId(null);
+      showToast("Event deleted successfully.");
+    } catch {
+      showToast("Could not delete. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -62,6 +88,20 @@ export default function EventsPage() {
           <Link href="/events/new" className="btn-primary min-h-[44px]">New event</Link>
         </div>
       </div>
+
+      {toast ? (
+        <p className="est-save-toast" role="status">{toast}</p>
+      ) : null}
+
+      <LibraryDeleteDialog
+        open={deleteId !== null}
+        itemLabel="event"
+        count={1}
+        deleting={deleting}
+        onCancel={() => { if (!deleting) setDeleteId(null); }}
+        onConfirm={() => void performDelete()}
+      />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <input className="field-input" placeholder="Search events…" value={q} onChange={(e) => setQ(e.target.value)} />
         <input className="field-input" placeholder="Filter destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
@@ -76,6 +116,7 @@ export default function EventsPage() {
           <span className="text-sm">Favorites only</span>
         </label>
       </div>
+
       {grouped.length === 0 ? (
         <p className="text-sm text-muted">No events found.</p>
       ) : (
@@ -88,24 +129,17 @@ export default function EventsPage() {
                   <h3 className="est-category-subtitle">
                     {EVENT_CATEGORY_LABELS[cat as EventCategory] ?? cat}
                   </h3>
-                  <ul className="space-y-2">
+                  <ul className="est-row-list">
                     {catItems.map((ev) => (
-                      <li key={ev.id} className="flex gap-2 items-stretch">
-                        <button
-                          type="button"
-                          className={`est-fav-btn${ev.is_favorite ? " is-active" : ""}`}
-                          onClick={() => void toggleFavorite(ev.id)}
-                          aria-label={ev.is_favorite ? "Remove favorite" : "Add favorite"}
-                        >
-                          ★
-                        </button>
-                        <Link href={`/events/${ev.id}`} className="card flex-1 block px-5 py-4 hover:border-gold/40 min-h-[44px]">
-                          <p className="font-medium">{ev.name}</p>
-                          <p className="text-xs text-muted mt-1">
-                            {[ev.start_date, ev.end_date].filter(Boolean).join(" – ") || "Dates TBC"}
-                          </p>
-                        </Link>
-                      </li>
+                      <LibraryItemRow
+                        key={ev.id}
+                        name={ev.name}
+                        meta={[ev.start_date, ev.end_date].filter(Boolean).join(" – ") || "Dates TBC"}
+                        editHref={`/events/${ev.id}`}
+                        isFavorite={ev.is_favorite}
+                        onToggleFavorite={() => void toggleFavorite(ev.id)}
+                        onRequestDelete={() => setDeleteId(ev.id)}
+                      />
                     ))}
                   </ul>
                 </div>

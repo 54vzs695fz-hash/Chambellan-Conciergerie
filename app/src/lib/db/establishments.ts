@@ -132,6 +132,15 @@ export async function deleteEstablishment(id: number): Promise<boolean> {
   }
 }
 
+export async function bulkDeleteEstablishments(ids: number[]): Promise<number> {
+  const uniqueIds = [...new Set(ids.filter((id) => Number.isFinite(id) && id > 0))];
+  if (!uniqueIds.length) return 0;
+  const result = await prisma.establishment.deleteMany({
+    where: { id: { in: uniqueIds } },
+  });
+  return result.count;
+}
+
 export async function listEstablishmentCities(): Promise<string[]> {
   const rows = await prisma.establishment.findMany({
     where: { city: { not: "" } },
