@@ -4,11 +4,16 @@
  *
  * Usage:
  *   node scripts/compare-pdf-preview.mjs
- *   BASE_URL=http://127.0.0.1:3000 TRIP_ID=1 node scripts/compare-pdf-preview.mjs
+ *   BASE_URL=https://chambellan-conciergerie.vercel.app TRIP_ID=1 node scripts/compare-pdf-preview.mjs
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  PLANNER_PDF_BOUNDS_CHECK_SCRIPT,
+  PLANNER_PDF_FIT_SCALE_SCRIPT,
+  PLANNER_PDF_MARGINS,
+} from "./lib/planner-pdf-capture.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const baseUrl = (process.env.BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
@@ -21,52 +26,6 @@ const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = fs.readFileSync(
 )
   .replace(/^\/\*\*[\s\S]*?\*\/\s*export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `/, "")
   .replace(/`;\s*$/, "");
-
-const PLANNER_PDF_FIT_SCALE_SCRIPT = fs.readFileSync(
-  path.join(__dirname, "../src/lib/pdf/planner-pdf-capture.ts"),
-  "utf8"
-).match(/export const PLANNER_PDF_FIT_SCALE_SCRIPT = `([\s\S]*?)`;/)[1];
-
-const PLANNER_PDF_BOUNDS_CHECK_SCRIPT = fs.readFileSync(
-  path.join(__dirname, "../src/lib/pdf/planner-pdf-capture.ts"),
-  "utf8"
-).match(/export const PLANNER_PDF_BOUNDS_CHECK_SCRIPT = `([\s\S]*?)`;/)[1];
-
-const PREVIEW_HTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <link rel="stylesheet" href="${baseUrl}/_next/static/css/app/planner/%5Bid%5D/page.css" />
-  <style>
-    html, body { margin: 0; background: #ebe3d8; }
-    .lux-client-preview {
-      flex: 1;
-      overflow: auto;
-      padding: 0.75rem 0.5rem 1.5rem;
-      display: flex;
-      justify-content: center;
-    }
-    .lux-client-preview .lux-print-root {
-      width: 100%;
-      max-width: 1123px;
-    }
-    .lux-client-preview .lux-print-root--client {
-      width: 100%;
-      max-width: 1123px;
-      height: auto;
-      min-height: 0;
-      aspect-ratio: 297 / 210;
-      margin: 0 auto;
-      box-shadow: 0 2px 24px rgba(28, 24, 20, 0.1);
-    }
-  </style>
-</head>
-<body>
-  <div class="lux-client-preview">
-    <iframe id="frame" src="${baseUrl}/planner/${tripId}/print?mode=client" style="width:1123px;height:794px;border:0;"></iframe>
-  </div>
-</body>
-</html>`;
 
 async function capturePreview(page) {
   const url = `${baseUrl}/planner/${tripId}/print?mode=client`;
@@ -89,10 +48,12 @@ async function capturePreview(page) {
   await page.waitForSelector(".lux-client-preview .lux-document", { timeout: 30_000 });
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate((script) => eval(script), LOCK_PLANNER_PRINT_LAYOUT_SCRIPT);
-  await page.waitForFunction(
-    () => document.documentElement.getAttribute("data-lux-print-ready") === "true",
-    { timeout: 15_000 }
-  ).catch(() => {});
+  await page
+    .waitForFunction(
+      () => document.documentElement.getAttribute("data-lux-print-ready") === "true",
+      { timeout: 15_000 }
+    )
+    .catch(() => {});
 
   const shot = path.join(outDir, "client-preview-compare.png");
   await page.screenshot({ path: shot, fullPage: false });
@@ -107,10 +68,12 @@ async function capturePdf(page) {
   await page.waitForSelector(".lux-print-root--capture .lux-document", { timeout: 30_000 });
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate((script) => eval(script), LOCK_PLANNER_PRINT_LAYOUT_SCRIPT);
-  await page.waitForFunction(
-    () => document.documentElement.getAttribute("data-lux-print-ready") === "true",
-    { timeout: 15_000 }
-  ).catch(() => {});
+  await page
+    .waitForFunction(
+      () => document.documentElement.getAttribute("data-lux-print-ready") === "true",
+      { timeout: 15_000 }
+    )
+    .catch(() => {});
 
   const scale = await page.evaluate((script) => eval(script), PLANNER_PDF_FIT_SCALE_SCRIPT);
   const bounds = await page.evaluate((script) => eval(script), PLANNER_PDF_BOUNDS_CHECK_SCRIPT);
@@ -122,7 +85,7 @@ async function capturePdf(page) {
     printBackground: true,
     preferCSSPageSize: false,
     scale,
-    margin: { top: "0", right: "0", bottom: "0", left: "0" },
+    margin: PLANNER_PDF_MARGINS,
   });
   fs.writeFileSync(pdfPath, pdf);
 
@@ -134,7 +97,6 @@ async function capturePdf(page) {
 
 async function main() {
   fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, "preview-shell.html"), PREVIEW_HTML);
 
   const puppeteer = await import("puppeteer");
   const browser = await puppeteer.default.launch({
@@ -156,6 +118,7 @@ async function main() {
     console.log(`PDF file: ${pdfResult.pdfPath}`);
     console.log(`Fit scale: ${pdfResult.scale.toFixed(4)}`);
     console.log(`Bounds ok: ${pdfResult.bounds.ok}`);
+    console.log(`Content box: left=${pdfResult.bounds.content.left.toFixed(1)} right=${pdfResult.bounds.content.right.toFixed(1)}`);
     if (pdfResult.bounds.issues?.length) {
       pdfResult.bounds.issues.forEach((issue) => console.error(`  ISSUE: ${issue}`));
       exitCode = 1;

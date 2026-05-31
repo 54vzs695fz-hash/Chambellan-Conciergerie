@@ -9,10 +9,14 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  PLANNER_PDF_BOUNDS_CHECK_SCRIPT,
+  PLANNER_PDF_FIT_SCALE_SCRIPT,
+  PLANNER_PDF_MARGINS,
+  PLANNER_PDF_PAGE,
+} from "./lib/planner-pdf-capture.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const PLANNER_PDF_PAGE = { width: 1123, height: 794, safeMarginPx: 20 };
 
 const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = fs.readFileSync(
   path.join(__dirname, "../src/lib/pdf/lock-planner-print-layout-script.ts"),
@@ -20,16 +24,6 @@ const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = fs.readFileSync(
 )
   .replace(/^\/\*\*[\s\S]*?\*\/\s*export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `/, "")
   .replace(/`;\s*$/, "");
-
-const PLANNER_PDF_FIT_SCALE_SCRIPT = fs.readFileSync(
-  path.join(__dirname, "../src/lib/pdf/planner-pdf-capture.ts"),
-  "utf8"
-).match(/export const PLANNER_PDF_FIT_SCALE_SCRIPT = `([\s\S]*?)`;/)[1];
-
-const PLANNER_PDF_BOUNDS_CHECK_SCRIPT = fs.readFileSync(
-  path.join(__dirname, "../src/lib/pdf/planner-pdf-capture.ts"),
-  "utf8"
-).match(/export const PLANNER_PDF_BOUNDS_CHECK_SCRIPT = `([\s\S]*?)`;/)[1];
 
 const baseUrl = (process.env.BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
 const tripId = Number(process.env.TRIP_ID ?? "1");
@@ -72,7 +66,7 @@ async function exportPdf(page, mode) {
     printBackground: true,
     preferCSSPageSize: false,
     scale,
-    margin: { top: "0", right: "0", bottom: "0", left: "0" },
+    margin: PLANNER_PDF_MARGINS,
   });
 
   const file = path.join(outDir, `export-test-${mode}.pdf`);
