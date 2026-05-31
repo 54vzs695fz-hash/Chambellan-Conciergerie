@@ -8,6 +8,7 @@ import {
   getFilledConciergeTeam,
   getDocumentArrangementFields,
   getFilledDocumentArrangements,
+  formatClientGuestCount,
   getClientItineraryContacts,
   getClientTravelInfoIcon,
   PLANNER_FOOTER,
@@ -396,6 +397,9 @@ export function PlannerLuxuryDocument({
   );
   const showHeaderDates =
     isClientItinerary && Boolean(headerDates.start);
+  const clientGuestCount = formatClientGuestCount(trip.tailored_for);
+  const showClientIdentity =
+    Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
 
   return (
     <div
@@ -443,8 +447,15 @@ export function PlannerLuxuryDocument({
             ) : null}
           </div>
           <div className="lux-meta-right">
-            {trip.client_name?.trim() ? (
-              <p className="lux-client">{trip.client_name}</p>
+            {showClientIdentity ? (
+              <div className="lux-client-identity">
+                {trip.client_name?.trim() ? (
+                  <p className="lux-client">{trip.client_name}</p>
+                ) : null}
+                {clientGuestCount ? (
+                  <p className="lux-client-guests">{clientGuestCount}</p>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </div>
@@ -541,17 +552,7 @@ export function PlannerLuxuryDocument({
                 <h2 className="lux-travel-info-heading">Your Stay</h2>
                 <div className="lux-travel-info-grid">
                   {stayContacts.map((contact) => (
-                    <div
-                      key={contact.key}
-                      className={[
-                        "lux-travel-info-item",
-                        contact.key === "tailored_for"
-                          ? "lux-travel-info-item--tailored"
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
+                    <div key={contact.key} className="lux-travel-info-item">
                       <span className="lux-travel-info-label">
                         <span className="lux-travel-info-icon" aria-hidden>
                           {getClientTravelInfoIcon(contact.key)}

@@ -304,6 +304,15 @@
   font-weight: 500;
 }
 
+.lux-client-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .lux-client {
   font-family: var(--font-cormorant), Georgia, serif;
   font-size: clamp(1.11rem, 2.68vw, 1.69rem);
@@ -316,6 +325,18 @@
   overflow-wrap: anywhere;
   word-break: break-word;
   hyphens: auto;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+.lux-client-guests {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(0.68rem, 1.55vw, 0.9rem);
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #8f877c;
+  margin: 0.44rem 0 0;
+  line-height: 1.28;
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
@@ -1694,23 +1715,6 @@
   margin-top: 0.08rem;
 }
 
-.lux-travel-info-item--tailored .lux-travel-info-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  color: #a89888;
-}
-
-.lux-travel-info-item--tailored .lux-travel-info-icon {
-  opacity: 0.55;
-}
-
-.lux-travel-info-item--tailored .lux-travel-info-name {
-  font-size: 0.92rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: #6f6963;
-}
-
 /* Print shell — passthrough in editor, centered composition in PDF */
 .lux-print-body,
 .lux-print-planner-block,
@@ -1993,6 +1997,22 @@
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
+.lux-print-root--client .lux-client-guests {
+  font-size: 0.82rem;
+  letter-spacing: 0.22em;
+  margin-top: 0.36rem;
+  color: #948c82;
+  font-weight: 300;
+}
+
+.lux-print-root:not(.lux-print-root--client) .lux-client-guests {
+  font-size: 0.86rem;
+  letter-spacing: 0.2em;
+  margin-top: 0.34rem;
+  color: #948c82;
+  font-weight: 300;
+}
+
 .lux-print-root--client .lux-itinerary-days {
   flex: 0 0 auto;
   align-items: stretch;
@@ -2185,20 +2205,6 @@
 
 .lux-print-root--client .lux-travel-info-grid {
   gap: 0.24rem 1.5rem;
-}
-
-.lux-print-root--client .lux-travel-info-item--tailored .lux-travel-info-label {
-  font-size: 0.56rem;
-  color: #b0a498;
-}
-
-.lux-print-root--client .lux-travel-info-item--tailored .lux-travel-info-name {
-  font-size: 0.78rem;
-  color: #7a746e;
-}
-
-.lux-print-root .lux-print-stay-reserved .lux-travel-info-item--tailored .lux-travel-info-name {
-  font-size: 0.78rem;
 }
 
 .lux-print-root--client .lux-footer {

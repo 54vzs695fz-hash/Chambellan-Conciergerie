@@ -196,8 +196,6 @@ export function getClientTravelInfoIcon(key: string): string {
       return "◆";
     case "host":
       return "◇";
-    case "tailored_for":
-      return "◌";
     case "butler":
       return "◦";
     case "security":
@@ -209,6 +207,14 @@ export function getClientTravelInfoIcon(key: string): string {
   }
 }
 
+/** Guest count shown beneath the client name in the header (uppercase, hidden when empty). */
+export function formatClientGuestCount(
+  tailoredFor: string | undefined | null
+): string | null {
+  const trimmed = String(tailoredFor ?? "").trim();
+  return trimmed ? trimmed.toUpperCase() : null;
+}
+
 export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[] {
   const contacts: ClientItineraryContact[] = [];
 
@@ -216,12 +222,6 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
     key: "hotel",
     label: "Hotel",
     name: String(trip.hotel ?? ""),
-  });
-
-  pushContact(contacts, {
-    key: "tailored_for",
-    label: "Tailored for",
-    name: String(trip.tailored_for ?? ""),
   });
 
   pushContact(contacts, {
