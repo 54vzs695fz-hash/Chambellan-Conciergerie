@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { Establishment } from "@/lib/types";
 import type { EstablishmentCategory } from "@/lib/establishments/categories";
 import { ESTABLISHMENT_CATEGORY_LABELS } from "@/lib/establishments/categories";
+import { citiesMatch } from "@/lib/establishments/group-by-city";
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -19,7 +20,8 @@ interface Props {
   onChange: (value: string) => void;
   onBlur?: () => void;
   category?: EstablishmentCategory;
-  city?: string;
+  /** Current planner destination — suggestions from this city appear first */
+  destination?: string;
   placeholder?: string;
   className?: string;
   onEstablishmentSelect?: (establishment: Establishment) => void;
@@ -31,7 +33,7 @@ export function EstablishmentAutocomplete({
   onChange,
   onBlur,
   category,
-  city,
+  destination,
   placeholder = "Search or type freely…",
   className = "adm-input",
   onEstablishmentSelect,
@@ -46,6 +48,7 @@ export function EstablishmentAutocomplete({
     "idle"
   );
   const debouncedQuery = useDebouncedValue(value.trim(), 250);
+  const destinationTrimmed = destination?.trim() ?? "";
 
   useEffect(() => {
     if (!open) return;
@@ -53,8 +56,8 @@ export function EstablishmentAutocomplete({
     const params = new URLSearchParams();
     if (debouncedQuery) params.set("q", debouncedQuery);
     if (category) params.set("category", category);
-    if (city?.trim()) params.set("city", city.trim());
-    params.set("limit", "12");
+    if (destinationTrimmed) params.set("prioritize_city", destinationTrimmed);
+    params.set("limit", "20");
 
     setLoading(true);
     fetch(`/api/establishments?${params}`)
@@ -72,7 +75,7 @@ export function EstablishmentAutocomplete({
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, category, city, open]);
+  }, [debouncedQuery, category, destinationTrimmed, open]);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -86,12 +89,21 @@ export function EstablishmentAutocomplete({
     (r) => r.name.trim().toLowerCase() === value.trim().toLowerCase()
   );
 
-  const showSave =
+  const canSaveToLibrary =
     allowSaveToLibrary &&
     category &&
     value.trim().length > 0 &&
+    destinationTrimmed.length > 0 &&
     !exactMatch &&
     saveState !== "saved";
+
+  const saveLabel = useMemo(() => {
+    if (saveState === "saving") return "Saving…";
+    if (saveState === "error") return "Error saving — retry";
+    return destinationTrimmed
+      ? `Save to library (${destinationTrimmed})`
+      : "Save to library";
+  }, [saveState, destinationTrimmed]);
 
   const selectEstablishment = useCallback(
     (est: Establishment) => {
@@ -103,7 +115,7 @@ export function EstablishmentAutocomplete({
   );
 
   const saveToLibrary = async () => {
-    if (!category || !value.trim()) return;
+    if (!category || !value.trim() || !destinationTrimmed) return;
     setSaveState("saving");
     try {
       const res = await fetch("/api/establishments", {
@@ -112,7 +124,7 @@ export function EstablishmentAutocomplete({
         body: JSON.stringify({
           name: value.trim(),
           category,
-          city: city?.trim() ?? "",
+          city: destinationTrimmed,
           address: "",
           contact_name: "",
           phone: "",
@@ -160,44 +172,55 @@ export function EstablishmentAutocomplete({
           {loading ? (
             <li className="est-suggestion est-suggestion--muted">Searching…</li>
           ) : null}
-          {results.map((est) => (
-            <li key={est.id}>
-              <button
-                type="button"
-                className="est-suggestion"
-                role="option"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => selectEstablishment(est)}
-              >
-                <span className="est-suggestion-name">{est.name}</span>
-                <span className="est-suggestion-meta">
-                  {[
-                    ESTABLISHMENT_CATEGORY_LABELS[
-                      est.category as EstablishmentCategory
-                    ] ?? est.category,
-                    est.city,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </button>
-            </li>
-          ))}
+          {results.map((est) => {
+            const isPriority =
+              destinationTrimmed.length > 0 &&
+              citiesMatch(est.city, destinationTrimmed);
+            return (
+              <li key={est.id}>
+                <button
+                  type="button"
+                  className={`est-suggestion${isPriority ? " est-suggestion--priority" : ""}`}
+                  role="option"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectEstablishment(est)}
+                >
+                  <span className="est-suggestion-name">{est.name}</span>
+                  <span className="est-suggestion-meta">
+                    {[
+                      ESTABLISHMENT_CATEGORY_LABELS[
+                        est.category as EstablishmentCategory
+                      ] ?? est.category,
+                      est.city,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    {isPriority ? " · current destination" : ""}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       ) : null}
-      {showSave ? (
+      {canSaveToLibrary ? (
         <button
           type="button"
           className="est-save-btn"
           onClick={() => void saveToLibrary()}
           disabled={saveState === "saving"}
         >
-          {saveState === "saving"
-            ? "Saving…"
-            : saveState === "error"
-              ? "Error saving — retry"
-              : "Save to library"}
+          {saveLabel}
         </button>
+      ) : null}
+      {allowSaveToLibrary &&
+      value.trim().length > 0 &&
+      !exactMatch &&
+      !destinationTrimmed &&
+      saveState !== "saved" ? (
+        <span className="est-save-hint">
+          Set planner destination to save this place to the library.
+        </span>
       ) : null}
       {saveState === "saved" ? (
         <span className="est-save-status">Saved to library</span>

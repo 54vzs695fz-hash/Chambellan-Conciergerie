@@ -85,7 +85,7 @@ function TripEstablishmentField({
   tripField,
   value,
   category,
-  city,
+  destination,
   onChange,
   onBlur,
 }: {
@@ -93,7 +93,7 @@ function TripEstablishmentField({
   tripField: keyof TripWithDays;
   value: string;
   category: EstablishmentCategory;
-  city?: string;
+  destination?: string;
   onChange: (key: keyof TripWithDays, value: string) => void;
   onBlur: () => void;
 }) {
@@ -102,7 +102,7 @@ function TripEstablishmentField({
       <EstablishmentAutocomplete
         value={value}
         category={category}
-        city={city}
+        destination={destination}
         placeholder={`${label} — search or type freely`}
         onChange={(next) => onChange(tripField, next)}
         onBlur={onBlur}
@@ -205,7 +205,7 @@ export function PlannerConciergeDashboard({
                     tripField={field.tripField}
                     value={String(trip[field.tripField] ?? "")}
                     category={category}
-                    city={trip.destination}
+                    destination={trip.destination}
                     onChange={onFieldChange}
                     onBlur={onFieldBlur}
                   />
@@ -276,7 +276,7 @@ export function PlannerConciergeDashboard({
                     <EstablishmentAutocomplete
                       value={String(trip[row.nameField] ?? "")}
                       category={category}
-                      city={trip.destination}
+                      destination={trip.destination}
                       placeholder="Name / Contact — search or type freely"
                       onChange={(next) => onFieldChange(row.nameField, next)}
                       onBlur={onFieldBlur}

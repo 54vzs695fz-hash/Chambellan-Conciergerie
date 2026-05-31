@@ -24,6 +24,11 @@ export function EstablishmentForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.city.trim()) {
+      setError("City / destination is required.");
+      setStatus("error");
+      return;
+    }
     setSaving(true);
     setError(null);
     setStatus("idle");
@@ -126,6 +131,8 @@ export function EstablishmentForm({
             className="field-input"
             value={form.city}
             onChange={(e) => set("city", e.target.value)}
+            placeholder="e.g. Saint-Tropez, Monaco, Dubai"
+            required
           />
         </div>
       </div>

@@ -81,9 +81,17 @@ assert("planner error save state", saveHook.includes('"error"'));
 const plannerEditor = read("src/components/planner/PlannerEditor.tsx");
 assert("planner shows Error saving", plannerEditor.includes("Error saving"));
 
-// ─── Sidebar nav ───
+// ─── Sidebar nav & city organization ───
 const sidebar = read("src/components/layout/Sidebar.tsx");
+const autocomplete = read("src/components/establishments/EstablishmentAutocomplete.tsx");
+const libraryPage = read("src/app/establishments/page.tsx");
+const establishmentsDb = read("src/lib/db/establishments.ts");
+
 assert("sidebar Library link", sidebar.includes("/establishments"));
+assert("planner autocomplete prioritizes destination", autocomplete.includes("prioritize_city"));
+assert("library groups by city", libraryPage.includes("groupEstablishmentsByCity"));
+assert("city required validation", establishmentsDb.includes("City / destination is required"));
+assert("cities API route exists", existsSync(join(root, "src/app/api/establishments/cities/route.ts")));
 
 // ─── Viewport tokens (390 / 430 iPhone) ───
 assert("mobile breakpoint 767px", adminCss.includes("max-width: 767px"));

@@ -2,6 +2,10 @@ import type { Establishment as PrismaEstablishment } from "@/generated/prisma/cl
 import { prisma } from "@/lib/prisma";
 import type { Establishment } from "@/lib/types";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
+import {
+  sortEstablishmentsAlphabetically,
+  sortEstablishmentsWithPrioritizedCity,
+} from "@/lib/establishments/group-by-city";
 
 function mapEstablishment(row: PrismaEstablishment): Establishment {
   return {
@@ -29,17 +33,18 @@ export interface EstablishmentSearchOptions {
   q?: string;
   category?: string;
   city?: string;
+  prioritizeCity?: string;
   limit?: number;
 }
 
 export async function listEstablishments(
   options: EstablishmentSearchOptions = {}
 ): Promise<Establishment[]> {
-  const { q, category, city, limit = 50 } = options;
+  const { q, category, city, prioritizeCity, limit = 50 } = options;
   const where: {
-    OR?: Array<Record<string, unknown>>;
+    name?: { contains: string; mode: "insensitive" };
     category?: string;
-    city?: { contains: string; mode: "insensitive" };
+    city?: { equals: string; mode: "insensitive" };
   } = {};
 
   if (category && isEstablishmentCategory(category)) {
@@ -47,26 +52,26 @@ export async function listEstablishments(
   }
 
   if (city?.trim()) {
-    where.city = { contains: city.trim(), mode: "insensitive" };
+    where.city = { equals: city.trim(), mode: "insensitive" };
   }
 
   if (q?.trim()) {
-    const term = q.trim();
-    where.OR = [
-      { name: { contains: term, mode: "insensitive" } },
-      { city: { contains: term, mode: "insensitive" } },
-      { tags: { contains: term, mode: "insensitive" } },
-      { notes: { contains: term, mode: "insensitive" } },
-    ];
+    where.name = { contains: q.trim(), mode: "insensitive" };
   }
 
   const rows = await prisma.establishment.findMany({
     where,
-    orderBy: [{ name: "asc" }],
-    take: Math.min(Math.max(limit, 1), 100),
+    orderBy: [{ city: "asc" }, { name: "asc" }],
+    take: Math.min(Math.max(limit, 1), 200),
   });
 
-  return rows.map(mapEstablishment);
+  const mapped = rows.map(mapEstablishment);
+
+  if (prioritizeCity?.trim()) {
+    return sortEstablishmentsWithPrioritizedCity(mapped, prioritizeCity);
+  }
+
+  return sortEstablishmentsAlphabetically(mapped);
 }
 
 export async function getEstablishment(
@@ -79,7 +84,9 @@ export async function getEstablishment(
 export async function createEstablishment(
   data: Omit<Establishment, "id" | "created_at" | "updated_at">
 ): Promise<Establishment> {
-  const row = await prisma.establishment.create({ data });
+  const row = await prisma.establishment.create({
+    data: { ...data, city: data.city.trim() },
+  });
   return mapEstablishment(row);
 }
 
@@ -88,7 +95,10 @@ export async function updateEstablishment(
   data: Omit<Establishment, "id" | "created_at" | "updated_at">
 ): Promise<Establishment | undefined> {
   try {
-    const row = await prisma.establishment.update({ where: { id }, data });
+    const row = await prisma.establishment.update({
+      where: { id },
+      data: { ...data, city: data.city.trim() },
+    });
     return mapEstablishment(row);
   } catch {
     return undefined;
@@ -111,5 +121,14 @@ export async function listEstablishmentCities(): Promise<string[]> {
     distinct: ["city"],
     orderBy: { city: "asc" },
   });
-  return rows.map((row) => row.city).filter(Boolean);
+  return rows.map((row) => row.city.trim()).filter(Boolean);
+}
+
+export function validateEstablishmentInput(
+  data: Partial<Establishment>
+): string | null {
+  if (!data.name?.trim()) return "Name is required";
+  if (!data.city?.trim()) return "City / destination is required";
+  if (!data.category?.trim()) return "Category is required";
+  return null;
 }

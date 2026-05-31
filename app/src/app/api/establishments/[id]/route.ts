@@ -3,6 +3,7 @@ import {
   deleteEstablishment,
   getEstablishment,
   updateEstablishment,
+  validateEstablishmentInput,
 } from "@/lib/db/establishments";
 
 export const runtime = "nodejs";
@@ -43,11 +44,9 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
     const body = await req.json();
-    if (!body?.name?.trim()) {
-      return NextResponse.json(
-        { error: "Name is required" },
-        { status: 400 }
-      );
+    const validationError = validateEstablishmentInput(body);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
     const establishment = await updateEstablishment(establishmentId, body);
     if (!establishment) {

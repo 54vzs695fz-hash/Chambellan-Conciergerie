@@ -210,7 +210,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
         <EstablishmentAutocomplete
           value={title}
           category={category}
-          city={destination}
+          destination={destination}
           placeholder="Venue — search library or type freely"
           className="adm-input adm-input--venue"
           onChange={(next) => {

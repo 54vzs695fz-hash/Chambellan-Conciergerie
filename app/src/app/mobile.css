@@ -168,3 +168,34 @@
   text-transform: uppercase;
   color: #9a7b4f;
 }
+
+.est-save-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: #7a736c;
+  line-height: 1.4;
+}
+
+.est-suggestion--priority {
+  background: rgba(154, 123, 79, 0.06);
+}
+
+.est-library-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.est-city-group-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  padding-bottom: 0.35rem;
+  border-bottom: 0.5px solid rgba(221, 212, 200, 0.7);
+}
