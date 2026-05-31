@@ -212,6 +212,9 @@ export function getClientTravelInfoIcon(key: string): string {
   }
 }
 
+/** Guest name split for planner headers — given name(s) / surname. */
+export { formatGuestName, type FormattedGuestName } from "./format-guest-name";
+
 /** Guest count shown beneath the client name in the header (uppercase, hidden when empty). */
 export function formatClientGuestCount(
   tailoredFor: string | undefined | null

@@ -121,6 +121,30 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
     lockDayRows(dayH);
     applyTimelineLayout();
     resetAncillaryHeights(stay, concierge);
+
+    function fitGuestNames() {
+      document.querySelectorAll(".lux-client-name").forEach((block) => {
+        block.classList.remove(
+          "lux-client-name--tight",
+          "lux-client-name--compact",
+          "lux-client-name--min"
+        );
+        const lines = block.querySelectorAll(".lux-client-line");
+        if (!lines.length) return;
+        const fits = () => {
+          const width = block.clientWidth;
+          return [...lines].every((line) => line.scrollWidth <= width + 1);
+        };
+        if (fits()) return;
+        block.classList.add("lux-client-name--tight");
+        if (fits()) return;
+        block.classList.add("lux-client-name--compact");
+        if (fits()) return;
+        block.classList.add("lux-client-name--min");
+      });
+    }
+
+    fitGuestNames();
   } catch (err) {
     console.error("lockPlannerPrintLayout", err);
   }

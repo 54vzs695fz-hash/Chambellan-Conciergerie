@@ -16,6 +16,7 @@ import {
   PLANNER_DOCUMENT_SUBTITLE,
   type PlannerExportVariant,
 } from "@/lib/planner/planner-sheet-model";
+import { GuestNameDisplay } from "@/components/planner/GuestNameDisplay";
 import {
   formatDateRange,
   formatHeaderTravelDates,
@@ -450,7 +451,7 @@ export function PlannerLuxuryDocument({
             {showClientIdentity ? (
               <div className="lux-client-identity">
                 {trip.client_name?.trim() ? (
-                  <p className="lux-client">{trip.client_name}</p>
+                  <GuestNameDisplay name={trip.client_name} />
                 ) : null}
                 {clientGuestCount ? (
                   <p className="lux-client-guests">{clientGuestCount}</p>
