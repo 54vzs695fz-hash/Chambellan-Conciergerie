@@ -11,21 +11,42 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const PLANNER_PDF_PAGE = { width: 1123, height: 794, safeMarginPx: 20 };
+
 const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = fs.readFileSync(
   path.join(__dirname, "../src/lib/pdf/lock-planner-print-layout-script.ts"),
   "utf8"
-).replace(/^\/\*\*[\s\S]*?\*\/\s*export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `/, "").replace(/`;\s*$/, "");
-const baseUrl = (process.env.BASE_URL ?? "https://chambellan-conciergerie.vercel.app").replace(
-  /\/$/,
-  ""
-);
+)
+  .replace(/^\/\*\*[\s\S]*?\*\/\s*export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `/, "")
+  .replace(/`;\s*$/, "");
+
+const PLANNER_PDF_FIT_SCALE_SCRIPT = fs.readFileSync(
+  path.join(__dirname, "../src/lib/pdf/planner-pdf-capture.ts"),
+  "utf8"
+).match(/export const PLANNER_PDF_FIT_SCALE_SCRIPT = `([\s\S]*?)`;/)[1];
+
+const PLANNER_PDF_BOUNDS_CHECK_SCRIPT = fs.readFileSync(
+  path.join(__dirname, "../src/lib/pdf/planner-pdf-capture.ts"),
+  "utf8"
+).match(/export const PLANNER_PDF_BOUNDS_CHECK_SCRIPT = `([\s\S]*?)`;/)[1];
+
+const baseUrl = (process.env.BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
 const tripId = Number(process.env.TRIP_ID ?? "1");
 const outDir = path.join(__dirname, "..", "tmp");
 
-async function exportPdf(page, mode) {
+async function preparePage(page, mode) {
   const url = `${baseUrl}/planner/${tripId}/print?mode=${mode}`;
+  await page.setViewport({
+    width: PLANNER_PDF_PAGE.width,
+    height: PLANNER_PDF_PAGE.height,
+    deviceScaleFactor: 1,
+  });
+  await page.emulateMediaType("print");
   await page.goto(url, { waitUntil: "networkidle0", timeout: 60_000 });
-  await page.waitForSelector(".lux-document", { timeout: 30_000 });
+  await page.waitForSelector(".lux-print-root--capture .lux-document", {
+    timeout: 30_000,
+  });
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate((script) => {
     eval(script);
@@ -37,35 +58,31 @@ async function exportPdf(page, mode) {
     )
     .catch(() => {});
 
-  const overflow = await page.evaluate(() => {
-    const doc = document.querySelector(".lux-document");
-    if (!doc) return { ok: false, reason: "missing document" };
-    const docRect = doc.getBoundingClientRect();
-    const clipped = [];
-    doc.querySelectorAll(".lux-travel-card, .lux-activity-card, .lux-travel-info-name").forEach((el) => {
-      const r = el.getBoundingClientRect();
-      if (r.bottom > docRect.bottom + 2 || r.right > docRect.right + 2) {
-        clipped.push(el.className);
-      }
-    });
-    return { ok: clipped.length === 0, clipped: clipped.slice(0, 5), docHeight: Math.round(docRect.height) };
-  });
+  const scale = await page.evaluate((script) => eval(script), PLANNER_PDF_FIT_SCALE_SCRIPT);
+  const bounds = await page.evaluate((script) => eval(script), PLANNER_PDF_BOUNDS_CHECK_SCRIPT);
+  return { scale, bounds };
+}
+
+async function exportPdf(page, mode) {
+  const { scale, bounds } = await preparePage(page, mode);
 
   const pdf = await page.pdf({
     format: "A4",
     landscape: true,
     printBackground: true,
-    preferCSSPageSize: true,
-    margin:
-      mode === "client"
-        ? { top: "2.5mm", right: "1.5mm", bottom: "2.5mm", left: "1.5mm" }
-        : { top: "4mm", right: "4mm", bottom: "4mm", left: "4mm" },
+    preferCSSPageSize: false,
+    scale,
+    margin: { top: "0", right: "0", bottom: "0", left: "0" },
   });
 
   const file = path.join(outDir, `export-test-${mode}.pdf`);
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(file, pdf);
-  return { file, bytes: pdf.length, overflow };
+
+  const screenshot = path.join(outDir, `export-test-${mode}.png`);
+  await page.screenshot({ path: screenshot, fullPage: false });
+
+  return { file, bytes: pdf.length, scale, bounds, screenshot };
 }
 
 async function main() {
@@ -77,21 +94,24 @@ async function main() {
 
   let exitCode = 0;
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1123, height: 794, deviceScaleFactor: 1 });
-    await page.emulateMediaType("print");
-
     for (const mode of ["client", "concierge"]) {
+      const page = await browser.newPage();
       console.log(`Exporting ${mode} PDF from ${baseUrl}/planner/${tripId}/print?mode=${mode}…`);
       try {
         const result = await exportPdf(page, mode);
         console.log(`  PASS: ${result.bytes} bytes -> ${result.file}`);
-        if (!result.overflow.ok) {
-          console.error(`  WARN: possible overflow (doc ${result.overflow.docHeight}px):`, result.overflow.clipped);
+        console.log(`  scale: ${result.scale.toFixed(4)}`);
+        console.log(`  bounds ok: ${result.bounds.ok}`);
+        if (result.bounds.issues?.length) {
+          result.bounds.issues.forEach((issue) => console.error(`  ISSUE: ${issue}`));
+          exitCode = 1;
         }
+        console.log(`  screenshot: ${result.screenshot}`);
       } catch (err) {
         console.error(`  FAIL: ${err.message}`);
         exitCode = 1;
+      } finally {
+        await page.close();
       }
     }
   } finally {

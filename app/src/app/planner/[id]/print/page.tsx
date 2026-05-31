@@ -25,7 +25,7 @@ export default async function PlannerPrintPage({
   return (
     <>
       <style>{`html, body { height: 100%; margin: 0; padding: 0; }`}</style>
-      <div className={`lux-print-root lux-print-root--${variant}`}>
+      <div className={`lux-print-root lux-print-root--capture lux-print-root--${variant}`}>
         <PlannerPrintLayoutLock />
         <PlannerLuxuryDocument trip={trip} variant={variant} />
       </div>
