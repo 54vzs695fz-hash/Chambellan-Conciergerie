@@ -1141,30 +1141,7 @@
 
 @page {
   size: A4 landscape;
-  margin: 0;
-}
-
-.lux-print-root--capture {
-  box-sizing: border-box;
-  padding: 20px;
-  overflow: visible;
-  width: 100%;
-  max-width: 1123px;
-  margin: 0 auto;
-}
-
-.lux-print-root--capture .lux-document {
-  overflow: visible;
-  box-sizing: border-box;
-}
-
-.lux-print-root--capture .lux-header,
-.lux-print-root--capture .lux-meta,
-.lux-print-root--capture .lux-meta-left,
-.lux-print-root--capture .lux-meta-right,
-.lux-print-root--capture .lux-client-identity,
-.lux-print-root--capture .lux-footer {
-  overflow: visible;
+  margin: 4mm;
 }
 
 .lux-print-root {

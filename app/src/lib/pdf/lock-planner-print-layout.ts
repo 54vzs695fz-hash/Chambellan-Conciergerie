@@ -5,7 +5,6 @@ export function lockPlannerPrintLayout(): void {
   } catch (err) {
     console.error("lockPlannerPrintLayout", err);
   }
-  document.documentElement.setAttribute("data-lux-print-ready", "true");
 }
 
 const PLANNER_GAP_PX = 24;

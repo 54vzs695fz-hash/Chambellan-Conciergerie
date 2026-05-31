@@ -9,64 +9,42 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import {
-  PLANNER_PDF_BOUNDS_CHECK_SCRIPT,
-  PLANNER_PDF_FIT_SCALE_SCRIPT,
-  PLANNER_PDF_MARGINS,
-  PLANNER_PDF_PAGE,
-} from "./lib/planner-pdf-capture.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = fs.readFileSync(
-  path.join(__dirname, "../src/lib/pdf/lock-planner-print-layout-script.ts"),
-  "utf8"
-)
-  .replace(/^\/\*\*[\s\S]*?\*\/\s*export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `/, "")
-  .replace(/`;\s*$/, "");
-
-const baseUrl = (process.env.BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
+const baseUrl = (process.env.BASE_URL ?? "https://chambellan-conciergerie.vercel.app").replace(
+  /\/$/,
+  ""
+);
 const tripId = Number(process.env.TRIP_ID ?? "1");
 const outDir = path.join(__dirname, "..", "tmp");
 
-async function preparePage(page, mode) {
+async function exportPdf(page, mode) {
   const url = `${baseUrl}/planner/${tripId}/print?mode=${mode}`;
-  await page.setViewport({
-    width: PLANNER_PDF_PAGE.width,
-    height: PLANNER_PDF_PAGE.height,
-    deviceScaleFactor: 1,
-  });
+  await page.setViewport({ width: 1123, height: 794, deviceScaleFactor: 1 });
   await page.emulateMediaType("print");
   await page.goto(url, { waitUntil: "networkidle0", timeout: 60_000 });
-  await page.waitForSelector(".lux-print-root--capture .lux-document", {
-    timeout: 30_000,
-  });
+  await page.waitForSelector(".lux-document", { timeout: 30_000 });
   await page.evaluate(() => document.fonts.ready);
-  await page.evaluate((script) => {
-    eval(script);
-  }, LOCK_PLANNER_PRINT_LAYOUT_SCRIPT);
-  await page
-    .waitForFunction(
-      () => document.documentElement.getAttribute("data-lux-print-ready") === "true",
-      { timeout: 15_000 }
-    )
-    .catch(() => {});
+  await page.waitForFunction(
+    () =>
+      document.documentElement.getAttribute("data-lux-export-ready") === "true",
+    { timeout: 30_000 }
+  );
 
-  const scale = await page.evaluate((script) => eval(script), PLANNER_PDF_FIT_SCALE_SCRIPT);
-  const bounds = await page.evaluate((script) => eval(script), PLANNER_PDF_BOUNDS_CHECK_SCRIPT);
-  return { scale, bounds };
-}
-
-async function exportPdf(page, mode) {
-  const { scale, bounds } = await preparePage(page, mode);
+  const manifest = await page.evaluate(() => ({
+    expected: document.documentElement.getAttribute("data-lux-export-expected"),
+    actual: document.documentElement.getAttribute("data-lux-export-actual"),
+  }));
 
   const pdf = await page.pdf({
     format: "A4",
     landscape: true,
     printBackground: true,
-    preferCSSPageSize: false,
-    scale,
-    margin: PLANNER_PDF_MARGINS,
+    preferCSSPageSize: true,
+    margin:
+      mode === "client"
+        ? { top: "2.5mm", right: "1.5mm", bottom: "2.5mm", left: "1.5mm" }
+        : { top: "4mm", right: "4mm", bottom: "4mm", left: "4mm" },
   });
 
   const file = path.join(outDir, `export-test-${mode}.pdf`);
@@ -76,7 +54,7 @@ async function exportPdf(page, mode) {
   const screenshot = path.join(outDir, `export-test-${mode}.png`);
   await page.screenshot({ path: screenshot, fullPage: false });
 
-  return { file, bytes: pdf.length, scale, bounds, screenshot };
+  return { file, bytes: pdf.length, manifest, screenshot };
 }
 
 async function main() {
@@ -93,11 +71,20 @@ async function main() {
       console.log(`Exporting ${mode} PDF from ${baseUrl}/planner/${tripId}/print?mode=${mode}…`);
       try {
         const result = await exportPdf(page, mode);
+        const expected = JSON.parse(result.manifest.expected ?? "{}");
+        const actual = JSON.parse(result.manifest.actual ?? "{}");
         console.log(`  PASS: ${result.bytes} bytes -> ${result.file}`);
-        console.log(`  scale: ${result.scale.toFixed(4)}`);
-        console.log(`  bounds ok: ${result.bounds.ok}`);
-        if (result.bounds.issues?.length) {
-          result.bounds.issues.forEach((issue) => console.error(`  ISSUE: ${issue}`));
+        console.log(
+          `  activities: expected ${expected.activities}, rendered ${actual.activities}`
+        );
+        console.log(
+          `  day columns: expected ${expected.dayColumns}, rendered ${actual.dayColumns}`
+        );
+        if (
+          expected.activities !== actual.activities ||
+          expected.dayColumns !== actual.dayColumns
+        ) {
+          console.error("  FAIL: export manifest mismatch");
           exitCode = 1;
         }
         console.log(`  screenshot: ${result.screenshot}`);

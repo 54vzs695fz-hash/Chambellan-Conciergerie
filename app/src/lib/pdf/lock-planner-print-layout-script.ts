@@ -111,6 +111,5 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
   } catch (err) {
     console.error("lockPlannerPrintLayout", err);
   }
-  document.documentElement.setAttribute("data-lux-print-ready", "true");
 })();
 `;

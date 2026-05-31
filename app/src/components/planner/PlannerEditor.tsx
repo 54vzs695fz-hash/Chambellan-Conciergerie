@@ -21,7 +21,7 @@ import {
 } from "@/lib/planner/trip-days-sync";
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
-import { PlannerPrintLayoutLock } from "./PlannerPrintLayoutLock";
+import { PlannerExportReadyGate } from "./PlannerExportReadyGate";
 import { usePlannerSave } from "./use-planner-save";
 
 type ViewMode = "concierge" | "client";
@@ -399,8 +399,8 @@ export function PlannerEditor({ initialTrip }: Props) {
         <div className="lux-client-preview">
           <PlannerPreviewErrorBoundary key={`preview-${trip.id}-${previewTrip.updated_at}`}>
             <div className="lux-print-root lux-print-root--client">
-              <PlannerPrintLayoutLock />
               <PlannerLuxuryDocument trip={previewTrip} variant="client" />
+              <PlannerExportReadyGate trip={previewTrip} variant="client" />
             </div>
           </PlannerPreviewErrorBoundary>
         </div>
