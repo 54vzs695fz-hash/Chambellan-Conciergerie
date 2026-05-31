@@ -126,9 +126,22 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
       document.querySelectorAll(".lux-meta--travel").forEach((meta) => {
         const leftCol = meta.querySelector(".lux-meta-left");
         const rightCol = meta.querySelector(".lux-meta-right");
-        const leftWidth = leftCol ? leftCol.clientWidth : 0;
-        const rightWidth = rightCol ? rightCol.clientWidth : 0;
-        const fitClasses = ["lux-header-fit--tight", "lux-header-fit--compact", "lux-header-fit--min"];
+        const fitClasses = [
+          "lux-header-fit--tight",
+          "lux-header-fit--compact",
+          "lux-header-fit--min",
+          "lux-header-fit--wrap",
+        ];
+
+        function columnInnerWidth(col) {
+          const style = window.getComputedStyle(col);
+          const padding =
+            parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+          return Math.max(0, col.clientWidth - padding);
+        }
+
+        const leftWidth = leftCol ? columnInnerWidth(leftCol) : 0;
+        const rightWidth = rightCol ? columnInnerWidth(rightCol) : 0;
 
         function clearFit(el) {
           fitClasses.forEach((cls) => el.classList.remove(cls));
@@ -144,6 +157,8 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
           el.classList.add("lux-header-fit--compact");
           if (fits()) return;
           el.classList.add("lux-header-fit--min");
+          if (fits()) return;
+          el.classList.add("lux-header-fit--wrap");
         }
 
         if (leftCol && leftWidth > 0) {
@@ -153,16 +168,11 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
         }
 
         if (rightCol && rightWidth > 0) {
-          const nameBlock = rightCol.querySelector(".lux-client-name");
-          if (nameBlock) {
-            nameBlock.style.maxWidth = rightWidth + "px";
-            nameBlock.querySelectorAll(".lux-client-line").forEach((line) => {
-              applyFit(line, rightWidth);
-            });
-          }
+          rightCol.querySelectorAll(".lux-client-line").forEach((line) => {
+            applyFit(line, rightWidth);
+          });
           const guests = rightCol.querySelector(".lux-client-guests");
           if (guests) {
-            guests.style.maxWidth = rightWidth + "px";
             applyFit(guests, rightWidth);
           }
         }

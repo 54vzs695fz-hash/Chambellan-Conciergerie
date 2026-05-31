@@ -407,6 +407,22 @@
   font-size: 0.9em;
 }
 
+.lux-header--travel .lux-header-dates-start.lux-header-fit--wrap,
+.lux-header--travel .lux-header-dates-end.lux-header-fit--wrap {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.lux-header--travel .lux-client-guests.lux-header-fit--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.lux-header--travel .lux-client-line.lux-header-fit--wrap {
+  letter-spacing: 0.02em;
+  font-size: 0.82em;
+}
+
 .lux-dates-row {
   display: flex;
   align-items: center;
@@ -1425,9 +1441,74 @@
   margin-bottom: 0.12rem;
 }
 
+.lux-header--travel {
+  box-sizing: border-box;
+  width: 100%;
+  padding-left: var(--lux-header-safe-x, 0.8rem);
+  padding-right: var(--lux-header-safe-x, 0.8rem);
+}
+
 .lux-header--travel .lux-meta--travel {
+  display: grid;
+  grid-template-columns: minmax(0, 30%) minmax(0, 40%) minmax(0, 30%);
+  align-items: center;
+  column-gap: 0.65rem;
+  row-gap: 0.65rem;
+  width: 100%;
+  box-sizing: border-box;
   border-bottom: none;
   padding-bottom: 0.2rem;
+  overflow: visible;
+}
+
+.lux-header--travel .lux-meta-left,
+.lux-header--travel .lux-meta-center,
+.lux-header--travel .lux-meta-right {
+  justify-self: stretch;
+  align-self: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.lux-header--travel .lux-meta-left {
+  text-align: left;
+  padding-right: 0.2rem;
+}
+
+.lux-header--travel .lux-meta-center {
+  text-align: center;
+}
+
+.lux-header--travel .lux-meta-right {
+  text-align: right;
+  padding-left: 0.2rem;
+  padding-top: 0.15rem;
+}
+
+.lux-header--travel .lux-header-dates {
+  width: 100%;
+  max-width: 100%;
+}
+
+.lux-header--travel .lux-header-dates-start,
+.lux-header--travel .lux-header-dates-end {
+  width: 100%;
+  max-width: 100%;
+}
+
+.lux-header--travel .lux-client-identity {
+  width: 100%;
+  max-width: 100%;
+  align-items: flex-end;
+}
+
+.lux-header--travel .lux-client-name,
+.lux-header--travel .lux-client-guests {
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
 }
 
 .lux-header-dates {
@@ -1991,6 +2072,18 @@
   flex-shrink: 0;
 }
 
+.lux-print-root .lux-header--travel {
+  --lux-header-safe-x: 0.9rem;
+}
+
+.lux-print-root--client .lux-header--travel {
+  --lux-header-safe-x: 1.15rem;
+}
+
+.lux-print-root .lux-header--travel .lux-meta--travel {
+  column-gap: 0.45rem;
+}
+
 .lux-print-root--client .lux-logo-wrap {
   margin-bottom: 0.22rem;
 }
@@ -2061,8 +2154,8 @@
   padding-top: 0;
 }
 
-.lux-print-root--client .lux-client-name {
-  width: max-content;
+.lux-print-root--client .lux-header--travel .lux-client-name {
+  width: 100%;
   max-width: 100%;
 }
 
