@@ -284,18 +284,20 @@ export function plannerExportDomMatchesManifest(
     actual.notes !== expected.notes ||
     actual.team !== expected.team ||
     actual.stayContacts !== expected.stayContacts ||
-    actual.afternoon !== expected.afternoon ||
-    actual.evening !== expected.evening
+    actual.visibleActivities !== expected.activities
   ) {
     return false;
   }
 
-  if (
-    actual.visibleActivities !== expected.activities ||
-    actual.visibleAfternoon !== expected.afternoon ||
-    actual.visibleEvening !== expected.evening
-  ) {
-    return false;
+  if (expected.variant === "client") {
+    if (
+      actual.afternoon !== expected.afternoon ||
+      actual.evening !== expected.evening ||
+      actual.visibleAfternoon !== expected.afternoon ||
+      actual.visibleEvening !== expected.evening
+    ) {
+      return false;
+    }
   }
 
   if (expected.byDay.length !== actual.byDay.length) return false;
@@ -303,11 +305,18 @@ export function plannerExportDomMatchesManifest(
   return expected.byDay.every((expectedDay, index) => {
     const actualDay = actual.byDay[index];
     if (!actualDay) return false;
+    if (
+      actualDay.total !== expectedDay.total ||
+      actualDay.visibleTotal !== expectedDay.total
+    ) {
+      return false;
+    }
+
+    if (expected.variant !== "client") return true;
+
     return (
-      actualDay.total === expectedDay.total &&
       actualDay.afternoon === expectedDay.afternoon &&
       actualDay.evening === expectedDay.evening &&
-      actualDay.visibleTotal === expectedDay.total &&
       actualDay.visibleAfternoon === expectedDay.afternoon &&
       actualDay.visibleEvening === expectedDay.evening
     );

@@ -96,9 +96,10 @@ export async function generatePlannerPdf(
     if (
       expected.activities !== actual.activities ||
       expected.dayColumns !== actual.dayColumns ||
-      expected.evening !== actual.evening ||
       expected.activities !== actual.visibleActivities ||
-      expected.evening !== actual.visibleEvening
+      (mode === "client" &&
+        (expected.evening !== actual.evening ||
+          expected.evening !== actual.visibleEvening))
     ) {
       throw new Error(
         `PDF export DOM mismatch: expected ${expected.activities} activities (${expected.evening} evening), visible ${actual.visibleActivities} (${actual.visibleEvening} evening)`
@@ -111,9 +112,19 @@ export async function generatePlannerPdf(
       if (
         !actualDay ||
         expectedDay.total !== actualDay.total ||
-        expectedDay.evening !== actualDay.evening ||
-        expectedDay.total !== actualDay.visibleTotal ||
-        expectedDay.evening !== actualDay.visibleEvening
+        expectedDay.total !== actualDay.visibleTotal
+      ) {
+        throw new Error(
+          `PDF export day mismatch for ${expectedDay?.date ?? `day ${i + 1}`}`
+        );
+      }
+
+      if (
+        mode === "client" &&
+        (expectedDay.evening !== actualDay.evening ||
+          expectedDay.evening !== actualDay.visibleEvening ||
+          expectedDay.afternoon !== actualDay.afternoon ||
+          expectedDay.afternoon !== actualDay.visibleAfternoon)
       ) {
         throw new Error(
           `PDF export day mismatch for ${expectedDay?.date ?? `day ${i + 1}`}`
