@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarFiltersBar } from "@/components/calendar/CalendarFilters";
 import { CalendarFollowUpPanel } from "@/components/calendar/CalendarFollowUpPanel";
+import { CalendarLegend } from "@/components/calendar/CalendarLegend";
 import { CalendarListView } from "@/components/calendar/CalendarListView";
 import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
 import { CalendarProgrammeSidePanel } from "@/components/calendar/CalendarProgrammeSidePanel";
@@ -412,6 +413,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
           clients={clients}
           onChange={setFilters}
         />
+
+        <CalendarLegend />
 
         <CalendarFollowUpPanel
           programmes={programmes}
