@@ -245,3 +245,23 @@ export async function listPendingChecklistItems(
 
   return pending.slice(0, 30);
 }
+
+export async function listOpenChecklistItems(): Promise<ChecklistItem[]> {
+  const rows = await prisma.tripChecklistItem.findMany({
+    where: { status: { not: "done" } },
+    orderBy: [{ trip_id: "asc" }, { sort_order: "asc" }, { id: "asc" }],
+  });
+  return rows.map(mapChecklistItem);
+}
+
+export async function listDashboardFollowUpItems() {
+  const { buildDashboardFollowUpSummary } = await import(
+    "@/lib/dashboard/follow-up-summary"
+  );
+  const { listTrips } = await import("@/lib/db/trips");
+  const [trips, checklistItems] = await Promise.all([
+    listTrips(),
+    listOpenChecklistItems(),
+  ]);
+  return buildDashboardFollowUpSummary(trips, checklistItems);
+}

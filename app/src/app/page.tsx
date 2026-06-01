@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { DashboardCalendarWidget } from "@/components/calendar/DashboardCalendarWidget";
-import { DashboardChecklistWidget } from "@/components/calendar/DashboardChecklistWidget";
+import { DashboardFollowUpSummary } from "@/components/dashboard/DashboardFollowUpSummary";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
-import { listPendingChecklistItems } from "@/lib/db/checklist";
+import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
 import { listTrips } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const allTrips = await listTrips();
   const trips = allTrips.slice(0, 6);
   const clients = (await listClients()).slice(0, 5);
-  const pendingChecklist = await listPendingChecklistItems();
+  const pendingFollowUp = await listDashboardFollowUpItems();
 
   return (
     <div className="page-shell max-w-4xl">
@@ -43,7 +43,7 @@ export default async function DashboardPage() {
 
       <DashboardCalendarWidget trips={allTrips} />
 
-      <DashboardChecklistWidget initialItems={pendingChecklist} />
+      <DashboardFollowUpSummary initialItems={pendingFollowUp} />
 
       <section className="mb-10">
         <div className="flex items-center justify-between mb-4">

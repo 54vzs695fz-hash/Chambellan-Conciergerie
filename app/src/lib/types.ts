@@ -56,6 +56,24 @@ export interface PendingChecklistItem extends ChecklistItem {
   planner_href: string;
 }
 
+export type DashboardFollowUpKind =
+  | "urgent"
+  | "arrival"
+  | "payment"
+  | "booking"
+  | "itinerary";
+
+export interface DashboardFollowUpItem {
+  key: string;
+  checklistItemId: number | null;
+  tripId: number;
+  kind: DashboardFollowUpKind;
+  task: string;
+  client_name: string;
+  destination: string;
+  timing: string;
+}
+
 export interface Client {
   id: number;
   full_name: string;

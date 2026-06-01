@@ -46,4 +46,131 @@ body {
   .section-title {
     @apply text-[10px] uppercase tracking-[0.25em] text-gold font-medium;
   }
+
+  .dash-follow-up-head {
+    @apply flex items-center justify-between mb-4;
+  }
+
+  .dash-follow-up-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .dash-follow-up-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: #fff;
+    border: 0.5px solid rgba(229, 221, 210, 0.85);
+    border-radius: 6px;
+  }
+
+  .dash-follow-up-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dash-follow-up-kind {
+    display: inline-block;
+    margin-bottom: 0.3rem;
+    padding: 0.12rem 0.45rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    border: 0.5px solid transparent;
+  }
+
+  .dash-follow-up-kind--urgent {
+    color: #8a7348;
+    background: rgba(200, 164, 107, 0.12);
+    border-color: rgba(200, 164, 107, 0.35);
+  }
+
+  .dash-follow-up-kind--arrival {
+    color: #5f7389;
+    background: rgba(123, 148, 181, 0.12);
+    border-color: rgba(123, 148, 181, 0.35);
+  }
+
+  .dash-follow-up-kind--payment {
+    color: #7a6a5a;
+    background: rgba(168, 148, 128, 0.12);
+    border-color: rgba(168, 148, 128, 0.35);
+  }
+
+  .dash-follow-up-kind--booking {
+    color: #5f755f;
+    background: rgba(125, 155, 125, 0.1);
+    border-color: rgba(125, 155, 125, 0.35);
+  }
+
+  .dash-follow-up-kind--itinerary {
+    color: #7a736c;
+    background: rgba(168, 168, 168, 0.1);
+    border-color: rgba(168, 168, 168, 0.35);
+  }
+
+  .dash-follow-up-client {
+    margin: 0;
+    font-family: var(--font-cormorant), serif;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    color: #9a7b4f;
+  }
+
+  .dash-follow-up-sep {
+    margin: 0 0.35rem;
+    color: #b5aea4;
+  }
+
+  .dash-follow-up-task {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: #5c5650;
+  }
+
+  .dash-follow-up-timing {
+    margin: 0.15rem 0 0;
+    font-size: 0.68rem;
+    color: #9a948c;
+  }
+
+  .dash-follow-up-done,
+  .dash-follow-up-view {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .dash-follow-up-done {
+    color: #5f755f;
+    background: rgba(125, 155, 125, 0.08);
+    border: 0.5px solid rgba(125, 155, 125, 0.35);
+    cursor: pointer;
+  }
+
+  .dash-follow-up-done:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .dash-follow-up-view {
+    color: #9a7b4f;
+    border: 0.5px solid rgba(154, 123, 79, 0.35);
+  }
 }
