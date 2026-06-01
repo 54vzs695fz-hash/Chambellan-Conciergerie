@@ -4,7 +4,7 @@ import {
   CalendarQuickActions,
   calendarEventClasses,
 } from "@/components/calendar/CalendarQuickActions";
-import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
 import {
   buildWeekDays,
   formatDayNum,
@@ -84,11 +84,7 @@ export function CalendarWeekView({
                   <span>
                     {p.clientName} · {p.destination}
                   </span>
-                  <ProgrammeStatusBadge
-                    status={p.followUpStatus}
-                    showDot
-                    arrivalDate={p.arrivalDate}
-                  />
+                  <CalendarProgrammeBadges programme={p} showFollowUpDot />
                 </button>
                 <CalendarQuickActions
                   programme={p}

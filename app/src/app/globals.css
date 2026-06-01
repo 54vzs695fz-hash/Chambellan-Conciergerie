@@ -173,4 +173,60 @@ body {
     color: #9a7b4f;
     border: 0.5px solid rgba(154, 123, 79, 0.35);
   }
+
+  .dash-pay-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .dash-pay-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .dash-pay-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .dash-pay-stat {
+    text-align: center;
+    padding: 0.35rem 0.25rem;
+  }
+
+  .dash-pay-value {
+    margin: 0;
+    font-family: var(--font-cormorant), serif;
+    font-size: 1.65rem;
+    line-height: 1.1;
+    color: #2a2622;
+  }
+
+  .dash-pay-value--pending {
+    color: #8a7348;
+  }
+
+  .dash-pay-value--deposit-paid {
+    color: #5f7389;
+  }
+
+  .dash-pay-value--fully-paid {
+    color: #5f755f;
+  }
+
+  .dash-pay-value--cancelled {
+    color: #9a948c;
+  }
+
+  .dash-pay-label {
+    margin: 0.25rem 0 0;
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9a948c;
+  }
 }

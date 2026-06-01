@@ -1,5 +1,6 @@
 import { formatClientGuestCount } from "@/lib/planner/planner-sheet-model";
-import type { Trip, TripFollowUpStatus } from "@/lib/types";
+import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
+import type { Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 export type CalendarView = "month" | "week" | "list";
 
@@ -11,6 +12,7 @@ export interface CalendarProgramme {
   departureDate: string;
   guestCount: string | null;
   followUpStatus: TripFollowUpStatus;
+  paymentStatus: TripPaymentStatus;
   plannerHref: string;
 }
 
@@ -99,6 +101,7 @@ export function tripToCalendarProgramme(trip: Trip): CalendarProgramme | null {
     departureDate: trip.departure_date,
     guestCount: formatClientGuestCount(trip.tailored_for),
     followUpStatus: trip.follow_up_status ?? "follow_up",
+    paymentStatus: normalizeTripPaymentStatus(trip.payment_status),
     plannerHref: `/planner/${trip.id}`,
   };
 }

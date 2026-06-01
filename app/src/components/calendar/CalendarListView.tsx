@@ -2,7 +2,7 @@
 
 import { formatDateRange } from "@/lib/planner-utils";
 import { CalendarQuickActions } from "@/components/calendar/CalendarQuickActions";
-import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
 import type { TripFollowUpStatus } from "@/lib/types";
 
@@ -44,11 +44,7 @@ export function CalendarListView({
             >
               <div className="cal-list-top">
                 <span className="cal-list-destination">{p.destination}</span>
-                <ProgrammeStatusBadge
-                  status={p.followUpStatus}
-                  showDot
-                  arrivalDate={p.arrivalDate}
-                />
+                <CalendarProgrammeBadges programme={p} />
               </div>
               <p className="cal-list-meta">
                 {p.clientName}

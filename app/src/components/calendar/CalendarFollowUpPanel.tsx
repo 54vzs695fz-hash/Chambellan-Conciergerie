@@ -2,6 +2,7 @@
 
 import { formatDateRange } from "@/lib/planner-utils";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import { getActiveFollowUpSuggestions } from "@/lib/calendar/follow-up";
 import {
   daysUntilArrival,
@@ -45,11 +46,17 @@ export function CalendarFollowUpPanel({
                 >
                   {p.clientName} · {p.destination}
                 </button>
-                <ProgrammeStatusBadge
-                  status={p.followUpStatus}
-                  showDot
-                  arrivalDate={p.arrivalDate}
-                />
+                <span className="cal-programme-badges">
+                  <ProgrammeStatusBadge
+                    status={p.followUpStatus}
+                    showDot
+                    arrivalDate={p.arrivalDate}
+                  />
+                  <PaymentStatusBadge
+                    status={p.paymentStatus}
+                    arrivalDate={p.arrivalDate}
+                  />
+                </span>
               </div>
               <p className="cal-reminder-meta">
                 {formatDateRange(p.arrivalDate, p.departureDate)}

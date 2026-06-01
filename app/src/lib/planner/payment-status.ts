@@ -1,4 +1,5 @@
 import type { TripPaymentMethod, TripPaymentStatus } from "@/lib/types";
+import { daysUntilArrival, startOfDay } from "@/lib/calendar/programmes";
 
 export const PAYMENT_STATUS_LABELS: Record<TripPaymentStatus, string> = {
   pending: "Pending",
@@ -70,4 +71,35 @@ export function paymentMethodLabel(
   const normalized = normalizeTripPaymentMethod(method ?? undefined);
   if (!normalized) return "";
   return PAYMENT_METHOD_LABELS[normalized];
+}
+
+export function paymentBadgeClass(status: TripPaymentStatus): string {
+  return `pay-status pay-status--${status.replace(/_/g, "-")}`;
+}
+
+export function countPaymentStatuses(
+  trips: { payment_status?: TripPaymentStatus | string | null }[]
+): Record<TripPaymentStatus, number> {
+  const counts: Record<TripPaymentStatus, number> = {
+    pending: 0,
+    deposit_paid: 0,
+    fully_paid: 0,
+    cancelled: 0,
+  };
+  for (const trip of trips) {
+    const status = normalizeTripPaymentStatus(trip.payment_status);
+    counts[status] += 1;
+  }
+  return counts;
+}
+
+export function needsPaymentWarning(
+  arrivalDate: string,
+  paymentStatus: TripPaymentStatus,
+  today = startOfDay(new Date())
+): boolean {
+  if (paymentStatus !== "pending") return false;
+  if (!arrivalDate) return false;
+  const days = daysUntilArrival(arrivalDate, today);
+  return days !== null && days >= 0 && days <= 7;
 }

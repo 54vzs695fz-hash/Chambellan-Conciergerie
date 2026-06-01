@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
-import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
 import {
   countClientsToFollowUp,
   countProgrammesThisMonth,
@@ -64,11 +64,7 @@ export function DashboardCalendarWidget({ trips }: Props) {
                   <br />
                   <span>{formatDateRange(p.arrivalDate, p.departureDate)}</span>
                 </span>
-                <ProgrammeStatusBadge
-                  status={p.followUpStatus}
-                  showDot
-                  arrivalDate={p.arrivalDate}
-                />
+                <CalendarProgrammeBadges programme={p} showFollowUpDot />
               </span>
             </Link>
           ))}

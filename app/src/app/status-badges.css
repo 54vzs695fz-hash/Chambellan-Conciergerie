@@ -236,3 +236,62 @@
   flex: 1;
   min-width: 0;
 }
+
+/* Payment status badges */
+
+.pay-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 0.5px solid transparent;
+  white-space: nowrap;
+}
+
+.pay-status--pending {
+  color: #8a7348;
+  background: rgba(200, 164, 107, 0.12);
+  border-color: rgba(200, 164, 107, 0.35);
+}
+
+.pay-status--deposit-paid {
+  color: #5f7389;
+  background: rgba(123, 148, 181, 0.12);
+  border-color: rgba(123, 148, 181, 0.35);
+}
+
+.pay-status--fully-paid {
+  color: #5f755f;
+  background: rgba(125, 155, 125, 0.12);
+  border-color: rgba(125, 155, 125, 0.35);
+}
+
+.pay-status--cancelled {
+  color: #7a7a7a;
+  background: rgba(168, 168, 168, 0.1);
+  border-color: rgba(168, 168, 168, 0.35);
+}
+
+.pay-status-warn {
+  flex-shrink: 0;
+  width: 0.38rem;
+  height: 0.38rem;
+  border-radius: 999px;
+  background: #b87a7a;
+}
+
+.cal-programme-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cal-fu-badges {
+  margin-top: 0.45rem;
+}

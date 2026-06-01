@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DashboardCalendarWidget } from "@/components/calendar/DashboardCalendarWidget";
 import { DashboardFollowUpSummary } from "@/components/dashboard/DashboardFollowUpSummary";
+import { DashboardPaymentSummary } from "@/components/dashboard/DashboardPaymentSummary";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
@@ -42,6 +43,8 @@ export default async function DashboardPage() {
       </div>
 
       <DashboardCalendarWidget trips={allTrips} />
+
+      <DashboardPaymentSummary trips={allTrips} />
 
       <DashboardFollowUpSummary initialItems={pendingFollowUp} />
 

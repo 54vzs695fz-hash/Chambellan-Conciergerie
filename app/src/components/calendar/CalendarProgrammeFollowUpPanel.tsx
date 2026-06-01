@@ -16,6 +16,7 @@ import {
   type SectionStatus,
 } from "@/lib/planner/checklist-utils";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
 import type {
   ChecklistCategory,
@@ -245,11 +246,17 @@ export function CalendarProgrammeFollowUpPanel({
             {" · "}
             {formatDateRange(programme.arrivalDate, programme.departureDate)}
           </p>
-          <ProgrammeStatusBadge
-            status={programme.followUpStatus}
-            showDot
-            arrivalDate={programme.arrivalDate}
-          />
+          <span className="cal-programme-badges cal-fu-badges">
+            <ProgrammeStatusBadge
+              status={programme.followUpStatus}
+              showDot
+              arrivalDate={programme.arrivalDate}
+            />
+            <PaymentStatusBadge
+              status={programme.paymentStatus}
+              arrivalDate={programme.arrivalDate}
+            />
+          </span>
         </div>
         <div className="cal-fu-header-actions">
           <Link href={programme.plannerHref} className="cal-fu-planner-link">

@@ -4,7 +4,7 @@ import {
   CalendarQuickActions,
   calendarEventClasses,
 } from "@/components/calendar/CalendarQuickActions";
-import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
 import {
   buildMonthGrid,
   formatDayNum,
@@ -82,10 +82,9 @@ export function CalendarMonthView({
                           </span>
                           {showActions ? (
                             <span className="cal-event-sub">
-                              <ProgrammeStatusBadge
-                                status={p.followUpStatus}
-                                showDot
-                                arrivalDate={p.arrivalDate}
+                              <CalendarProgrammeBadges
+                                programme={p}
+                                showFollowUpDot
                               />
                             </span>
                           ) : null}
