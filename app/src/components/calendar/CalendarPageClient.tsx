@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarFiltersBar } from "@/components/calendar/CalendarFilters";
+import { CalendarFiltersBar, CalendarFiltersDrawer } from "@/components/calendar/CalendarFilters";
 import { CalendarFollowUpPanel } from "@/components/calendar/CalendarFollowUpPanel";
 import { CalendarLegend } from "@/components/calendar/CalendarLegend";
 import { CalendarListView } from "@/components/calendar/CalendarListView";
@@ -62,9 +62,16 @@ function programmesInWeek(
   );
 }
 
+function initialCalendarView(): CalendarView {
+  if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+    return "list";
+  }
+  return "agenda";
+}
+
 export function CalendarPageClient({ initialTrips }: Props) {
   const isMobile = useIsMobile();
-  const [view, setView] = useState<CalendarView>("agenda");
+  const [view, setView] = useState<CalendarView>(initialCalendarView);
   const [reference, setReference] = useState(() => startOfDay(new Date()));
   const [filters, setFilters] = useState<CalendarFilters>({
     ...DEFAULT_CALENDAR_FILTERS,
@@ -372,6 +379,9 @@ export function CalendarPageClient({ initialTrips }: Props) {
   };
 
   const panelOpen = selectedProgramme !== null || dayPanel !== null;
+  const viewOrder: CalendarView[] = isMobile
+    ? ["list", "agenda", "month"]
+    : ["agenda", "list", "month"];
 
   return (
     <div className={`cal-page${panelOpen ? " has-side-panel" : ""}`}>
@@ -388,7 +398,7 @@ export function CalendarPageClient({ initialTrips }: Props) {
             role="tablist"
             aria-label="Calendar view"
           >
-            {(["agenda", "list", "month"] as CalendarView[]).map((v) => (
+            {viewOrder.map((v) => (
               <button
                 key={v}
                 type="button"
@@ -407,12 +417,21 @@ export function CalendarPageClient({ initialTrips }: Props) {
           </div>
         </div>
 
-        <CalendarFiltersBar
-          filters={filters}
-          destinations={destinations}
-          clients={clients}
-          onChange={setFilters}
-        />
+        {isMobile ? (
+          <CalendarFiltersDrawer
+            filters={filters}
+            destinations={destinations}
+            clients={clients}
+            onChange={setFilters}
+          />
+        ) : (
+          <CalendarFiltersBar
+            filters={filters}
+            destinations={destinations}
+            clients={clients}
+            onChange={setFilters}
+          />
+        )}
 
         <CalendarFollowUpPanel
           programmes={programmes}
@@ -454,7 +473,7 @@ export function CalendarPageClient({ initialTrips }: Props) {
           </div>
         ) : null}
 
-        <CalendarLegend />
+        <CalendarLegend collapsible={isMobile} />
 
         {view === "month" ? (
           <CalendarMonthView
@@ -489,8 +508,11 @@ export function CalendarPageClient({ initialTrips }: Props) {
             checklistSummaries={checklistSummaries}
             onSelectProgramme={selectProgramme}
             updatingPaymentId={updatingPaymentId}
+            updatingStatusId={updatingId}
             paymentErrors={paymentErrors}
             onPaymentStatusChange={handlePaymentStatusChange}
+            onStatusChange={handleStatusChange}
+            groupByDay={isMobile}
           />
         ) : null}
       </div>

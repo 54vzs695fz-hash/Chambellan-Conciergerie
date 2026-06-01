@@ -108,6 +108,84 @@ export function groupProgrammesForList(
   })).filter((group) => group.programmes.length > 0);
 }
 
+export interface MobileDayListGroup {
+  iso: string;
+  date: Date;
+  label: string;
+  programmes: CalendarProgramme[];
+}
+
+function parseIsoDateLocal(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function formatMobileDayGroupLabel(iso: string, today = startOfDay(new Date())): string {
+  const date = parseIsoDateLocal(iso);
+  if (!date) return iso;
+
+  const todayStr = toIsoDate(today);
+  const tomorrowStr = toIsoDate(addDays(today, 1));
+  const weekday = date.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+
+  if (iso === todayStr) return `Today · ${weekday}`;
+  if (iso === tomorrowStr) return `Tomorrow · ${weekday}`;
+  return weekday;
+}
+
+/** Mobile list — one programme per day section, anchored to today / arrival / departure. */
+export function groupProgrammesForMobileDayList(
+  programmes: CalendarProgramme[],
+  today = startOfDay(new Date())
+): MobileDayListGroup[] {
+  if (programmes.length === 0) return [];
+
+  const todayStr = toIsoDate(today);
+  const byDay = new Map<string, CalendarProgramme[]>();
+
+  for (const programme of programmes) {
+    let anchor: string;
+    if (programme.departureDate < todayStr) {
+      anchor = programme.departureDate;
+    } else if (programme.arrivalDate <= todayStr) {
+      anchor = todayStr;
+    } else {
+      anchor = programme.arrivalDate;
+    }
+
+    const bucket = byDay.get(anchor) ?? [];
+    bucket.push(programme);
+    byDay.set(anchor, bucket);
+  }
+
+  const upcoming = [...byDay.entries()]
+    .filter(([iso]) => iso >= todayStr)
+    .sort(([a], [b]) => a.localeCompare(b));
+  const past = [...byDay.entries()]
+    .filter(([iso]) => iso < todayStr)
+    .sort(([a], [b]) => b.localeCompare(a));
+
+  return [...upcoming, ...past]
+    .map(([iso, dayProgrammes]) => {
+      const date = parseIsoDateLocal(iso);
+      if (!date) return null;
+      return {
+        iso,
+        date,
+        label: formatMobileDayGroupLabel(iso, today),
+        programmes: dayProgrammes.sort((a, b) =>
+          a.clientName.localeCompare(b.clientName)
+        ),
+      };
+    })
+    .filter((group): group is MobileDayListGroup => group !== null);
+}
+
 export function groupProgrammesByDay(
   weekDays: Date[],
   programmes: CalendarProgramme[]

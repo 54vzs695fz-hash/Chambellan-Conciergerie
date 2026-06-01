@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   PAYMENT_STATUS_DOT,
   PROGRAMME_STATUS_DOT,
@@ -11,9 +14,47 @@ import {
   PAYMENT_STATUS_OPTIONS,
 } from "@/lib/planner/payment-status";
 
-export function CalendarLegend() {
+interface Props {
+  collapsible?: boolean;
+}
+
+export function CalendarLegend({ collapsible = false }: Props) {
+  const [open, setOpen] = useState(!collapsible);
+
+  if (!collapsible) {
+    return (
+      <div className="cal-legend" aria-label="Status legend">
+        <LegendContent />
+      </div>
+    );
+  }
+
   return (
-    <div className="cal-legend" aria-label="Status legend">
+    <div className="cal-legend cal-legend--collapsible">
+      <button
+        type="button"
+        className="cal-legend-toggle min-h-[44px]"
+        aria-expanded={open}
+        aria-controls="cal-legend-content"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>Legend</span>
+        <span className="cal-legend-chevron" aria-hidden>
+          {open ? "−" : "+"}
+        </span>
+      </button>
+      {open ? (
+        <div id="cal-legend-content" className="cal-legend-body">
+          <LegendContent />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function LegendContent() {
+  return (
+    <>
       <div className="cal-legend-row">
         <span className="cal-legend-group">Programme:</span>
         <ul className="cal-legend-items">
@@ -42,6 +83,6 @@ export function CalendarLegend() {
           ))}
         </ul>
       </div>
-    </div>
+    </>
   );
 }

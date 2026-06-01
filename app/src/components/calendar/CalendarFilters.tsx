@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_CALENDAR_FILTERS,
   FOLLOW_UP_STATUS_LABELS,
@@ -11,19 +12,34 @@ import {
 } from "@/lib/planner/payment-status";
 import type { TripFollowUpStatus } from "@/lib/types";
 
-interface Props {
+interface FormProps {
   filters: CalendarFilters;
   destinations: string[];
   clients: string[];
   onChange: (filters: CalendarFilters) => void;
 }
 
-export function CalendarFiltersBar({
+export function countActiveCalendarFilters(filters: CalendarFilters): number {
+  let count = 0;
+  if (filters.destination) count += 1;
+  if (filters.client) count += 1;
+  if (filters.status) count += 1;
+  if (filters.paymentStatus) count += 1;
+  if (filters.upcomingOnly) count += 1;
+  if (filters.thisWeek) count += 1;
+  if (filters.thisMonth) count += 1;
+  if (filters.arrivalWithin7Days) count += 1;
+  if (filters.pendingPaymentOnly) count += 1;
+  if (filters.urgentFollowUpOnly) count += 1;
+  return count;
+}
+
+function CalendarFiltersForm({
   filters,
   destinations,
   clients,
   onChange,
-}: Props) {
+}: FormProps) {
   const set = (patch: Partial<CalendarFilters>) =>
     onChange({ ...filters, ...patch });
 
@@ -150,6 +166,86 @@ export function CalendarFiltersBar({
           Clear filters
         </button>
       </div>
+    </div>
+  );
+}
+
+export function CalendarFiltersBar(props: FormProps) {
+  return <CalendarFiltersForm {...props} />;
+}
+
+export function CalendarFiltersDrawer(props: FormProps) {
+  const [open, setOpen] = useState(false);
+  const activeCount = useMemo(
+    () => countActiveCalendarFilters(props.filters),
+    [props.filters]
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.body.classList.add("cal-filters-open");
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.classList.remove("cal-filters-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="cal-filters-drawer">
+      <button
+        type="button"
+        className="cal-filters-drawer-trigger min-h-[44px]"
+        aria-expanded={open}
+        aria-controls="cal-filters-sheet"
+        onClick={() => setOpen((value) => !value)}
+      >
+        Filters
+        {activeCount > 0 ? (
+          <span className="cal-filters-drawer-count">{activeCount}</span>
+        ) : null}
+      </button>
+
+      {open ? (
+        <div className="cal-filters-drawer-root">
+          <button
+            type="button"
+            className="cal-filters-drawer-backdrop"
+            aria-label="Close filters"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            id="cal-filters-sheet"
+            className="cal-filters-drawer-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Calendar filters"
+          >
+            <div className="cal-filters-drawer-head">
+              <p className="cal-filters-drawer-title">Filters</p>
+              <button
+                type="button"
+                className="cal-filters-drawer-close min-h-[44px] min-w-[44px]"
+                aria-label="Close filters"
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <CalendarFiltersForm {...props} />
+            <button
+              type="button"
+              className="cal-filters-drawer-apply min-h-[44px]"
+              onClick={() => setOpen(false)}
+            >
+              Show results
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
