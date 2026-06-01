@@ -123,59 +123,52 @@
 }
 
 .cal-legend {
-  margin-bottom: 1.25rem;
-  padding: 0.75rem 0.9rem;
-  background: rgba(255, 255, 255, 0.85);
-  border: 0.5px solid rgba(229, 221, 210, 0.85);
-  border-radius: 6px;
-}
-
-.cal-legend-title {
-  margin: 0 0 0.55rem;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #9a7b4f;
-}
-
-.cal-legend-sections {
   display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-@media (min-width: 640px) {
-  .cal-legend-sections {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 1rem 2rem;
-  }
-}
-
-.cal-legend-kicker {
-  margin: 0 0 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
   font-size: 0.58rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: #9a948c;
 }
 
-.cal-legend-items {
-  display: flex;
+.cal-legend-row {
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.45rem;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.cal-legend-group {
+  flex-shrink: 0;
+  font-size: 0.54rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b5aea4;
+}
+
+.cal-legend-items {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.55rem;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.cal-legend-items .prog-status,
-.cal-legend-items .pay-status {
-  font-size: 0.55rem;
-  padding: 0.14rem 0.45rem;
-  letter-spacing: 0.08em;
+.cal-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  white-space: nowrap;
+}
+
+.cal-dot--legend {
+  width: 0.3rem;
+  height: 0.3rem;
 }
 
 .cal-reminder-panel {

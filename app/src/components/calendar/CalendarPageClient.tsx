@@ -414,8 +414,6 @@ export function CalendarPageClient({ initialTrips }: Props) {
           onChange={setFilters}
         />
 
-        <CalendarLegend />
-
         <CalendarFollowUpPanel
           programmes={programmes}
           today={today}
@@ -455,6 +453,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
             </div>
           </div>
         ) : null}
+
+        <CalendarLegend />
 
         {view === "month" ? (
           <CalendarMonthView
