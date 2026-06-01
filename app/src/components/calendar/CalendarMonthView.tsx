@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CalendarQuickActions,
-  calendarEventClasses,
-} from "@/components/calendar/CalendarQuickActions";
-import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
+import { CalendarProgrammeChip } from "@/components/calendar/CalendarProgrammeChip";
 import {
   buildMonthGrid,
   formatDayNum,
@@ -12,36 +8,28 @@ import {
   isSameMonth,
   isToday,
   programmeActiveOnDate,
-  programmeSegmentClass,
   toIsoDate,
   type CalendarProgramme,
 } from "@/lib/calendar/programmes";
-import type { TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
+
+const MAX_CHIPS_PER_DAY = 3;
 
 interface Props {
   reference: Date;
   programmes: CalendarProgramme[];
   today: Date;
-  updatingId: number | null;
   selectedId: number | null;
   onSelectProgramme: (programme: CalendarProgramme) => void;
-  onStatusChange: (id: number, status: TripFollowUpStatus) => void;
-  updatingPaymentId: number | null;
-  paymentErrors: Record<number, string>;
-  onPaymentStatusChange: (id: number, status: TripPaymentStatus) => void;
+  onSelectDay: (iso: string, programmes: CalendarProgramme[]) => void;
 }
 
 export function CalendarMonthView({
   reference,
   programmes,
   today,
-  updatingId,
   selectedId,
   onSelectProgramme,
-  onStatusChange,
-  updatingPaymentId,
-  paymentErrors,
-  onPaymentStatusChange,
+  onSelectDay,
 }: Props) {
   const weeks = buildMonthGrid(reference);
   const weekdays = weeks[0].map(formatDayShort);
@@ -59,9 +47,11 @@ export function CalendarMonthView({
         <div key={wi} className="cal-month-week">
           {week.map((day) => {
             const iso = toIsoDate(day);
-            const dayProgrammes = programmes.filter((p) =>
-              programmeActiveOnDate(p, iso)
-            );
+            const dayProgrammes = programmes
+              .filter((p) => programmeActiveOnDate(p, iso))
+              .sort((a, b) => a.clientName.localeCompare(b.clientName));
+            const visible = dayProgrammes.slice(0, MAX_CHIPS_PER_DAY);
+            const overflow = dayProgrammes.length - visible.length;
             const inMonth = isSameMonth(day, reference);
             const todayCell = isToday(day, today);
 
@@ -72,45 +62,23 @@ export function CalendarMonthView({
               >
                 <span className="cal-day-num">{formatDayNum(day)}</span>
                 <div className="cal-day-events">
-                  {dayProgrammes.map((p) => {
-                    const segment = programmeSegmentClass(p, iso);
-                    const showActions = segment !== "cal-event--middle";
-
-                    return (
-                      <div key={`${p.id}-${iso}`} className="cal-event-wrap">
-                        <button
-                          type="button"
-                          className={`${calendarEventClasses(p, segment, today)}${selectedId === p.id ? " is-selected" : ""}`}
-                          onClick={() => onSelectProgramme(p)}
-                        >
-                          <span className="cal-event-label">
-                            {p.clientName} · {p.destination}
-                          </span>
-                          {showActions ? (
-                            <span className="cal-event-sub">
-                              <CalendarProgrammeBadges
-                                programme={p}
-                                showFollowUpDot
-                                paymentUpdating={updatingPaymentId === p.id}
-                                paymentError={paymentErrors[p.id] ?? null}
-                                onPaymentStatusChange={(status) =>
-                                  onPaymentStatusChange(p.id, status)
-                                }
-                              />
-                            </span>
-                          ) : null}
-                        </button>
-                        {showActions ? (
-                          <CalendarQuickActions
-                            programme={p}
-                            updating={updatingId === p.id}
-                            onStatusChange={onStatusChange}
-                            compact
-                          />
-                        ) : null}
-                      </div>
-                    );
-                  })}
+                  {visible.map((p) => (
+                    <CalendarProgrammeChip
+                      key={`${p.id}-${iso}`}
+                      programme={p}
+                      selected={selectedId === p.id}
+                      onClick={() => onSelectProgramme(p)}
+                    />
+                  ))}
+                  {overflow > 0 ? (
+                    <button
+                      type="button"
+                      className="cal-chip-more min-h-[44px]"
+                      onClick={() => onSelectDay(iso, dayProgrammes)}
+                    >
+                      + {overflow} more
+                    </button>
+                  ) : null}
                 </div>
               </div>
             );

@@ -5,16 +5,18 @@ import { CalendarFiltersBar } from "@/components/calendar/CalendarFilters";
 import { CalendarFollowUpPanel } from "@/components/calendar/CalendarFollowUpPanel";
 import { CalendarListView } from "@/components/calendar/CalendarListView";
 import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
-import { CalendarProgrammeFollowUpPanel } from "@/components/calendar/CalendarProgrammeFollowUpPanel";
-import { CalendarWeekView } from "@/components/calendar/CalendarWeekView";
+import { CalendarProgrammeSidePanel } from "@/components/calendar/CalendarProgrammeSidePanel";
+import { CalendarWeekAgendaView } from "@/components/calendar/CalendarWeekAgendaView";
+import { buildProgrammeChecklistSummary } from "@/lib/calendar/checklist-summary";
 import {
   addDays,
+  buildWeekDays,
   DEFAULT_CALENDAR_FILTERS,
   filterProgrammes,
   formatMonthYear,
   formatWeekRange,
-  buildWeekDays,
   startOfDay,
+  toIsoDate,
   tripsToCalendarProgrammes,
   uniqueClients,
   uniqueDestinations,
@@ -23,7 +25,13 @@ import {
   type CalendarView,
 } from "@/lib/calendar/programmes";
 import { PLANNER_AUTOSAVE_MS } from "@/components/planner/use-planner-save";
-import type { ChecklistItem, Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
+import type {
+  ChecklistItem,
+  PendingChecklistItem,
+  Trip,
+  TripFollowUpStatus,
+  TripPaymentStatus,
+} from "@/lib/types";
 
 interface Props {
   initialTrips: Trip[];
@@ -41,9 +49,21 @@ function useIsMobile(): boolean {
   return mobile;
 }
 
+function programmesInWeek(
+  programmes: CalendarProgramme[],
+  reference: Date
+): CalendarProgramme[] {
+  const weekDays = buildWeekDays(reference);
+  const weekStart = toIsoDate(weekDays[0]);
+  const weekEnd = toIsoDate(weekDays[6]);
+  return programmes.filter(
+    (p) => p.departureDate >= weekStart && p.arrivalDate <= weekEnd
+  );
+}
+
 export function CalendarPageClient({ initialTrips }: Props) {
   const isMobile = useIsMobile();
-  const [view, setView] = useState<CalendarView>("month");
+  const [view, setView] = useState<CalendarView>("agenda");
   const [reference, setReference] = useState(() => startOfDay(new Date()));
   const [filters, setFilters] = useState<CalendarFilters>({
     ...DEFAULT_CALENDAR_FILTERS,
@@ -53,6 +73,11 @@ export function CalendarPageClient({ initialTrips }: Props) {
   );
   const [selectedProgramme, setSelectedProgramme] =
     useState<CalendarProgramme | null>(null);
+  const [dayPanel, setDayPanel] = useState<{
+    iso: string;
+    date: Date;
+    programmes: CalendarProgramme[];
+  } | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [updatingPaymentId, setUpdatingPaymentId] = useState<number | null>(
     null
@@ -63,6 +88,12 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const [checklistUpdatingId, setChecklistUpdatingId] = useState<number | null>(
     null
   );
+  const [checklistSummaries, setChecklistSummaries] = useState<
+    Record<number, string>
+  >({});
+  const [sideChecklistSummary, setSideChecklistSummary] = useState<
+    string | null
+  >(null);
   const [toast, setToast] = useState<string | null>(null);
   const patchTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const pendingPatches = useRef(new Map<number, Partial<ChecklistItem>>());
@@ -92,6 +123,56 @@ export function CalendarPageClient({ initialTrips }: Props) {
   }, []);
 
   useEffect(() => {
+    const loadPending = async () => {
+      const res = await fetch("/api/checklist/pending");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const summaries: Record<number, string> = {};
+      const byTrip = new Map<number, PendingChecklistItem[]>();
+      for (const item of data as PendingChecklistItem[]) {
+        const list = byTrip.get(item.trip_id) ?? [];
+        list.push(item);
+        byTrip.set(item.trip_id, list);
+      }
+      for (const [tripId, items] of byTrip) {
+        const trip = programmes.find((p) => p.id === tripId);
+        if (!trip) continue;
+        const summary = buildProgrammeChecklistSummary(
+          items,
+          trip.arrivalDate,
+          trip.departureDate,
+          today
+        );
+        if (summary.open > 0) summaries[tripId] = summary.label;
+      }
+      setChecklistSummaries(summaries);
+    };
+    void loadPending();
+  }, [programmes, today]);
+
+  useEffect(() => {
+    if (!selectedProgramme) {
+      setSideChecklistSummary(null);
+      return;
+    }
+    const load = async () => {
+      const res = await fetch(`/api/trips/${selectedProgramme.id}/checklist`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+      const summary = buildProgrammeChecklistSummary(
+        data as ChecklistItem[],
+        selectedProgramme.arrivalDate,
+        selectedProgramme.departureDate,
+        today
+      );
+      setSideChecklistSummary(summary.label);
+    };
+    void load();
+  }, [selectedProgramme, today]);
+
+  useEffect(() => {
     return () => {
       for (const timer of patchTimers.current.values()) {
         clearTimeout(timer);
@@ -104,6 +185,11 @@ export function CalendarPageClient({ initialTrips }: Props) {
     [programmes, filters, today]
   );
 
+  const agendaProgrammes = useMemo(
+    () => programmesInWeek(filtered, reference),
+    [filtered, reference]
+  );
+
   const destinations = useMemo(
     () => uniqueDestinations(programmes),
     [programmes]
@@ -113,6 +199,22 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2500);
+  };
+
+  const selectProgramme = (programme: CalendarProgramme) => {
+    setDayPanel(null);
+    setSelectedProgramme(programme);
+  };
+
+  const selectDay = (iso: string, dayProgrammes: CalendarProgramme[]) => {
+    const date = new Date(`${iso}T12:00:00`);
+    setSelectedProgramme(null);
+    setDayPanel({ iso, date, programmes: dayProgrammes });
+  };
+
+  const closePanel = () => {
+    setSelectedProgramme(null);
+    setDayPanel(null);
   };
 
   const handlePaymentStatusChange = async (
@@ -198,8 +300,7 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const handlePatchChecklistItem = useCallback(
     async (id: number, fields: Partial<ChecklistItem>) => {
       const immediate =
-        fields.status !== undefined ||
-        Object.keys(fields).length === 0;
+        fields.status !== undefined || Object.keys(fields).length === 0;
 
       if (immediate && Object.keys(fields).length > 0) {
         pendingPatches.current.delete(id);
@@ -255,7 +356,7 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const navTitle =
     view === "month"
       ? formatMonthYear(reference)
-      : view === "week"
+      : view === "agenda"
         ? formatWeekRange(buildWeekDays(reference))
         : "All programmes";
 
@@ -264,141 +365,158 @@ export function CalendarPageClient({ initialTrips }: Props) {
       setReference(
         (r) => new Date(r.getFullYear(), r.getMonth() + delta, 1, 12, 0, 0)
       );
-    } else if (view === "week") {
+    } else if (view === "agenda") {
       setReference((r) => addDays(r, delta * 7));
     }
   };
 
+  const panelOpen = selectedProgramme !== null || dayPanel !== null;
+
   return (
-    <div className="cal-shell">
+    <div className={`cal-page${panelOpen ? " has-side-panel" : ""}`}>
       {toast ? (
         <p className="est-save-toast" role="status">
           {toast}
         </p>
       ) : null}
 
-      <div className="cal-header">
-        <div className="cal-view-tabs" role="tablist" aria-label="Calendar view">
-          {(["month", "week", "list"] as CalendarView[]).map((v) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={view === v}
-              className={`cal-view-tab${view === v ? " is-active" : ""}`}
-              onClick={() => setView(v)}
-            >
-              {v === "month" ? "Month" : v === "week" ? "Week" : "List"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <CalendarFiltersBar
-        filters={filters}
-        destinations={destinations}
-        clients={clients}
-        onChange={setFilters}
-      />
-
-      <CalendarFollowUpPanel
-        programmes={programmes}
-        today={today}
-        onSelectProgramme={setSelectedProgramme}
-        updatingPaymentId={updatingPaymentId}
-        paymentErrors={paymentErrors}
-        onPaymentStatusChange={handlePaymentStatusChange}
-      />
-
-      {selectedProgramme ? (
-        <CalendarProgrammeFollowUpPanel
-          programme={selectedProgramme}
-          today={today}
-          updatingId={checklistUpdatingId}
-          updatingPaymentId={updatingPaymentId}
-          paymentError={paymentErrors[selectedProgramme.id] ?? null}
-          onClose={() => setSelectedProgramme(null)}
-          onMarkDone={handleChecklistDone}
-          onPatchItem={handlePatchChecklistItem}
-          onPaymentStatusChange={(status) =>
-            handlePaymentStatusChange(selectedProgramme.id, status)
-          }
-        />
-      ) : null}
-
-      {view !== "list" ? (
-        <div className="cal-nav">
-          <button
-            type="button"
-            className="cal-nav-btn"
-            onClick={() => shiftReference(-1)}
-            aria-label="Previous"
+      <div className="cal-page-main">
+        <div className="cal-header">
+          <div
+            className="cal-view-tabs"
+            role="tablist"
+            aria-label="Calendar view"
           >
-            ←
-          </button>
-          <h2 className="cal-nav-title">{navTitle}</h2>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="cal-nav-btn"
-              onClick={() => setReference(startOfDay(new Date()))}
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              className="cal-nav-btn"
-              onClick={() => shiftReference(1)}
-              aria-label="Next"
-            >
-              →
-            </button>
+            {(["agenda", "list", "month"] as CalendarView[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={view === v}
+                className={`cal-view-tab${view === v ? " is-active" : ""}`}
+                onClick={() => setView(v)}
+              >
+                {v === "agenda"
+                  ? "Week"
+                  : v === "month"
+                    ? "Month"
+                    : "List"}
+              </button>
+            ))}
           </div>
         </div>
-      ) : null}
 
-      {view === "month" ? (
-        <CalendarMonthView
-          reference={reference}
-          programmes={filtered}
+        <CalendarFiltersBar
+          filters={filters}
+          destinations={destinations}
+          clients={clients}
+          onChange={setFilters}
+        />
+
+        <CalendarFollowUpPanel
+          programmes={programmes}
           today={today}
-          updatingId={updatingId}
-          selectedId={selectedProgramme?.id ?? null}
-          onSelectProgramme={setSelectedProgramme}
-          onStatusChange={handleStatusChange}
+          onSelectProgramme={selectProgramme}
           updatingPaymentId={updatingPaymentId}
           paymentErrors={paymentErrors}
           onPaymentStatusChange={handlePaymentStatusChange}
         />
-      ) : null}
 
-      {view === "week" ? (
-        <CalendarWeekView
-          reference={reference}
-          programmes={filtered}
-          today={today}
-          updatingId={updatingId}
-          selectedId={selectedProgramme?.id ?? null}
-          onSelectProgramme={setSelectedProgramme}
-          onStatusChange={handleStatusChange}
-          updatingPaymentId={updatingPaymentId}
-          paymentErrors={paymentErrors}
-          onPaymentStatusChange={handlePaymentStatusChange}
-        />
-      ) : null}
+        {view !== "list" ? (
+          <div className="cal-nav">
+            <button
+              type="button"
+              className="cal-nav-btn"
+              onClick={() => shiftReference(-1)}
+              aria-label="Previous"
+            >
+              ←
+            </button>
+            <h2 className="cal-nav-title">{navTitle}</h2>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="cal-nav-btn"
+                onClick={() => setReference(startOfDay(new Date()))}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                className="cal-nav-btn"
+                onClick={() => shiftReference(1)}
+                aria-label="Next"
+              >
+                →
+              </button>
+            </div>
+          </div>
+        ) : null}
 
-      {view === "list" ? (
-        <CalendarListView
-          programmes={filtered}
-          updatingId={updatingId}
-          selectedId={selectedProgramme?.id ?? null}
-          onSelectProgramme={setSelectedProgramme}
-          onStatusChange={handleStatusChange}
-          updatingPaymentId={updatingPaymentId}
-          paymentErrors={paymentErrors}
-          onPaymentStatusChange={handlePaymentStatusChange}
-        />
-      ) : null}
+        {view === "month" ? (
+          <CalendarMonthView
+            reference={reference}
+            programmes={filtered}
+            today={today}
+            selectedId={selectedProgramme?.id ?? null}
+            onSelectProgramme={selectProgramme}
+            onSelectDay={selectDay}
+          />
+        ) : null}
+
+        {view === "agenda" ? (
+          <CalendarWeekAgendaView
+            reference={reference}
+            programmes={agendaProgrammes}
+            today={today}
+            selectedId={selectedProgramme?.id ?? null}
+            checklistSummaries={checklistSummaries}
+            onSelectProgramme={selectProgramme}
+            updatingPaymentId={updatingPaymentId}
+            paymentErrors={paymentErrors}
+            onPaymentStatusChange={handlePaymentStatusChange}
+          />
+        ) : null}
+
+        {view === "list" ? (
+          <CalendarListView
+            programmes={filtered}
+            today={today}
+            selectedId={selectedProgramme?.id ?? null}
+            checklistSummaries={checklistSummaries}
+            onSelectProgramme={selectProgramme}
+            updatingPaymentId={updatingPaymentId}
+            paymentErrors={paymentErrors}
+            onPaymentStatusChange={handlePaymentStatusChange}
+          />
+        ) : null}
+      </div>
+
+      <CalendarProgrammeSidePanel
+        programme={selectedProgramme}
+        dayProgrammes={dayPanel?.programmes ?? null}
+        dayDate={dayPanel?.date ?? null}
+        today={today}
+        checklistSummary={sideChecklistSummary}
+        updatingId={updatingId}
+        updatingPaymentId={updatingPaymentId}
+        paymentError={
+          selectedProgramme
+            ? (paymentErrors[selectedProgramme.id] ?? null)
+            : null
+        }
+        checklistUpdatingId={checklistUpdatingId}
+        onClose={closePanel}
+        onSelectProgramme={selectProgramme}
+        onStatusChange={handleStatusChange}
+        onPaymentStatusChange={(status) => {
+          if (selectedProgramme) {
+            void handlePaymentStatusChange(selectedProgramme.id, status);
+          }
+        }}
+        onMarkDone={handleChecklistDone}
+        onPatchItem={handlePatchChecklistItem}
+      />
     </div>
   );
 }

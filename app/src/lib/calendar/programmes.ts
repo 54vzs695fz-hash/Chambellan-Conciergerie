@@ -1,8 +1,9 @@
 import { formatClientGuestCount } from "@/lib/planner/planner-sheet-model";
 import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
+import { needsPaymentWarning } from "@/lib/planner/payment-status";
 import type { Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
-export type CalendarView = "month" | "week" | "list";
+export type CalendarView = "agenda" | "month" | "list";
 
 export interface CalendarProgramme {
   id: number;
@@ -20,18 +21,26 @@ export interface CalendarFilters {
   destination: string;
   client: string;
   status: string;
+  paymentStatus: string;
   upcomingOnly: boolean;
   thisWeek: boolean;
   thisMonth: boolean;
+  arrivalWithin7Days: boolean;
+  pendingPaymentOnly: boolean;
+  urgentFollowUpOnly: boolean;
 }
 
 export const DEFAULT_CALENDAR_FILTERS: CalendarFilters = {
   destination: "",
   client: "",
   status: "",
+  paymentStatus: "",
   upcomingOnly: false,
   thisWeek: false,
   thisMonth: false,
+  arrivalWithin7Days: false,
+  pendingPaymentOnly: false,
+  urgentFollowUpOnly: false,
 };
 
 export { FOLLOW_UP_STATUS_LABELS } from "@/lib/calendar/status-styles";
@@ -171,9 +180,30 @@ export function filterProgrammes(
       return false;
     }
     if (filters.status && p.followUpStatus !== filters.status) return false;
+    if (filters.paymentStatus && p.paymentStatus !== filters.paymentStatus) {
+      return false;
+    }
     if (filters.upcomingOnly && !isUpcomingProgramme(p, today)) return false;
     if (filters.thisWeek && !isThisWeek(p, today)) return false;
     if (filters.thisMonth && !isThisMonth(p, today)) return false;
+    if (filters.arrivalWithin7Days) {
+      const days = daysUntilArrival(p.arrivalDate, today);
+      if (days === null || days < 0 || days > 7) return false;
+    }
+    if (filters.pendingPaymentOnly && p.paymentStatus !== "pending") {
+      return false;
+    }
+    if (filters.urgentFollowUpOnly) {
+      const days = daysUntilArrival(p.arrivalDate, today);
+      const urgent =
+        p.followUpStatus === "follow_up" &&
+        isUpcomingProgramme(p, today) &&
+        days !== null &&
+        days >= 0 &&
+        days <= 7;
+      const paymentUrgent = needsPaymentWarning(p.arrivalDate, p.paymentStatus, today);
+      if (!urgent && !paymentUrgent) return false;
+    }
     return true;
   });
 }

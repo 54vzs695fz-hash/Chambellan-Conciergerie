@@ -5,6 +5,10 @@ import {
   FOLLOW_UP_STATUS_LABELS,
   type CalendarFilters,
 } from "@/lib/calendar/programmes";
+import {
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_OPTIONS,
+} from "@/lib/planner/payment-status";
 import type { TripFollowUpStatus } from "@/lib/types";
 
 interface Props {
@@ -63,9 +67,9 @@ export function CalendarFiltersBar({
         className="field-input min-h-[44px]"
         value={filters.status}
         onChange={(e) => set({ status: e.target.value })}
-        aria-label="Filter by status"
+        aria-label="Filter by programme status"
       >
-        <option value="">All statuses</option>
+        <option value="">All programme statuses</option>
         {(Object.keys(FOLLOW_UP_STATUS_LABELS) as TripFollowUpStatus[]).map(
           (s) => (
             <option key={s} value={s}>
@@ -73,6 +77,20 @@ export function CalendarFiltersBar({
             </option>
           )
         )}
+      </select>
+
+      <select
+        className="field-input min-h-[44px]"
+        value={filters.paymentStatus}
+        onChange={(e) => set({ paymentStatus: e.target.value })}
+        aria-label="Filter by payment status"
+      >
+        <option value="">All payment statuses</option>
+        {PAYMENT_STATUS_OPTIONS.map((s) => (
+          <option key={s} value={s}>
+            {PAYMENT_STATUS_LABELS[s]}
+          </option>
+        ))}
       </select>
 
       <div className="cal-filter-toggles">
@@ -99,6 +117,30 @@ export function CalendarFiltersBar({
             onChange={() => toggle("thisMonth")}
           />
           This month
+        </label>
+        <label className="cal-filter-toggle">
+          <input
+            type="checkbox"
+            checked={filters.arrivalWithin7Days}
+            onChange={() => toggle("arrivalWithin7Days")}
+          />
+          Arrival within 7 days
+        </label>
+        <label className="cal-filter-toggle">
+          <input
+            type="checkbox"
+            checked={filters.pendingPaymentOnly}
+            onChange={() => toggle("pendingPaymentOnly")}
+          />
+          Pending payment only
+        </label>
+        <label className="cal-filter-toggle">
+          <input
+            type="checkbox"
+            checked={filters.urgentFollowUpOnly}
+            onChange={() => toggle("urgentFollowUpOnly")}
+          />
+          Urgent follow-up only
         </label>
         <button
           type="button"

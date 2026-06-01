@@ -35,6 +35,7 @@ interface Props {
   onMarkDone: (id: number) => Promise<void>;
   onPatchItem: (id: number, fields: Partial<ChecklistItem>) => Promise<void>;
   onPaymentStatusChange: (status: TripPaymentStatus) => void;
+  variant?: "full" | "embedded";
 }
 
 function groupItems(items: ChecklistItem[]) {
@@ -181,6 +182,7 @@ export function CalendarProgrammeFollowUpPanel({
   onMarkDone,
   onPatchItem,
   onPaymentStatusChange,
+  variant = "full",
 }: Props) {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,48 +242,55 @@ export function CalendarProgrammeFollowUpPanel({
   };
 
   return (
-    <section className="cal-fu-panel" aria-label="Follow-up and operations">
-      <div className="cal-fu-header">
-        <div className="cal-fu-header-copy">
-          <h2 className="cal-fu-title">Follow-up & Operations</h2>
-          <p className="cal-fu-programme font-serif text-gold tracking-wide">
-            {programme.destination}
-          </p>
-          <p className="cal-fu-meta">
-            {programme.clientName}
-            {programme.guestCount ? ` · ${programme.guestCount}` : ""}
-            {" · "}
-            {formatDateRange(programme.arrivalDate, programme.departureDate)}
-          </p>
-          <span className="cal-programme-badges cal-fu-badges">
-            <ProgrammeStatusBadge
-              status={programme.followUpStatus}
-              showDot
-              arrivalDate={programme.arrivalDate}
-            />
-            <PaymentStatusPicker
-              status={programme.paymentStatus}
-              arrivalDate={programme.arrivalDate}
-              saving={updatingPaymentId === programme.id}
-              error={paymentError}
-              onSelect={onPaymentStatusChange}
-            />
-          </span>
+    <section
+      className={`cal-fu-panel${variant === "embedded" ? " cal-fu-panel--embedded" : ""}`}
+      aria-label="Follow-up and operations"
+    >
+      {variant === "full" ? (
+        <div className="cal-fu-header">
+          <div className="cal-fu-header-copy">
+            <h2 className="cal-fu-title">Follow-up & Operations</h2>
+            <p className="cal-fu-programme font-serif text-gold tracking-wide">
+              {programme.destination}
+            </p>
+            <p className="cal-fu-meta">
+              {programme.clientName}
+              {programme.guestCount ? ` · ${programme.guestCount}` : ""}
+              {" · "}
+              {formatDateRange(programme.arrivalDate, programme.departureDate)}
+            </p>
+            <span className="cal-programme-badges cal-fu-badges">
+              <ProgrammeStatusBadge
+                status={programme.followUpStatus}
+                showDot
+                arrivalDate={programme.arrivalDate}
+              />
+              <PaymentStatusPicker
+                status={programme.paymentStatus}
+                arrivalDate={programme.arrivalDate}
+                saving={updatingPaymentId === programme.id}
+                error={paymentError}
+                onSelect={onPaymentStatusChange}
+              />
+            </span>
+          </div>
+          <div className="cal-fu-header-actions">
+            <Link href={programme.plannerHref} className="cal-fu-planner-link">
+              Open planner
+            </Link>
+            <button
+              type="button"
+              className="cal-fu-close min-h-[44px] min-w-[44px]"
+              onClick={onClose}
+              aria-label="Close follow-up panel"
+            >
+              ×
+            </button>
+          </div>
         </div>
-        <div className="cal-fu-header-actions">
-          <Link href={programme.plannerHref} className="cal-fu-planner-link">
-            Open planner
-          </Link>
-          <button
-            type="button"
-            className="cal-fu-close min-h-[44px] min-w-[44px]"
-            onClick={onClose}
-            aria-label="Close follow-up panel"
-          >
-            ×
-          </button>
-        </div>
-      </div>
+      ) : (
+        <h3 className="cal-fu-embedded-title">Follow-up checklist</h3>
+      )}
 
       {loading ? (
         <p className="cal-fu-loading">Loading checklist…</p>
