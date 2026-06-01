@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { DashboardCalendarWidget } from "@/components/calendar/DashboardCalendarWidget";
 import { listClients } from "@/lib/db/clients";
 import { listTrips } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
+import "@/app/calendar/calendar.css";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const trips = (await listTrips()).slice(0, 6);
+  const allTrips = await listTrips();
+  const trips = allTrips.slice(0, 6);
   const clients = (await listClients()).slice(0, 5);
 
   return (
@@ -33,6 +36,8 @@ export default async function DashboardPage() {
           New establishment
         </Link>
       </div>
+
+      <DashboardCalendarWidget trips={allTrips} />
 
       <section className="mb-10">
         <div className="flex items-center justify-between mb-4">

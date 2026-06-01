@@ -30,6 +30,8 @@ function mapTrip(row: PrismaTrip): Trip {
     ...EMPTY_TRIP_HEADER,
     ...row,
     client_id: row.client_id,
+    follow_up_status:
+      (row.follow_up_status as Trip["follow_up_status"]) || "follow_up",
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
   };
@@ -115,6 +117,7 @@ const tripDataFields = (
   host_phone: payload.host_phone,
   host_contact: payload.host_contact,
   tailored_for: payload.tailored_for,
+  follow_up_status: payload.follow_up_status,
 });
 
 export async function createTrip(
@@ -198,6 +201,21 @@ export async function updateDaySections(
       },
     });
     return mapDay(row, row.activities.map(mapActivity));
+  } catch {
+    return undefined;
+  }
+}
+
+export async function updateTripFollowUpStatus(
+  id: number,
+  follow_up_status: Trip["follow_up_status"]
+): Promise<Trip | undefined> {
+  try {
+    const row = await prisma.trip.update({
+      where: { id },
+      data: { follow_up_status },
+    });
+    return mapTrip(row);
   } catch {
     return undefined;
   }

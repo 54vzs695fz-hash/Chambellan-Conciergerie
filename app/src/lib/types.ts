@@ -17,6 +17,12 @@ export interface DaySection {
 
 export type ActivityStatus = "confirmed" | "awaiting";
 
+export type TripFollowUpStatus =
+  | "follow_up"
+  | "contacted"
+  | "confirmed"
+  | "completed";
+
 export interface Client {
   id: number;
   full_name: string;
@@ -64,6 +70,7 @@ export interface Trip {
   host_phone: string;
   host_contact: string;
   tailored_for: string;
+  follow_up_status: TripFollowUpStatus;
   created_at: string;
   updated_at: string;
 }
@@ -265,4 +272,5 @@ export const EMPTY_TRIP_HEADER: Omit<
   host_phone: "+1 332 733 9543",
   host_contact: "",
   tailored_for: "",
+  follow_up_status: "follow_up",
 };
