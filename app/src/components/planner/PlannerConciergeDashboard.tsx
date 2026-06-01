@@ -9,6 +9,8 @@ import type {
   DaySection,
   Establishment,
   TripFollowUpStatus,
+  TripPaymentMethod,
+  TripPaymentStatus,
   TripWithDays,
 } from "@/lib/types";
 import {
@@ -21,6 +23,12 @@ import {
   PROGRAMME_STATUS_LABELS,
   PROGRAMME_STATUS_OPTIONS,
 } from "@/lib/planner/programme-status";
+import {
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHOD_OPTIONS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_OPTIONS,
+} from "@/lib/planner/payment-status";
 import {
   TRIP_FIELD_ESTABLISHMENT_CATEGORY,
   TEAM_ROW_ESTABLISHMENT_CATEGORY,
@@ -178,6 +186,89 @@ export function PlannerConciergeDashboard({
                   </option>
                 ))}
               </select>
+            </Field>
+          </div>
+
+          <div className="adm-subsection">
+            <h3 className="adm-subsection-title">Payment</h3>
+            <div className="adm-grid adm-grid--2">
+              <Field label="Payment status">
+                <select
+                  className="adm-input adm-status-select"
+                  value={trip.payment_status ?? "pending"}
+                  onChange={(e) => {
+                    onFieldChange(
+                      "payment_status",
+                      e.target.value as TripPaymentStatus
+                    );
+                    onFieldBlur();
+                  }}
+                  aria-label="Payment status"
+                >
+                  {PAYMENT_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {PAYMENT_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Payment method">
+                <select
+                  className="adm-input"
+                  value={trip.payment_method ?? ""}
+                  onChange={(e) => {
+                    onFieldChange(
+                      "payment_method",
+                      e.target.value as TripPaymentMethod | ""
+                    );
+                    onFieldBlur();
+                  }}
+                  aria-label="Payment method"
+                >
+                  <option value="">Not set</option>
+                  {PAYMENT_METHOD_OPTIONS.map((method) => (
+                    <option key={method} value={method}>
+                      {PAYMENT_METHOD_LABELS[method]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Total amount">
+                <input
+                  className="adm-input"
+                  value={trip.total_amount ?? ""}
+                  onChange={(e) =>
+                    onFieldChange("total_amount", e.target.value)
+                  }
+                  onBlur={onFieldBlur}
+                  placeholder="e.g. 15000"
+                  inputMode="decimal"
+                />
+              </Field>
+              <Field label="Amount received">
+                <input
+                  className="adm-input"
+                  value={trip.amount_received ?? ""}
+                  onChange={(e) =>
+                    onFieldChange("amount_received", e.target.value)
+                  }
+                  onBlur={onFieldBlur}
+                  placeholder="e.g. 5000"
+                  inputMode="decimal"
+                />
+              </Field>
+            </div>
+            <Field label="Payment notes">
+              <textarea
+                className="adm-textarea"
+                value={trip.payment_notes ?? ""}
+                onChange={(e) =>
+                  onFieldChange("payment_notes", e.target.value)
+                }
+                onBlur={onFieldBlur}
+                placeholder="Internal payment notes…"
+                rows={3}
+              />
             </Field>
           </div>
         </section>
