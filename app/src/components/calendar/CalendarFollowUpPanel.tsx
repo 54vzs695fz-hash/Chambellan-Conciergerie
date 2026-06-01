@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { getActiveFollowUpSuggestions } from "@/lib/calendar/follow-up";
 import {
   daysUntilArrival,
@@ -32,9 +33,16 @@ export function CalendarFollowUpPanel({ programmes, today }: Props) {
 
           return (
             <li key={p.id} className="cal-reminder-item">
-              <Link href={p.plannerHref} className="font-serif text-gold tracking-wide">
-                {p.clientName} · {p.destination}
-              </Link>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link href={p.plannerHref} className="font-serif text-gold tracking-wide">
+                  {p.clientName} · {p.destination}
+                </Link>
+                <ProgrammeStatusBadge
+                  status={p.followUpStatus}
+                  showDot
+                  arrivalDate={p.arrivalDate}
+                />
+              </div>
               <p className="cal-reminder-meta">
                 {formatDateRange(p.arrivalDate, p.departureDate)}
                 {days !== null

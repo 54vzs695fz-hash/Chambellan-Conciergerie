@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DashboardCalendarWidget } from "@/components/calendar/DashboardCalendarWidget";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { listClients } from "@/lib/db/clients";
 import { listTrips } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
@@ -56,14 +57,23 @@ export default async function DashboardPage() {
                   href={`/planner/${t.id}`}
                   className="card block px-5 py-4 hover:border-gold/40 transition-colors"
                 >
-                  <span className="font-serif text-gold tracking-wide">
-                    {t.destination || "Untitled"}
-                  </span>
-                  <span className="text-muted mx-2">·</span>
-                  <span className="text-sm">{t.client_name || "Client"}</span>
-                  <p className="text-xs text-muted mt-1">
-                    {formatDateRange(t.arrival_date, t.departure_date)}
-                  </p>
+                  <div className="dash-planner-row">
+                    <div className="dash-planner-meta">
+                      <span className="font-serif text-gold tracking-wide">
+                        {t.destination || "Untitled"}
+                      </span>
+                      <span className="text-muted mx-2">·</span>
+                      <span className="text-sm">{t.client_name || "Client"}</span>
+                      <p className="text-xs text-muted mt-1">
+                        {formatDateRange(t.arrival_date, t.departure_date)}
+                      </p>
+                    </div>
+                    <ProgrammeStatusBadge
+                      status={t.follow_up_status ?? "follow_up"}
+                      showDot
+                      arrivalDate={t.arrival_date}
+                    />
+                  </div>
                 </Link>
               </li>
             ))}

@@ -8,6 +8,7 @@ import type {
   Client,
   DaySection,
   Establishment,
+  TripFollowUpStatus,
   TripWithDays,
 } from "@/lib/types";
 import {
@@ -16,6 +17,11 @@ import {
   OPTIONAL_SERVICE_FIELDS,
   PLANNER_BRAND_LOGO,
 } from "@/lib/planner/planner-sheet-model";
+import {
+  FOLLOW_UP_STATUS_LABELS,
+  FOLLOW_UP_STATUS_OPTIONS,
+} from "@/lib/calendar/status-styles";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import {
   TRIP_FIELD_ESTABLISHMENT_CATEGORY,
   TEAM_ROW_ESTABLISHMENT_CATEGORY,
@@ -39,6 +45,7 @@ interface DashboardProps {
   ) => void;
   onDatesCommit: () => void;
   onLinkClient: (clientId: string) => void;
+  onStatusChange: (status: TripFollowUpStatus) => void;
   onAddActivity: (
     dayId: number,
     sectionId: string,
@@ -121,6 +128,7 @@ export function PlannerConciergeDashboard({
   onDateFieldChange,
   onDatesCommit,
   onLinkClient,
+  onStatusChange,
   onAddActivity,
   onPatchActivity,
   onRemoveActivity,
@@ -155,6 +163,29 @@ export function PlannerConciergeDashboard({
                 onBlur={onFieldBlur}
                 placeholder="Client name"
               />
+            </Field>
+            <Field label="Programme status">
+              <div className="adm-status-row">
+                <select
+                  className="adm-input adm-status-select"
+                  value={trip.follow_up_status ?? "follow_up"}
+                  onChange={(e) =>
+                    onStatusChange(e.target.value as TripFollowUpStatus)
+                  }
+                  aria-label="Programme status"
+                >
+                  {FOLLOW_UP_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {FOLLOW_UP_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+                <ProgrammeStatusBadge
+                  status={trip.follow_up_status ?? "follow_up"}
+                  showDot
+                  arrivalDate={trip.arrival_date}
+                />
+              </div>
             </Field>
           </div>
         </section>

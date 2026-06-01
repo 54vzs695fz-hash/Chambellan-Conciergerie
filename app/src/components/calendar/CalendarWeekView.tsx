@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import {
+  CalendarQuickActions,
+  calendarEventClasses,
+} from "@/components/calendar/CalendarQuickActions";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import {
   buildWeekDays,
   formatDayNum,
   formatDayShort,
@@ -9,21 +14,35 @@ import {
   toIsoDate,
   type CalendarProgramme,
 } from "@/lib/calendar/programmes";
+import type { TripFollowUpStatus } from "@/lib/types";
 
 interface Props {
   reference: Date;
   programmes: CalendarProgramme[];
   today: Date;
+  updatingId: number | null;
+  onStatusChange: (id: number, status: TripFollowUpStatus) => void;
 }
 
-export function CalendarWeekView({ reference, programmes, today }: Props) {
+export function CalendarWeekView({
+  reference,
+  programmes,
+  today,
+  updatingId,
+  onStatusChange,
+}: Props) {
   const weekDays = buildWeekDays(reference);
   const todayIso = toIsoDate(today);
 
   const visible = programmes
     .map((p) => ({ p, span: programmeSpanInWeek(p, weekDays) }))
-    .filter((entry): entry is { p: CalendarProgramme; span: { startCol: number; span: number } } =>
-      entry.span !== null
+    .filter(
+      (
+        entry
+      ): entry is {
+        p: CalendarProgramme;
+        span: { startCol: number; span: number };
+      } => entry.span !== null
     );
 
   return (
@@ -48,15 +67,32 @@ export function CalendarWeekView({ reference, programmes, today }: Props) {
         ) : (
           visible.map(({ p, span }) => (
             <div key={p.id} className="cal-week-row">
-              <Link
-                href={p.plannerHref}
-                className="cal-week-bar"
+              <div
+                className="cal-event-wrap cal-week-event-wrap"
                 style={{
                   gridColumn: `${span.startCol + 1} / span ${span.span}`,
                 }}
               >
-                {p.clientName} · {p.destination}
-              </Link>
+                <Link
+                  href={p.plannerHref}
+                  className={calendarEventClasses(p, "", today, "cal-week-bar")}
+                >
+                  <span>
+                    {p.clientName} · {p.destination}
+                  </span>
+                  <ProgrammeStatusBadge
+                    status={p.followUpStatus}
+                    showDot
+                    arrivalDate={p.arrivalDate}
+                  />
+                </Link>
+                <CalendarQuickActions
+                  programme={p}
+                  updating={updatingId === p.id}
+                  onStatusChange={onStatusChange}
+                  compact
+                />
+              </div>
             </div>
           ))
         )}

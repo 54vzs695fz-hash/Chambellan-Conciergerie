@@ -12,6 +12,7 @@ import type {
   ActivityType,
   Client,
   DaySection,
+  TripFollowUpStatus,
   TripWithDays,
 } from "@/lib/types";
 import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
@@ -126,6 +127,10 @@ export function PlannerEditor({ initialTrip }: Props) {
     value: TripWithDays[K]
   ) => {
     applyTripUpdate((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateStatus = (status: TripFollowUpStatus) => {
+    applyTripUpdate((prev) => ({ ...prev, follow_up_status: status }), true);
   };
 
   const onFieldBlur = () => {
@@ -395,6 +400,7 @@ export function PlannerEditor({ initialTrip }: Props) {
           onDateFieldChange={onDateFieldChange}
           onDatesCommit={onDatesCommit}
           onLinkClient={linkClient}
+          onStatusChange={updateStatus}
           onAddActivity={addActivity}
           onPatchActivity={patchActivity}
           onRemoveActivity={removeActivity}

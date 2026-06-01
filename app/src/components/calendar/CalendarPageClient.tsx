@@ -57,6 +57,20 @@ export function CalendarPageClient({ initialTrips }: Props) {
     if (isMobile) setView("list");
   }, [isMobile]);
 
+  useEffect(() => {
+    const refresh = async () => {
+      const res = await fetch("/api/trips");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setProgrammes(tripsToCalendarProgrammes(data as Trip[]));
+      }
+    };
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
   const filtered = useMemo(
     () => filterProgrammes(programmes, filters, today),
     [programmes, filters, today]
@@ -180,6 +194,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
           reference={reference}
           programmes={filtered}
           today={today}
+          updatingId={updatingId}
+          onStatusChange={handleStatusChange}
         />
       ) : null}
 
@@ -188,6 +204,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
           reference={reference}
           programmes={filtered}
           today={today}
+          updatingId={updatingId}
+          onStatusChange={handleStatusChange}
         />
       ) : null}
 

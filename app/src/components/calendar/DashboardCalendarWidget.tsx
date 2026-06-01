@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import {
   countClientsToFollowUp,
   countProgrammesThisMonth,
@@ -57,9 +58,18 @@ export function DashboardCalendarWidget({ trips }: Props) {
               href={p.plannerHref}
               className="cal-dash-followup-link"
             >
-              {p.clientName} · {p.destination}
-              <br />
-              <span>{formatDateRange(p.arrivalDate, p.departureDate)}</span>
+              <span className="dash-planner-row">
+                <span className="dash-planner-meta">
+                  {p.clientName} · {p.destination}
+                  <br />
+                  <span>{formatDateRange(p.arrivalDate, p.departureDate)}</span>
+                </span>
+                <ProgrammeStatusBadge
+                  status={p.followUpStatus}
+                  showDot
+                  arrivalDate={p.arrivalDate}
+                />
+              </span>
             </Link>
           ))}
         </div>

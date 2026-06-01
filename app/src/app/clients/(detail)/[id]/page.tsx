@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ClientForm } from "@/components/crm/ClientForm";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import {
   getClient,
   getClientDestinations,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/db/clients";
 import { createTrip } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
+import type { TripFollowUpStatus } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,9 +127,18 @@ export default async function ClientDetailPage({
                       href={`/planner/${t.id}`}
                       className="card block px-4 py-3 hover:border-gold/40 text-sm"
                     >
-                      <span className="font-serif text-gold">
-                        {t.destination || "Untitled"}
-                      </span>
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-serif text-gold">
+                          {t.destination || "Untitled"}
+                        </span>
+                        <ProgrammeStatusBadge
+                          status={
+                            (t.follow_up_status as TripFollowUpStatus) || "follow_up"
+                          }
+                          showDot
+                          arrivalDate={t.arrival_date}
+                        />
+                      </div>
                       <p className="text-xs text-muted mt-1">
                         {formatDateRange(t.arrival_date, t.departure_date)}
                       </p>

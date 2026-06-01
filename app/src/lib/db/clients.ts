@@ -7,6 +7,7 @@ export interface ClientTripSummary {
   destination: string;
   arrival_date: string;
   departure_date: string;
+  follow_up_status: string;
   created_at: string;
   notes: string;
 }
@@ -90,6 +91,7 @@ export async function getClientTripHistory(
       destination: true,
       arrival_date: true,
       departure_date: true,
+      follow_up_status: true,
       created_at: true,
       notes: true,
     },
@@ -99,6 +101,7 @@ export async function getClientTripHistory(
     destination: row.destination,
     arrival_date: row.arrival_date,
     departure_date: row.departure_date,
+    follow_up_status: row.follow_up_status,
     created_at: row.created_at.toISOString(),
     notes: row.notes,
   }));

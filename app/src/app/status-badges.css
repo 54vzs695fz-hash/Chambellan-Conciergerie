@@ -1,0 +1,228 @@
+/* Programme status badges & arrival urgency — Chambellan palette */
+
+.prog-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 0.5px solid transparent;
+  white-space: nowrap;
+}
+
+.prog-status--follow-up {
+  color: #8a7348;
+  background: rgba(200, 164, 107, 0.12);
+  border-color: rgba(200, 164, 107, 0.35);
+}
+
+.prog-status--contacted {
+  color: #5f7389;
+  background: rgba(123, 148, 181, 0.12);
+  border-color: rgba(123, 148, 181, 0.35);
+}
+
+.prog-status--confirmed {
+  color: #5f755f;
+  background: rgba(125, 155, 125, 0.12);
+  border-color: rgba(125, 155, 125, 0.35);
+}
+
+.prog-status--completed {
+  color: #7a7a7a;
+  background: rgba(168, 168, 168, 0.1);
+  border-color: rgba(168, 168, 168, 0.35);
+}
+
+.prog-urgency {
+  flex-shrink: 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+}
+
+.prog-urgency--within-7 {
+  background: #c8a46b;
+}
+
+.prog-urgency--within-3 {
+  background: #c4926a;
+}
+
+.prog-urgency--tomorrow {
+  background: #b87a7a;
+}
+
+.cal-event--status-follow-up {
+  border-left: 2px solid #c8a46b;
+}
+
+.cal-event--status-contacted {
+  border-left: 2px solid #7b94b5;
+}
+
+.cal-event--status-confirmed {
+  border-left: 2px solid #7d9b7d;
+}
+
+.cal-event--status-completed {
+  border-left: 2px solid #a8a8a8;
+  opacity: 0.82;
+}
+
+.cal-event-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 44px;
+}
+
+.cal-event-wrap .cal-event {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-event-wrap .cal-quick-actions--compact {
+  flex-shrink: 0;
+}
+
+.cal-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.cal-quick-actions--compact {
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border-left: 0.5px solid rgba(229, 221, 210, 0.65);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.cal-quick-btn {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7a736c;
+  background: transparent;
+  border: 0.5px solid rgba(229, 221, 210, 0.85);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+@media (min-width: 640px) {
+  .cal-quick-btn {
+    min-height: 36px;
+    font-size: 0.58rem;
+    padding: 0.3rem 0.55rem;
+  }
+}
+
+.cal-quick-btn:hover:not(:disabled) {
+  background: rgba(244, 242, 239, 0.9);
+}
+
+.cal-quick-btn--contacted:hover:not(:disabled) {
+  color: #5f7389;
+  border-color: rgba(123, 148, 181, 0.45);
+}
+
+.cal-quick-btn--confirmed:hover:not(:disabled) {
+  color: #5f755f;
+  border-color: rgba(125, 155, 125, 0.45);
+}
+
+.cal-quick-btn--completed:hover:not(:disabled) {
+  color: #7a7a7a;
+  border-color: rgba(168, 168, 168, 0.45);
+}
+
+.cal-quick-btn.is-active {
+  font-weight: 500;
+}
+
+.cal-quick-btn--contacted.is-active {
+  color: #5f7389;
+  background: rgba(123, 148, 181, 0.1);
+  border-color: rgba(123, 148, 181, 0.4);
+}
+
+.cal-quick-btn--confirmed.is-active {
+  color: #5f755f;
+  background: rgba(125, 155, 125, 0.1);
+  border-color: rgba(125, 155, 125, 0.4);
+}
+
+.cal-quick-btn--completed.is-active {
+  color: #7a7a7a;
+  background: rgba(168, 168, 168, 0.1);
+  border-color: rgba(168, 168, 168, 0.4);
+}
+
+.cal-quick-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.cal-list-card-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.cal-list-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-list-card .cal-quick-actions {
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.5rem 0.65rem;
+  border-left: 0.5px solid rgba(229, 221, 210, 0.55);
+}
+
+.adm-status-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%237a736c' d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.adm-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.planner-list-status {
+  margin-top: 0.35rem;
+}
+
+.client-list-status {
+  margin-top: 0.35rem;
+}
+
+.dash-planner-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dash-planner-meta {
+  flex: 1;
+  min-width: 0;
+}

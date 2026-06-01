@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import {
+  CalendarQuickActions,
+  calendarEventClasses,
+} from "@/components/calendar/CalendarQuickActions";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import {
   buildMonthGrid,
   formatDayNum,
   formatDayShort,
-  FOLLOW_UP_STATUS_LABELS,
   isSameMonth,
   isToday,
   programmeActiveOnDate,
@@ -13,16 +17,25 @@ import {
   toIsoDate,
   type CalendarProgramme,
 } from "@/lib/calendar/programmes";
+import type { TripFollowUpStatus } from "@/lib/types";
 
 interface Props {
   reference: Date;
   programmes: CalendarProgramme[];
   today: Date;
+  updatingId: number | null;
+  onStatusChange: (id: number, status: TripFollowUpStatus) => void;
 }
 
-export function CalendarMonthView({ reference, programmes, today }: Props) {
+export function CalendarMonthView({
+  reference,
+  programmes,
+  today,
+  updatingId,
+  onStatusChange,
+}: Props) {
   const weeks = buildMonthGrid(reference);
-  const weekdays = buildMonthGrid(reference)[0].map(formatDayShort);
+  const weekdays = weeks[0].map(formatDayShort);
 
   return (
     <div className="cal-month">
@@ -50,20 +63,40 @@ export function CalendarMonthView({ reference, programmes, today }: Props) {
               >
                 <span className="cal-day-num">{formatDayNum(day)}</span>
                 <div className="cal-day-events">
-                  {dayProgrammes.map((p) => (
-                    <Link
-                      key={`${p.id}-${iso}`}
-                      href={p.plannerHref}
-                      className={`cal-event ${programmeSegmentClass(p, iso)}`}
-                    >
-                      <span className="cal-event-label">
-                        {p.clientName} · {p.destination}
-                      </span>
-                      <span className="cal-event-sub">
-                        {FOLLOW_UP_STATUS_LABELS[p.followUpStatus]}
-                      </span>
-                    </Link>
-                  ))}
+                  {dayProgrammes.map((p) => {
+                    const segment = programmeSegmentClass(p, iso);
+                    const showActions = segment !== "cal-event--middle";
+
+                    return (
+                      <div key={`${p.id}-${iso}`} className="cal-event-wrap">
+                        <Link
+                          href={p.plannerHref}
+                          className={calendarEventClasses(p, segment, today)}
+                        >
+                          <span className="cal-event-label">
+                            {p.clientName} · {p.destination}
+                          </span>
+                          {showActions ? (
+                            <span className="cal-event-sub">
+                              <ProgrammeStatusBadge
+                                status={p.followUpStatus}
+                                showDot
+                                arrivalDate={p.arrivalDate}
+                              />
+                            </span>
+                          ) : null}
+                        </Link>
+                        {showActions ? (
+                          <CalendarQuickActions
+                            programme={p}
+                            updating={updatingId === p.id}
+                            onStatusChange={onStatusChange}
+                            compact
+                          />
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

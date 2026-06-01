@@ -3,6 +3,7 @@ import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 import "./mobile.css";
+import "./status-badges.css";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],

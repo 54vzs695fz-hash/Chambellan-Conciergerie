@@ -95,3 +95,12 @@ export const FOLLOW_UP_ACTIONS: {
   { status: "confirmed", label: "Mark as confirmed" },
   { status: "completed", label: "Mark as completed" },
 ];
+
+export const CALENDAR_QUICK_ACTIONS: {
+  status: TripFollowUpStatus;
+  label: string;
+}[] = [
+  { status: "contacted", label: "Contacted" },
+  { status: "confirmed", label: "Confirmed" },
+  { status: "completed", label: "Completed" },
+];

@@ -32,12 +32,7 @@ export const DEFAULT_CALENDAR_FILTERS: CalendarFilters = {
   thisMonth: false,
 };
 
-export const FOLLOW_UP_STATUS_LABELS: Record<TripFollowUpStatus, string> = {
-  follow_up: "Follow up",
-  contacted: "Contacted",
-  confirmed: "Confirmed",
-  completed: "Completed",
-};
+export { FOLLOW_UP_STATUS_LABELS } from "@/lib/calendar/status-styles";
 
 function parseIsoDate(dateStr: string): Date | null {
   if (!dateStr) return null;
