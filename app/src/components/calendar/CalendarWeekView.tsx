@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   CalendarQuickActions,
   calendarEventClasses,
@@ -21,6 +20,8 @@ interface Props {
   programmes: CalendarProgramme[];
   today: Date;
   updatingId: number | null;
+  selectedId: number | null;
+  onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
 }
 
@@ -29,6 +30,8 @@ export function CalendarWeekView({
   programmes,
   today,
   updatingId,
+  selectedId,
+  onSelectProgramme,
   onStatusChange,
 }: Props) {
   const weekDays = buildWeekDays(reference);
@@ -73,9 +76,10 @@ export function CalendarWeekView({
                   gridColumn: `${span.startCol + 1} / span ${span.span}`,
                 }}
               >
-                <Link
-                  href={p.plannerHref}
-                  className={calendarEventClasses(p, "", today, "cal-week-bar")}
+                <button
+                  type="button"
+                  className={`${calendarEventClasses(p, "", today, "cal-week-bar")}${selectedId === p.id ? " is-selected" : ""}`}
+                  onClick={() => onSelectProgramme(p)}
                 >
                   <span>
                     {p.clientName} · {p.destination}
@@ -85,7 +89,7 @@ export function CalendarWeekView({
                     showDot
                     arrivalDate={p.arrivalDate}
                   />
-                </Link>
+                </button>
                 <CalendarQuickActions
                   programme={p}
                   updating={updatingId === p.id}

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
 import { CalendarQuickActions } from "@/components/calendar/CalendarQuickActions";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
@@ -10,12 +9,16 @@ import type { TripFollowUpStatus } from "@/lib/types";
 interface Props {
   programmes: CalendarProgramme[];
   updatingId: number | null;
+  selectedId: number | null;
+  onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
 }
 
 export function CalendarListView({
   programmes,
   updatingId,
+  selectedId,
+  onSelectProgramme,
   onStatusChange,
 }: Props) {
   if (programmes.length === 0) {
@@ -29,9 +32,16 @@ export function CalendarListView({
   return (
     <div className="cal-list">
       {sorted.map((p) => (
-        <article key={p.id} className="cal-list-card">
+        <article
+          key={p.id}
+          className={`cal-list-card${selectedId === p.id ? " is-selected" : ""}`}
+        >
           <div className="cal-list-card-inner">
-            <Link href={p.plannerHref} className="cal-list-card-body block">
+            <button
+              type="button"
+              className="cal-list-card-body"
+              onClick={() => onSelectProgramme(p)}
+            >
               <div className="cal-list-top">
                 <span className="cal-list-destination">{p.destination}</span>
                 <ProgrammeStatusBadge
@@ -47,7 +57,7 @@ export function CalendarListView({
               <p className="cal-list-dates">
                 {formatDateRange(p.arrivalDate, p.departureDate)}
               </p>
-            </Link>
+            </button>
             <CalendarQuickActions
               programme={p}
               updating={updatingId === p.id}

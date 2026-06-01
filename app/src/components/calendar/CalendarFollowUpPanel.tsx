@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { getActiveFollowUpSuggestions } from "@/lib/calendar/follow-up";
@@ -13,9 +12,14 @@ import {
 interface Props {
   programmes: CalendarProgramme[];
   today: Date;
+  onSelectProgramme: (programme: CalendarProgramme) => void;
 }
 
-export function CalendarFollowUpPanel({ programmes, today }: Props) {
+export function CalendarFollowUpPanel({
+  programmes,
+  today,
+  onSelectProgramme,
+}: Props) {
   const arrivingSoon = programmesArrivingWithinDays(programmes, 7, today);
   const suggestions = getActiveFollowUpSuggestions(arrivingSoon, today);
 
@@ -34,9 +38,13 @@ export function CalendarFollowUpPanel({ programmes, today }: Props) {
           return (
             <li key={p.id} className="cal-reminder-item">
               <div className="flex flex-wrap items-center gap-2">
-                <Link href={p.plannerHref} className="font-serif text-gold tracking-wide">
+                <button
+                  type="button"
+                  className="cal-follow-up-select font-serif text-gold tracking-wide"
+                  onClick={() => onSelectProgramme(p)}
+                >
                   {p.clientName} · {p.destination}
-                </Link>
+                </button>
                 <ProgrammeStatusBadge
                   status={p.followUpStatus}
                   showDot

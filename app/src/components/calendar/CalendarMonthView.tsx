@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   CalendarQuickActions,
   calendarEventClasses,
@@ -24,6 +23,8 @@ interface Props {
   programmes: CalendarProgramme[];
   today: Date;
   updatingId: number | null;
+  selectedId: number | null;
+  onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
 }
 
@@ -32,6 +33,8 @@ export function CalendarMonthView({
   programmes,
   today,
   updatingId,
+  selectedId,
+  onSelectProgramme,
   onStatusChange,
 }: Props) {
   const weeks = buildMonthGrid(reference);
@@ -69,9 +72,10 @@ export function CalendarMonthView({
 
                     return (
                       <div key={`${p.id}-${iso}`} className="cal-event-wrap">
-                        <Link
-                          href={p.plannerHref}
-                          className={calendarEventClasses(p, segment, today)}
+                        <button
+                          type="button"
+                          className={`${calendarEventClasses(p, segment, today)}${selectedId === p.id ? " is-selected" : ""}`}
+                          onClick={() => onSelectProgramme(p)}
                         >
                           <span className="cal-event-label">
                             {p.clientName} · {p.destination}
@@ -85,7 +89,7 @@ export function CalendarMonthView({
                               />
                             </span>
                           ) : null}
-                        </Link>
+                        </button>
                         {showActions ? (
                           <CalendarQuickActions
                             programme={p}

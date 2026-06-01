@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CalendarChecklistPanel } from "@/components/calendar/CalendarChecklistPanel";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarFiltersBar } from "@/components/calendar/CalendarFilters";
 import { CalendarFollowUpPanel } from "@/components/calendar/CalendarFollowUpPanel";
 import { CalendarListView } from "@/components/calendar/CalendarListView";
 import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
+import { CalendarProgrammeFollowUpPanel } from "@/components/calendar/CalendarProgrammeFollowUpPanel";
 import { CalendarWeekView } from "@/components/calendar/CalendarWeekView";
 import {
   addDays,
@@ -22,7 +22,8 @@ import {
   type CalendarProgramme,
   type CalendarView,
 } from "@/lib/calendar/programmes";
-import type { PendingChecklistItem, Trip, TripFollowUpStatus } from "@/lib/types";
+import { PLANNER_AUTOSAVE_MS } from "@/components/planner/use-planner-save";
+import type { ChecklistItem, Trip, TripFollowUpStatus } from "@/lib/types";
 
 interface Props {
   initialTrips: Trip[];
@@ -50,14 +51,15 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const [programmes, setProgrammes] = useState<CalendarProgramme[]>(() =>
     tripsToCalendarProgrammes(initialTrips)
   );
+  const [selectedProgramme, setSelectedProgramme] =
+    useState<CalendarProgramme | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [checklistUpdatingId, setChecklistUpdatingId] = useState<number | null>(
     null
   );
-  const [pendingChecklist, setPendingChecklist] = useState<
-    PendingChecklistItem[]
-  >([]);
   const [toast, setToast] = useState<string | null>(null);
+  const patchTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const pendingPatches = useRef(new Map<number, Partial<ChecklistItem>>());
   const today = useMemo(() => startOfDay(new Date()), []);
 
   useEffect(() => {
@@ -70,22 +72,25 @@ export function CalendarPageClient({ initialTrips }: Props) {
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data)) {
-        setProgrammes(tripsToCalendarProgrammes(data as Trip[]));
+        const next = tripsToCalendarProgrammes(data as Trip[]);
+        setProgrammes(next);
+        setSelectedProgramme((current) => {
+          if (!current) return null;
+          return next.find((p) => p.id === current.id) ?? null;
+        });
       }
     };
-    const refreshChecklist = async () => {
-      const res = await fetch("/api/checklist/pending");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data)) setPendingChecklist(data as PendingChecklistItem[]);
-    };
-    const onFocus = () => {
-      void refresh();
-      void refreshChecklist();
-    };
-    void refreshChecklist();
+    const onFocus = () => void refresh();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      for (const timer of patchTimers.current.values()) {
+        clearTimeout(timer);
+      }
+    };
   }, []);
 
   const filtered = useMemo(
@@ -116,6 +121,9 @@ export function CalendarPageClient({ initialTrips }: Props) {
       setProgrammes((prev) =>
         prev.map((p) => (p.id === id ? { ...p, followUpStatus: status } : p))
       );
+      setSelectedProgramme((prev) =>
+        prev?.id === id ? { ...prev, followUpStatus: status } : prev
+      );
       showToast("Status updated.");
     } catch {
       showToast("Could not update status.");
@@ -123,6 +131,57 @@ export function CalendarPageClient({ initialTrips }: Props) {
       setUpdatingId(null);
     }
   };
+
+  const flushChecklistPatch = useCallback(async (id: number) => {
+    const fields = pendingPatches.current.get(id);
+    if (!fields || Object.keys(fields).length === 0) return;
+    pendingPatches.current.delete(id);
+    const res = await fetch(`/api/checklist-items/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+    if (!res.ok) throw new Error("Update failed");
+  }, []);
+
+  const handlePatchChecklistItem = useCallback(
+    async (id: number, fields: Partial<ChecklistItem>) => {
+      const immediate =
+        fields.status !== undefined ||
+        Object.keys(fields).length === 0;
+
+      if (immediate && Object.keys(fields).length > 0) {
+        pendingPatches.current.delete(id);
+        const timer = patchTimers.current.get(id);
+        if (timer) clearTimeout(timer);
+        patchTimers.current.delete(id);
+        const res = await fetch(`/api/checklist-items/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        });
+        if (!res.ok) throw new Error("Update failed");
+        return;
+      }
+
+      pendingPatches.current.set(id, {
+        ...pendingPatches.current.get(id),
+        ...fields,
+      });
+      const existing = patchTimers.current.get(id);
+      if (existing) clearTimeout(existing);
+      patchTimers.current.set(
+        id,
+        setTimeout(() => {
+          patchTimers.current.delete(id);
+          void flushChecklistPatch(id).catch(() => {
+            showToast("Could not save checklist item.");
+          });
+        }, PLANNER_AUTOSAVE_MS)
+      );
+    },
+    [flushChecklistPatch]
+  );
 
   const handleChecklistDone = async (id: number) => {
     setChecklistUpdatingId(id);
@@ -133,10 +192,10 @@ export function CalendarPageClient({ initialTrips }: Props) {
         body: JSON.stringify({ status: "done" }),
       });
       if (!res.ok) throw new Error("Update failed");
-      setPendingChecklist((prev) => prev.filter((item) => item.id !== id));
-      showToast("Checklist item marked done.");
+      showToast("Marked done.");
     } catch {
       showToast("Could not update checklist item.");
+      throw new Error("Update failed");
     } finally {
       setChecklistUpdatingId(null);
     }
@@ -191,13 +250,22 @@ export function CalendarPageClient({ initialTrips }: Props) {
         onChange={setFilters}
       />
 
-      <CalendarFollowUpPanel programmes={programmes} today={today} />
-
-      <CalendarChecklistPanel
-        items={pendingChecklist}
-        updatingId={checklistUpdatingId}
-        onMarkDone={handleChecklistDone}
+      <CalendarFollowUpPanel
+        programmes={programmes}
+        today={today}
+        onSelectProgramme={setSelectedProgramme}
       />
+
+      {selectedProgramme ? (
+        <CalendarProgrammeFollowUpPanel
+          programme={selectedProgramme}
+          today={today}
+          updatingId={checklistUpdatingId}
+          onClose={() => setSelectedProgramme(null)}
+          onMarkDone={handleChecklistDone}
+          onPatchItem={handlePatchChecklistItem}
+        />
+      ) : null}
 
       {view !== "list" ? (
         <div className="cal-nav">
@@ -236,6 +304,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
           programmes={filtered}
           today={today}
           updatingId={updatingId}
+          selectedId={selectedProgramme?.id ?? null}
+          onSelectProgramme={setSelectedProgramme}
           onStatusChange={handleStatusChange}
         />
       ) : null}
@@ -246,6 +316,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
           programmes={filtered}
           today={today}
           updatingId={updatingId}
+          selectedId={selectedProgramme?.id ?? null}
+          onSelectProgramme={setSelectedProgramme}
           onStatusChange={handleStatusChange}
         />
       ) : null}
@@ -254,6 +326,8 @@ export function CalendarPageClient({ initialTrips }: Props) {
         <CalendarListView
           programmes={filtered}
           updatingId={updatingId}
+          selectedId={selectedProgramme?.id ?? null}
+          onSelectProgramme={setSelectedProgramme}
           onStatusChange={handleStatusChange}
         />
       ) : null}
