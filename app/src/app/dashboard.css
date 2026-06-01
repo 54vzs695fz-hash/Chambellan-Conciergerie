@@ -1,0 +1,218 @@
+/* Dashboard category cards — soft backgrounds, colored left border */
+
+.dash-card {
+  --dash-accent: var(--shell-accent, #b89b6a);
+  background: color-mix(in srgb, var(--dash-accent) 5.5%, var(--shell-card-bg, #fff));
+  border: 1px solid var(--shell-card-border, #e5e7eb);
+  border-left: 3px solid color-mix(in srgb, var(--dash-accent) 70%, #fff);
+  border-radius: 12px;
+  box-shadow: var(--shell-card-shadow);
+}
+
+.dash-card--arrivals {
+  --dash-accent: #3e6fa8;
+}
+
+.dash-card--follow-up {
+  --dash-accent: #b89b6a;
+}
+
+.dash-card--payments {
+  --dash-accent: #c9822b;
+}
+
+.dash-card--confirmed {
+  --dash-accent: #4f8a63;
+}
+
+.dash-card--urgent {
+  --dash-accent: #9b4f5c;
+}
+
+.dash-card--library {
+  --dash-accent: #7556a8;
+}
+
+.dash-card .cal-dash-stat-value {
+  color: color-mix(in srgb, var(--dash-accent) 76%, var(--shell-text, #111));
+}
+
+.dash-card .cal-dash-stat-label,
+.dash-card .dash-pay-label {
+  color: color-mix(in srgb, var(--dash-accent) 38%, var(--shell-text-muted, #6b7280));
+}
+
+/* Calendar overview stats */
+
+.cal-dash-grid {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .cal-dash-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .cal-dash-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.cal-dash-stat {
+  padding: 0.85rem 1rem;
+}
+
+.cal-dash-stat-value {
+  margin: 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.cal-dash-stat-label {
+  margin: 0.3rem 0 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cal-dash-followups {
+  margin-top: 0.25rem;
+}
+
+.cal-dash-followup-link {
+  display: block;
+  padding: 0.7rem 0;
+  font-size: 0.82rem;
+  text-decoration: none;
+  color: var(--shell-text, #111);
+  border-bottom: 1px solid color-mix(in srgb, var(--dash-accent, #3e6fa8) 12%, var(--shell-card-border));
+}
+
+.cal-dash-followup-link:last-child {
+  border-bottom: none;
+}
+
+.cal-dash-followup-link span {
+  color: var(--shell-text-muted, #6b7280);
+  font-size: 0.72rem;
+}
+
+/* Follow-up items */
+
+.dash-follow-up-item.dash-card {
+  padding: 0.85rem 1rem;
+}
+
+.dash-follow-up-kind--urgent {
+  color: color-mix(in srgb, #9b4f5c 82%, #111);
+  background: color-mix(in srgb, #9b4f5c 10%, white);
+  border-color: color-mix(in srgb, #9b4f5c 24%, transparent);
+}
+
+.dash-follow-up-kind--arrival {
+  color: color-mix(in srgb, #3e6fa8 82%, #111);
+  background: color-mix(in srgb, #3e6fa8 10%, white);
+  border-color: color-mix(in srgb, #3e6fa8 24%, transparent);
+}
+
+.dash-follow-up-kind--payment {
+  color: color-mix(in srgb, #c9822b 82%, #111);
+  background: color-mix(in srgb, #c9822b 10%, white);
+  border-color: color-mix(in srgb, #c9822b 24%, transparent);
+}
+
+.dash-follow-up-kind--booking {
+  color: color-mix(in srgb, #4f8a63 82%, #111);
+  background: color-mix(in srgb, #4f8a63 10%, white);
+  border-color: color-mix(in srgb, #4f8a63 24%, transparent);
+}
+
+.dash-follow-up-kind--itinerary {
+  color: color-mix(in srgb, #b89b6a 82%, #111);
+  background: color-mix(in srgb, #b89b6a 10%, white);
+  border-color: color-mix(in srgb, #b89b6a 24%, transparent);
+}
+
+/* Payment grid */
+
+.dash-pay-grid.dash-card {
+  padding: 0.85rem 1rem;
+}
+
+/* List rows */
+
+.dash-list-link {
+  display: block;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dash-list-link:hover {
+  background: color-mix(in srgb, var(--dash-accent) 8%, var(--shell-card-bg));
+  border-left-color: var(--dash-accent);
+}
+
+/* Quick actions with category accents */
+
+.dash-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dash-action--follow-up {
+  color: #fff;
+  background: var(--shell-btn-primary-bg, #111);
+  border: 1px solid var(--shell-btn-primary-bg, #111);
+}
+
+.dash-action--follow-up:hover {
+  background: color-mix(in srgb, #b89b6a 18%, #111);
+}
+
+.dash-action--confirmed {
+  color: var(--shell-text, #111);
+  background: color-mix(in srgb, #4f8a63 7%, white);
+  border: 1px solid color-mix(in srgb, #4f8a63 22%, var(--shell-card-border));
+  border-left: 3px solid color-mix(in srgb, #4f8a63 70%, #fff);
+}
+
+.dash-action--confirmed:hover {
+  background: color-mix(in srgb, #4f8a63 12%, white);
+}
+
+.dash-action--library {
+  color: var(--shell-text, #111);
+  background: color-mix(in srgb, #7556a8 7%, white);
+  border: 1px solid color-mix(in srgb, #7556a8 22%, var(--shell-card-border));
+  border-left: 3px solid color-mix(in srgb, #7556a8 70%, #fff);
+}
+
+.dash-action--library:hover {
+  background: color-mix(in srgb, #7556a8 12%, white);
+}
+
+@media (max-width: 639px) {
+  .cal-dash-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .dash-list-link {
+    padding: 0.95rem 1rem;
+  }
+}

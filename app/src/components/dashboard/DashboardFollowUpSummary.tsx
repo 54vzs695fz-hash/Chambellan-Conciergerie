@@ -45,7 +45,7 @@ export function DashboardFollowUpSummary({ initialItems }: Props) {
   if (items.length === 0) return null;
 
   return (
-    <section className="dash-follow-up mb-10">
+    <section className="dash-follow-up mb-10" data-section="planner">
       <div className="dash-follow-up-head">
         <h2 className="section-title">Follow-up</h2>
         <Link href="/calendar" className="btn-ghost">
@@ -54,7 +54,12 @@ export function DashboardFollowUpSummary({ initialItems }: Props) {
       </div>
       <ul className="dash-follow-up-list">
         {items.map((item) => (
-          <li key={item.key} className="dash-follow-up-item">
+          <li
+            key={item.key}
+            className={`dash-follow-up-item dash-card ${
+              item.kind === "urgent" ? "dash-card--urgent" : "dash-card--follow-up"
+            }`}
+          >
             <div className="dash-follow-up-copy">
               <span className={`dash-follow-up-kind dash-follow-up-kind--${item.kind}`}>
                 {KIND_LABELS[item.kind]}

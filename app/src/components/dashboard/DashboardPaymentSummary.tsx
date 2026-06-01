@@ -27,7 +27,7 @@ export function DashboardPaymentSummary({ trips }: Props) {
           Calendar
         </Link>
       </div>
-      <div className="dash-pay-grid card px-4 py-4">
+      <div className="dash-pay-grid dash-card dash-card--payments px-4 py-4">
         {PAYMENT_STATUS_OPTIONS.map((status) => (
           <PaymentCount key={status} status={status} count={counts[status]} />
         ))}

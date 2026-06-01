@@ -8,6 +8,7 @@ import { listClients } from "@/lib/db/clients";
 import { listTrips } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
 import "@/app/calendar/calendar.css";
+import "@/app/dashboard.css";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,13 +32,13 @@ export default async function DashboardPage() {
       </header>
 
       <div className="flex flex-wrap gap-3 mb-12">
-        <Link href="/planner/new" className="btn-primary min-h-[44px]">
+        <Link href="/planner/new" className="dash-action dash-action--follow-up">
           New weekly planner
         </Link>
-        <Link href="/clients/new" className="btn-secondary min-h-[44px]">
+        <Link href="/clients/new" className="dash-action dash-action--confirmed">
           New client
         </Link>
-        <Link href="/establishments/new" className="btn-secondary min-h-[44px]">
+        <Link href="/establishments/new" className="dash-action dash-action--library">
           New establishment
         </Link>
       </div>
@@ -48,7 +49,7 @@ export default async function DashboardPage() {
 
       <DashboardFollowUpSummary initialItems={pendingFollowUp} />
 
-      <section className="mb-10">
+      <section className="mb-10" data-section="planner">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title">Recent planners</h2>
           <Link href="/planner" className="btn-ghost">
@@ -63,7 +64,7 @@ export default async function DashboardPage() {
               <li key={t.id}>
                 <Link
                   href={`/planner/${t.id}`}
-                  className="card block px-5 py-4 hover:border-gold/40 transition-colors"
+                  className="dash-card dash-card--confirmed dash-list-link"
                 >
                   <div className="dash-planner-row">
                     <div className="dash-planner-meta">
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <section>
+      <section data-section="clients">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title">Clients</h2>
           <Link href="/clients" className="btn-ghost">
@@ -104,7 +105,7 @@ export default async function DashboardPage() {
               <li key={c.id}>
                 <Link
                   href={`/clients/${c.id}`}
-                  className="card block px-5 py-3 hover:border-gold/40 transition-colors text-sm"
+                  className="dash-card dash-card--confirmed dash-list-link text-sm"
                 >
                   {c.full_name}
                   {c.nationality ? (

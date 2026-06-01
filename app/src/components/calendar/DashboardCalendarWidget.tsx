@@ -23,7 +23,7 @@ export function DashboardCalendarWidget({ trips }: Props) {
   const followUp = countClientsToFollowUp(programmes, today);
 
   return (
-    <section className="mb-10">
+    <section className="mb-10" data-section="calendar">
       <div className="flex items-center justify-between mb-4">
         <h2 className="section-title">Calendar overview</h2>
         <Link href="/calendar" className="btn-ghost">
@@ -32,26 +32,26 @@ export function DashboardCalendarWidget({ trips }: Props) {
       </div>
 
       <div className="cal-dash-grid">
-        <div className="cal-dash-stat">
+        <div className="cal-dash-stat dash-card dash-card--arrivals">
           <p className="cal-dash-stat-value">{upcoming.length}</p>
           <p className="cal-dash-stat-label">Upcoming arrivals (7 days)</p>
         </div>
-        <div className="cal-dash-stat">
+        <div className="cal-dash-stat dash-card dash-card--confirmed">
           <p className="cal-dash-stat-value">{thisWeek}</p>
           <p className="cal-dash-stat-label">Programmes this week</p>
         </div>
-        <div className="cal-dash-stat">
+        <div className="cal-dash-stat dash-card dash-card--confirmed">
           <p className="cal-dash-stat-value">{thisMonth}</p>
           <p className="cal-dash-stat-label">Programmes this month</p>
         </div>
-        <div className="cal-dash-stat">
+        <div className="cal-dash-stat dash-card dash-card--follow-up">
           <p className="cal-dash-stat-value">{followUp}</p>
           <p className="cal-dash-stat-label">Clients to follow up</p>
         </div>
       </div>
 
       {upcoming.length > 0 ? (
-        <div className="cal-dash-followups card px-5 py-3">
+        <div className="cal-dash-followups dash-card dash-card--arrivals px-5 py-3">
           {upcoming.slice(0, 5).map((p) => (
             <Link
               key={p.id}

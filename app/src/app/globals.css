@@ -141,11 +141,6 @@ body {
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.85rem 1rem;
-    background: var(--shell-card-bg);
-    border: 1px solid var(--shell-card-border);
-    border-radius: 12px;
-    box-shadow: var(--shell-card-shadow);
   }
 
   .dash-follow-up-copy {
@@ -162,36 +157,6 @@ body {
     text-transform: uppercase;
     border-radius: 999px;
     border: 0.5px solid transparent;
-  }
-
-  .dash-follow-up-kind--urgent {
-    color: #8a7348;
-    background: rgba(200, 164, 107, 0.12);
-    border-color: rgba(200, 164, 107, 0.35);
-  }
-
-  .dash-follow-up-kind--arrival {
-    color: #5f7389;
-    background: rgba(123, 148, 181, 0.12);
-    border-color: rgba(123, 148, 181, 0.35);
-  }
-
-  .dash-follow-up-kind--payment {
-    color: #7a6a5a;
-    background: rgba(168, 148, 128, 0.12);
-    border-color: rgba(168, 148, 128, 0.35);
-  }
-
-  .dash-follow-up-kind--booking {
-    color: #5f755f;
-    background: rgba(125, 155, 125, 0.1);
-    border-color: rgba(125, 155, 125, 0.35);
-  }
-
-  .dash-follow-up-kind--itinerary {
-    color: #7a736c;
-    background: rgba(168, 168, 168, 0.1);
-    border-color: rgba(168, 168, 168, 0.35);
   }
 
   .dash-follow-up-client {
