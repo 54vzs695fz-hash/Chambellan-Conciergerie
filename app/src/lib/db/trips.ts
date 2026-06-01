@@ -24,6 +24,10 @@ import {
   serializeDefaultDaySections,
 } from "../planner/trip-days-sync";
 import { isUntitledDestination } from "../planner-utils";
+import {
+  normalizeTripPaymentMethod,
+  normalizeTripPaymentStatus,
+} from "../planner/payment-status";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -37,6 +41,11 @@ function mapTrip(row: PrismaTrip): Trip {
     client_id: row.client_id,
     follow_up_status:
       (row.follow_up_status as Trip["follow_up_status"]) || "follow_up",
+    payment_status: normalizeTripPaymentStatus(row.payment_status),
+    total_amount: row.total_amount ?? "",
+    amount_received: row.amount_received ?? "",
+    payment_method: normalizeTripPaymentMethod(row.payment_method),
+    payment_notes: row.payment_notes ?? "",
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
   };
@@ -125,6 +134,11 @@ const tripDataFields = (
   host_contact: payload.host_contact,
   tailored_for: payload.tailored_for,
   follow_up_status: payload.follow_up_status,
+  payment_status: payload.payment_status,
+  total_amount: payload.total_amount,
+  amount_received: payload.amount_received,
+  payment_method: payload.payment_method,
+  payment_notes: payload.payment_notes,
 });
 
 export async function createTrip(

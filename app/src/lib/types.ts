@@ -23,6 +23,20 @@ export type TripFollowUpStatus =
   | "confirmed"
   | "completed";
 
+export type TripPaymentStatus =
+  | "pending"
+  | "deposit_paid"
+  | "fully_paid"
+  | "cancelled";
+
+export type TripPaymentMethod =
+  | "stripe"
+  | "paypal"
+  | "revolut"
+  | "bank_transfer"
+  | "cash"
+  | "other";
+
 export type ChecklistItemStatus = "todo" | "in_progress" | "done";
 
 export type ChecklistCategory =
@@ -122,6 +136,11 @@ export interface Trip {
   host_contact: string;
   tailored_for: string;
   follow_up_status: TripFollowUpStatus;
+  payment_status: TripPaymentStatus;
+  total_amount: string;
+  amount_received: string;
+  payment_method: TripPaymentMethod | "";
+  payment_notes: string;
   created_at: string;
   updated_at: string;
 }
@@ -325,4 +344,9 @@ export const EMPTY_TRIP_HEADER: Omit<
   host_contact: "",
   tailored_for: "",
   follow_up_status: "follow_up",
+  payment_status: "pending",
+  total_amount: "",
+  amount_received: "",
+  payment_method: "",
+  payment_notes: "",
 };
