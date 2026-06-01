@@ -5,17 +5,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "#faf8f5",
-        beige: "#f0ebe3",
-        sand: "#e5ddd2",
-        gold: "#9a7b4f",
-        "gold-light": "#c4a574",
-        ink: "#1c1c1c",
-        muted: "#6b6560",
+        cream: "var(--shell-app-bg)",
+        beige: "var(--shell-sidebar-active-bg)",
+        sand: "var(--shell-card-border)",
+        gold: "var(--shell-accent)",
+        "gold-light": "#c9ad7f",
+        ink: "var(--shell-btn-primary-bg)",
+        muted: "var(--shell-text-muted)",
       },
       fontFamily: {
         serif: ["var(--font-cormorant)", "Georgia", "serif"],
         sans: ["var(--font-dm-sans)", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        card: "var(--shell-card-shadow)",
+      },
+      borderRadius: {
+        input: "var(--shell-input-radius)",
       },
     },
   },

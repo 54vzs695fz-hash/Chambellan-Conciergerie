@@ -16,14 +16,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isPlanner) {
     return (
       <>
-        <div className="app-main app-main--planner min-h-screen">{children}</div>
+        <div className="app-shell app-main app-main--planner min-h-screen">{children}</div>
         <MobileNav />
       </>
     );
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="app-shell flex min-h-screen">
       <Sidebar />
       <main className="app-main">{children}</main>
       <MobileNav />

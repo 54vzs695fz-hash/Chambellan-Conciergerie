@@ -3,16 +3,48 @@
 @tailwind utilities;
 
 :root {
-  --cream: #faf8f5;
-  --beige: #f0ebe3;
-  --sand: #e5ddd2;
-  --gold: #9a7b4f;
-  --ink: #1c1c1c;
+  /* App shell — sidebar */
+  --shell-sidebar-bg: #111111;
+  --shell-sidebar-text: #f5f5f5;
+  --shell-sidebar-muted: #a8a8a8;
+  --shell-sidebar-active-bg: #2a241c;
+  --shell-sidebar-active-accent: #b89b6a;
+
+  /* App shell — workspace */
+  --shell-app-bg: #f6f7f8;
+  --shell-card-bg: #ffffff;
+  --shell-card-border: #e5e7eb;
+  --shell-card-shadow: 0 1px 2px rgba(17, 17, 17, 0.04),
+    0 4px 12px rgba(17, 17, 17, 0.05);
+  --shell-text-muted: #6b7280;
+  --shell-text: #111111;
+
+  /* Buttons */
+  --shell-btn-primary-bg: #111111;
+  --shell-btn-primary-text: #ffffff;
+  --shell-btn-accent-bg: #b89b6a;
+  --shell-btn-accent-text: #ffffff;
+
+  /* Inputs */
+  --shell-input-bg: #ffffff;
+  --shell-input-border: #e5e7eb;
+  --shell-input-radius: 10px;
+  --shell-input-height: 42px;
+
+  /* Accent (content highlights) */
+  --shell-accent: #b89b6a;
+
+  /* Legacy aliases */
+  --cream: var(--shell-app-bg);
+  --beige: var(--shell-sidebar-active-bg);
+  --sand: var(--shell-card-border);
+  --gold: var(--shell-accent);
+  --ink: var(--shell-btn-primary-bg);
 }
 
 body {
-  background: var(--cream);
-  color: var(--ink);
+  background: var(--shell-app-bg);
+  color: var(--shell-text);
 }
 
 @layer components {
@@ -21,18 +53,59 @@ body {
   }
 
   .field-input {
-    @apply w-full bg-white border border-sand/80 rounded-sm px-3 py-2.5 text-sm text-ink
-      placeholder:text-muted/50 focus:outline-none focus:border-gold/60 transition-colors;
+    @apply w-full px-3 text-sm text-ink transition-colors;
+    height: var(--shell-input-height);
+    min-height: var(--shell-input-height);
+    background: var(--shell-input-bg);
+    border: 1px solid var(--shell-input-border);
+    border-radius: var(--shell-input-radius);
+  }
+
+  .field-input::placeholder {
+    color: color-mix(in srgb, var(--shell-text-muted) 50%, transparent);
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: color-mix(in srgb, var(--shell-accent) 55%, var(--shell-input-border));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--shell-accent) 12%, transparent);
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]
-      bg-ink text-cream rounded-sm hover:bg-ink/90 transition-colors;
+    @apply inline-flex items-center justify-center px-5 text-[10px] uppercase tracking-[0.18em] transition-colors;
+    min-height: var(--shell-input-height);
+    background: var(--shell-btn-primary-bg);
+    color: var(--shell-btn-primary-text);
+    border-radius: var(--shell-input-radius);
+  }
+
+  .btn-primary:hover {
+    background: color-mix(in srgb, var(--shell-btn-primary-bg) 88%, white);
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-5 text-[10px] uppercase tracking-[0.18em] transition-colors;
+    min-height: var(--shell-input-height);
+    background: var(--shell-btn-accent-bg);
+    color: var(--shell-btn-accent-text);
+    border-radius: var(--shell-input-radius);
+  }
+
+  .btn-accent:hover {
+    background: color-mix(in srgb, var(--shell-btn-accent-bg) 88%, white);
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-5 py-2.5 text-[10px] uppercase tracking-[0.18em]
-      border border-sand bg-white text-ink rounded-sm hover:border-gold/50 transition-colors;
+    @apply inline-flex items-center justify-center px-5 text-[10px] uppercase tracking-[0.18em] transition-colors;
+    min-height: var(--shell-input-height);
+    background: var(--shell-card-bg);
+    color: var(--shell-text);
+    border: 1px solid var(--shell-card-border);
+    border-radius: var(--shell-input-radius);
+  }
+
+  .btn-secondary:hover {
+    border-color: color-mix(in srgb, var(--shell-accent) 45%, var(--shell-card-border));
   }
 
   .btn-ghost {
@@ -40,7 +113,10 @@ body {
   }
 
   .card {
-    @apply bg-white border border-sand/60 rounded-sm;
+    background: var(--shell-card-bg);
+    border: 1px solid var(--shell-card-border);
+    border-radius: 12px;
+    box-shadow: var(--shell-card-shadow);
   }
 
   .section-title {
@@ -66,9 +142,10 @@ body {
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.85rem 1rem;
-    background: #fff;
-    border: 0.5px solid rgba(229, 221, 210, 0.85);
-    border-radius: 6px;
+    background: var(--shell-card-bg);
+    border: 1px solid var(--shell-card-border);
+    border-radius: 12px;
+    box-shadow: var(--shell-card-shadow);
   }
 
   .dash-follow-up-copy {
@@ -122,7 +199,7 @@ body {
     font-family: var(--font-cormorant), serif;
     font-size: 0.95rem;
     letter-spacing: 0.02em;
-    color: #9a7b4f;
+    color: var(--shell-accent);
   }
 
   .dash-follow-up-sep {
@@ -170,8 +247,8 @@ body {
   }
 
   .dash-follow-up-view {
-    color: #9a7b4f;
-    border: 0.5px solid rgba(154, 123, 79, 0.35);
+    color: var(--shell-accent);
+    border: 1px solid color-mix(in srgb, var(--shell-accent) 35%, transparent);
   }
 
   .dash-pay-head {
@@ -203,7 +280,7 @@ body {
     font-family: var(--font-cormorant), serif;
     font-size: 1.65rem;
     line-height: 1.1;
-    color: #2a2622;
+    color: var(--shell-text);
   }
 
   .dash-pay-value--pending {

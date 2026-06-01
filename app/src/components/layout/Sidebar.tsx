@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/", label: "Dashboard" },
@@ -16,21 +16,19 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex w-56 min-h-screen border-r border-sand/80 bg-white flex-col shrink-0">
-      <div className="px-5 pt-8 pb-6 border-b border-sand/60 text-center">
+    <aside className="app-sidebar" aria-label="Main navigation">
+      <div className="app-sidebar-brand">
         <Image
           src="/brand/logo.jpg"
           alt="Chambellan"
           width={64}
           height={64}
-          className="mx-auto mb-3 rounded-sm"
+          className="app-sidebar-logo"
         />
-        <p className="font-serif text-sm tracking-[0.2em] text-ink">CHAMBELLAN</p>
-        <p className="text-[9px] tracking-[0.35em] text-muted mt-0.5 uppercase">
-          Concierge
-        </p>
+        <p className="app-sidebar-name">CHAMBELLAN</p>
+        <p className="app-sidebar-tagline">Concierge</p>
       </div>
-      <nav className="flex-1 px-3 py-6 space-y-0.5">
+      <nav className="app-sidebar-nav">
         {NAV.map((item) => {
           const active =
             item.href === "/"
@@ -40,20 +38,14 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-4 py-2.5 min-h-[44px] text-[11px] uppercase tracking-[0.14em] rounded-sm transition-colors ${
-                active
-                  ? "bg-beige text-gold"
-                  : "text-muted hover:text-ink hover:bg-cream"
-              }`}
+              className={`app-sidebar-link${active ? " is-active" : ""}`}
             >
               {item.label}
             </Link>
           );
         })}
       </nav>
-      <p className="px-5 py-4 text-[9px] text-muted/70 tracking-wider">
-        Local · Private data
-      </p>
+      <p className="app-sidebar-foot">Local · Private data</p>
     </aside>
   );
 }

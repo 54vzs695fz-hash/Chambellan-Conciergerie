@@ -48,8 +48,8 @@
   justify-content: space-around;
   height: var(--mobile-nav-h);
   padding-bottom: env(safe-area-inset-bottom, 0);
-  background: rgba(255, 255, 255, 0.97);
-  border-top: 0.5px solid rgba(229, 221, 210, 0.9);
+  background: var(--shell-sidebar-bg);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
 }
 
@@ -63,12 +63,12 @@
   font-size: 0.62rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #7a736c;
+  color: var(--shell-sidebar-muted);
   text-decoration: none;
 }
 
 .mobile-nav-link.is-active {
-  color: #9a7b4f;
+  color: var(--shell-sidebar-active-accent);
   font-weight: 500;
 }
 

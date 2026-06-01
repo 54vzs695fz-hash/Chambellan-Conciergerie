@@ -1,0 +1,97 @@
+/* App interface shell — premium dashboard layout */
+
+.app-sidebar {
+  display: none;
+  width: 14rem;
+  min-height: 100vh;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: var(--shell-sidebar-bg);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (min-width: 768px) {
+  .app-sidebar {
+    display: flex;
+  }
+}
+
+.app-sidebar-brand {
+  padding: 2rem 1.25rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-sidebar-logo {
+  margin: 0 auto 0.75rem;
+  border-radius: 4px;
+}
+
+.app-sidebar-name {
+  margin: 0;
+  font-family: var(--font-cormorant), serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.2em;
+  color: var(--shell-sidebar-text);
+}
+
+.app-sidebar-tagline {
+  margin: 0.125rem 0 0;
+  font-size: 0.5625rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--shell-sidebar-muted);
+}
+
+.app-sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.app-sidebar-link {
+  display: block;
+  min-height: 44px;
+  padding: 0.625rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--shell-sidebar-muted);
+  border-radius: 8px;
+  border-left: 2px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.app-sidebar-link:hover {
+  color: var(--shell-sidebar-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-sidebar-link.is-active {
+  color: var(--shell-sidebar-active-accent);
+  background: var(--shell-sidebar-active-bg);
+  border-left-color: var(--shell-sidebar-active-accent);
+}
+
+.app-sidebar-foot {
+  padding: 1rem 1.25rem;
+  font-size: 0.5625rem;
+  letter-spacing: 0.06em;
+  color: rgba(168, 168, 168, 0.75);
+}
+
+.app-main {
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+  background: var(--shell-app-bg);
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: var(--shell-app-bg);
+}
