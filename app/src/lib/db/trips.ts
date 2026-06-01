@@ -18,6 +18,7 @@ import {
   eachDayBetween,
   serializeDefaultDaySections,
 } from "../planner/trip-days-sync";
+import { isUntitledDestination } from "../planner-utils";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -209,6 +210,17 @@ export async function deleteTrip(id: number): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export { isUntitledDestination } from "../planner-utils";
+
+export async function deleteUntitledDestinationTrips(): Promise<number> {
+  const result = await prisma.trip.deleteMany({
+    where: {
+      OR: [{ destination: "" }, { destination: "Untitled destination" }],
+    },
+  });
+  return result.count;
 }
 
 export async function addActivity(

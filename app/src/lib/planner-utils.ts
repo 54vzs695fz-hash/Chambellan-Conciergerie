@@ -67,6 +67,11 @@ export function formatDateRange(arrival: string, departure: string): string {
   return `${fmt(a)} – ${fmt(b)}`;
 }
 
+export function isUntitledDestination(destination: string): boolean {
+  const trimmed = destination.trim();
+  return !trimmed || trimmed === "Untitled destination";
+}
+
 /** Client header — stacked travel dates (left column) */
 export function formatHeaderTravelDates(
   arrival: string,

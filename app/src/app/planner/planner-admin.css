@@ -461,3 +461,106 @@
     padding-bottom: calc(var(--mobile-nav-h) + 1rem);
   }
 }
+
+/* Weekly Planner list — delete actions */
+.planner-list-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.72);
+  border: 0.5px solid rgba(221, 212, 200, 0.75);
+  border-radius: 6px;
+}
+
+.planner-list-bulk-copy {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #7a736c;
+  letter-spacing: 0.02em;
+}
+
+.planner-list-bulk-btn {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b3a3a;
+  background: transparent;
+  border: 0.5px solid rgba(139, 58, 58, 0.35);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.planner-list-bulk-btn:hover {
+  background: rgba(139, 58, 58, 0.05);
+  border-color: rgba(139, 58, 58, 0.55);
+}
+
+.planner-list-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.planner-list-row:hover {
+  border-color: rgba(154, 123, 79, 0.4);
+}
+
+.planner-list-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.planner-list-delete {
+  flex-shrink: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.75rem;
+  color: #7a736c;
+  background: transparent;
+  border: none;
+  border-left: 0.5px solid rgba(221, 212, 200, 0.65);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.planner-list-delete:hover {
+  color: #8b3a3a;
+  background: rgba(139, 58, 58, 0.04);
+}
+
+.planner-list-delete-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 640px) {
+  .planner-list-delete {
+    flex-direction: row;
+    gap: 0.35rem;
+    padding: 0 1rem;
+  }
+
+  .planner-list-delete-label {
+    font-size: 0.68rem;
+  }
+}

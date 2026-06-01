@@ -4,6 +4,7 @@ interface Props {
   open: boolean;
   itemLabel?: string;
   count?: number;
+  message?: string;
   deleting?: boolean;
   onCancel: () => void;
   onConfirm: () => void;
@@ -13,6 +14,7 @@ export function LibraryDeleteDialog({
   open,
   itemLabel = "establishment",
   count = 1,
+  message: messageOverride,
   deleting = false,
   onCancel,
   onConfirm,
@@ -20,11 +22,12 @@ export function LibraryDeleteDialog({
   if (!open) return null;
 
   const message =
-    count === 1 && itemLabel === "establishment"
+    messageOverride ??
+    (count === 1 && itemLabel === "establishment"
       ? "Are you sure you want to delete this establishment?"
       : count === 1
         ? `Are you sure you want to delete this ${itemLabel}?`
-        : `Are you sure you want to delete ${count} ${itemLabel}s?`;
+        : `Are you sure you want to delete ${count} ${itemLabel}s?`);
 
   return (
     <div
