@@ -2,34 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const NAV = [
-  { href: "/", label: "Home", short: "Home" },
-  { href: "/calendar", label: "Calendar", short: "Cal" },
-  { href: "/planner", label: "Planners", short: "Plans" },
-  { href: "/clients", label: "Clients", short: "Clients" },
-  { href: "/establishments", label: "Library", short: "Library" },
-];
+import { SectionIcon } from "@/components/layout/SectionIcon";
+import {
+  isNavActive,
+  MAIN_NAV,
+} from "@/lib/theme/section-colors";
 
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav
-      className="mobile-nav md:hidden"
-      aria-label="Main navigation"
-    >
-      {NAV.map((item) => {
-        const active =
-          item.href === "/"
-            ? pathname === "/"
-            : pathname.startsWith(item.href);
+    <nav className="mobile-nav md:hidden" aria-label="Main navigation">
+      {MAIN_NAV.map((item) => {
+        const active = isNavActive(pathname, item.href);
         return (
           <Link
             key={item.href}
             href={item.href}
+            data-section={item.section}
             className={`mobile-nav-link${active ? " is-active" : ""}`}
           >
+            <SectionIcon section={item.section} className="mobile-nav-icon" />
             {item.short}
           </Link>
         );

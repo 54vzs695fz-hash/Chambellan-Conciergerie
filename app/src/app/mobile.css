@@ -68,7 +68,6 @@
 }
 
 .mobile-nav-link.is-active {
-  color: var(--shell-sidebar-active-accent);
   font-weight: 500;
 }
 

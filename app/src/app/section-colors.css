@@ -1,0 +1,173 @@
+/* Admin section color identities — muted luxury palette */
+
+[data-section="dashboard"] {
+  --section-color: #b89b6a;
+}
+
+[data-section="calendar"] {
+  --section-color: #3e6fa8;
+}
+
+[data-section="planner"] {
+  --section-color: #b89b6a;
+}
+
+[data-section="clients"] {
+  --section-color: #4f8a63;
+}
+
+[data-section="library"] {
+  --section-color: #7556a8;
+}
+
+[data-section="payments"] {
+  --section-color: #c9822b;
+}
+
+[data-section="transport"] {
+  --section-color: #3b92c8;
+}
+
+[data-section="accommodation"] {
+  --section-color: #4e9b91;
+}
+
+[data-section="concierge-services"] {
+  --section-color: #9b4f5c;
+}
+
+[data-section="reports"] {
+  --section-color: #7c7c7c;
+}
+
+[data-section="settings"] {
+  --section-color: #a8a8a8;
+}
+
+/* Sidebar icons + active indicator */
+
+.app-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.section-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  color: color-mix(in srgb, var(--section-color, #a8a8a8) 55%, #a8a8a8);
+  opacity: 0.9;
+  transition: color 0.15s ease;
+}
+
+.app-sidebar-link:hover .section-icon {
+  color: color-mix(in srgb, var(--section-color, #f5f5f5) 70%, #f5f5f5);
+}
+
+.app-sidebar-link.is-active {
+  color: color-mix(in srgb, var(--section-color) 78%, #f5f5f5);
+  background: color-mix(
+    in srgb,
+    var(--section-color) 11%,
+    var(--shell-sidebar-active-bg)
+  );
+  border-left-color: var(--section-color);
+}
+
+.app-sidebar-link.is-active .section-icon {
+  color: var(--section-color);
+  opacity: 1;
+}
+
+/* Mobile nav section accents */
+
+.mobile-nav-link {
+  position: relative;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.mobile-nav-link.is-active {
+  color: var(--section-color, var(--shell-sidebar-active-accent));
+}
+
+.mobile-nav-link.is-active::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--section-color, var(--shell-sidebar-active-accent));
+}
+
+.mobile-nav-icon {
+  display: inline-flex;
+  color: color-mix(in srgb, var(--section-color, #a8a8a8) 55%, #a8a8a8);
+}
+
+.mobile-nav-link.is-active .mobile-nav-icon {
+  color: var(--section-color, var(--shell-sidebar-active-accent));
+}
+
+/* Page title accent */
+
+.app-main[data-section] .page-shell > header h1,
+.app-main[data-section] .page-shell > .page-header h1,
+.app-main[data-section] .page-shell .cal-header h1,
+.app-main[data-section] .p-10 > div:first-child h1 {
+  position: relative;
+  padding-left: 0.85rem;
+}
+
+.app-main[data-section] .page-shell > header h1::before,
+.app-main[data-section] .page-shell > .page-header h1::before,
+.app-main[data-section] .page-shell .cal-header h1::before,
+.app-main[data-section] .p-10 > div:first-child h1::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.12em;
+  bottom: 0.12em;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--section-color);
+  opacity: 0.88;
+}
+
+/* Section title markers */
+
+[data-section] .section-title,
+.app-main[data-section] .section-title {
+  position: relative;
+  padding-left: 0.65rem;
+  color: color-mix(in srgb, var(--section-color, var(--shell-accent)) 82%, #5c5650);
+}
+
+[data-section] .section-title::before,
+.app-main[data-section] .section-title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--section-color, var(--shell-accent));
+  opacity: 0.85;
+}
+
+/* Library sub-navigation marker */
+
+.app-main[data-section="library"] .library-nav-link.is-active {
+  color: var(--section-color);
+  border-color: color-mix(in srgb, var(--section-color) 40%, transparent);
+  background: color-mix(in srgb, var(--section-color) 8%, white);
+  box-shadow: inset 2px 0 0 var(--section-color);
+}

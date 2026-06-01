@@ -120,7 +120,7 @@ body {
   }
 
   .section-title {
-    @apply text-[10px] uppercase tracking-[0.25em] text-gold font-medium;
+    @apply text-[10px] uppercase tracking-[0.25em] font-medium;
   }
 
   .dash-follow-up-head {

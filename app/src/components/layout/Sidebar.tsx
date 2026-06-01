@@ -3,14 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-
-const NAV = [
-  { href: "/", label: "Dashboard" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/planner", label: "Weekly Planner" },
-  { href: "/clients", label: "Clients" },
-  { href: "/establishments", label: "Library" },
-];
+import { SectionIcon } from "@/components/layout/SectionIcon";
+import {
+  isNavActive,
+  MAIN_NAV,
+} from "@/lib/theme/section-colors";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -29,17 +26,16 @@ export function Sidebar() {
         <p className="app-sidebar-tagline">Concierge</p>
       </div>
       <nav className="app-sidebar-nav">
-        {NAV.map((item) => {
-          const active =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+        {MAIN_NAV.map((item) => {
+          const active = isNavActive(pathname, item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
+              data-section={item.section}
               className={`app-sidebar-link${active ? " is-active" : ""}`}
             >
+              <SectionIcon section={item.section} />
               {item.label}
             </Link>
           );

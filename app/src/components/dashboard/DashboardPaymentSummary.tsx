@@ -20,7 +20,7 @@ export function DashboardPaymentSummary({ trips }: Props) {
   if (total === 0) return null;
 
   return (
-    <section className="dash-pay mb-10">
+    <section className="dash-pay mb-10" data-section="payments">
       <div className="dash-pay-head">
         <h2 className="section-title">Payment summary</h2>
         <Link href="/calendar" className="btn-ghost">

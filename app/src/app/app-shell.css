@@ -71,12 +71,6 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-.app-sidebar-link.is-active {
-  color: var(--shell-sidebar-active-accent);
-  background: var(--shell-sidebar-active-bg);
-  border-left-color: var(--shell-sidebar-active-accent);
-}
-
 .app-sidebar-foot {
   padding: 1rem 1.25rem;
   font-size: 0.5625rem;
