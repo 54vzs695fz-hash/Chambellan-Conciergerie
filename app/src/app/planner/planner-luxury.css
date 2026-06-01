@@ -2393,6 +2393,10 @@
     gap: 0.35rem 0.65rem;
   }
 
+  .adm-nav-brand {
+    display: none;
+  }
+
   .lux-toolbar-status {
     flex: 1 1 100%;
     text-align: center;

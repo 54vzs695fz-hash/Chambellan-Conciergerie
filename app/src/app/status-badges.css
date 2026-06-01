@@ -481,6 +481,31 @@
   }
 }
 
+@media (max-width: 767px) {
+  .pay-status-picker {
+    max-width: 100%;
+  }
+
+  .pay-status-picker-trigger {
+    max-width: 100%;
+  }
+
+  .pay-status-menu {
+    left: auto;
+    right: 0;
+    max-width: min(16rem, calc(100vw - 2rem));
+  }
+
+  .cal-programme-badges,
+  .planner-list-status {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    max-width: 100%;
+  }
+}
+
 .pay-status-error {
   font-size: 0.58rem;
   letter-spacing: 0.03em;

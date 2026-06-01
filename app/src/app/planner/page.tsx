@@ -9,15 +9,17 @@ export default async function PlannerListPage() {
   const trips = await listTrips();
 
   return (
-    <div className="p-10">
-      <div className="flex items-center justify-between mb-8">
+    <div className="page-shell max-w-4xl">
+      <div className="page-header">
         <div>
           <h1 className="font-serif text-2xl tracking-wide">Weekly Planner</h1>
           <p className="text-sm text-muted mt-1">All programmes</p>
         </div>
-        <Link href="/planner/new" className="btn-primary">
-          New planner
-        </Link>
+        <div className="page-header-actions">
+          <Link href="/planner/new" className="btn-primary min-h-[44px]">
+            New planner
+          </Link>
+        </div>
       </div>
 
       <PlannerListClient initialTrips={trips} />

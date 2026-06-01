@@ -959,6 +959,19 @@
   body.mobile-more-open {
     overflow: hidden;
   }
+
+  .page-header .btn-primary,
+  .page-header .btn-secondary,
+  .page-header-actions .btn-primary,
+  .page-header-actions .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .field-input.max-w-sm {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 @media (max-width: 767px) and (min-width: 390px) {
