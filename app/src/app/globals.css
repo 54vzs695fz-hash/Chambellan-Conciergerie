@@ -207,19 +207,19 @@ body {
   }
 
   .dash-pay-value--pending {
-    color: #8a7348;
+    color: var(--pay-pending-text);
   }
 
   .dash-pay-value--deposit-paid {
-    color: #5f7389;
+    color: var(--pay-deposit-text);
   }
 
   .dash-pay-value--fully-paid {
-    color: #5f755f;
+    color: var(--pay-full-text);
   }
 
   .dash-pay-value--cancelled {
-    color: #9a948c;
+    color: var(--pay-cancelled-text);
   }
 
   .dash-pay-label {

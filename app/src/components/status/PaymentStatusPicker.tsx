@@ -7,6 +7,7 @@ import {
   needsPaymentWarning,
   paymentBadgeClass,
 } from "@/lib/planner/payment-status";
+import { PAYMENT_STATUS_DOT } from "@/lib/calendar/display-utils";
 import type { TripPaymentStatus } from "@/lib/types";
 
 interface Props {
@@ -73,13 +74,13 @@ export function PaymentStatusPicker({
           setOpen((value) => !value);
         }}
       >
-        {warning ? (
-          <span
-            className="pay-status-warn"
-            aria-hidden
-            title="Payment pending — arrival within 7 days"
-          />
-        ) : null}
+        <span
+          className={`cal-dot ${PAYMENT_STATUS_DOT[status]}${warning ? " cal-dot--warn-ring" : ""}`}
+          aria-hidden
+          title={
+            warning ? "Payment pending — arrival within 7 days" : undefined
+          }
+        />
         <span className="pay-status-picker-label">
           {PAYMENT_STATUS_LABELS[status]}
         </span>
@@ -109,6 +110,10 @@ export function PaymentStatusPicker({
                   if (option !== status) onSelect(option);
                 }}
               >
+                <span
+                  className={`cal-dot ${PAYMENT_STATUS_DOT[option]}`}
+                  aria-hidden
+                />
                 {PAYMENT_STATUS_LABELS[option]}
               </button>
             </li>

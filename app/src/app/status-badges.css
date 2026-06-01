@@ -1,77 +1,172 @@
-/* Programme status badges & arrival urgency — Chambellan palette */
+/* Status color tokens — Chambellan luxury palette */
 
-.prog-status {
+:root {
+  /* Programme status */
+  --prog-follow-up-bg: #f5e8c7;
+  --prog-follow-up-text: #8a641e;
+  --prog-follow-up-dot: #c79a35;
+  --prog-follow-up-border: #e0cda0;
+
+  --prog-contacted-bg: #e4ebf3;
+  --prog-contacted-text: #385875;
+  --prog-contacted-dot: #6f8fae;
+  --prog-contacted-border: #c5d4e4;
+
+  --prog-confirmed-bg: #e3efe6;
+  --prog-confirmed-text: #356143;
+  --prog-confirmed-dot: #6fa47a;
+  --prog-confirmed-border: #c5dac9;
+
+  --prog-completed-bg: #e8e6e2;
+  --prog-completed-text: #5f5b55;
+  --prog-completed-dot: #9a948c;
+  --prog-completed-border: #d5d2cb;
+
+  /* Payment status */
+  --pay-pending-bg: #f6e1c7;
+  --pay-pending-text: #8a551f;
+  --pay-pending-dot: #c9822b;
+  --pay-pending-border: #e8ceb0;
+
+  --pay-deposit-bg: #ddece9;
+  --pay-deposit-text: #2f625a;
+  --pay-deposit-dot: #5f9a8c;
+  --pay-deposit-border: #c8ddd8;
+
+  --pay-full-bg: #dde9dd;
+  --pay-full-text: #2f5b38;
+  --pay-full-dot: #527b55;
+  --pay-full-border: #c8d8c8;
+
+  --pay-cancelled-bg: #eee2df;
+  --pay-cancelled-text: #7a3f3a;
+  --pay-cancelled-dot: #a9655e;
+  --pay-cancelled-border: #dfcfcc;
+}
+
+/* Shared status dots (badges, chips, legend) */
+
+.cal-dot {
+  display: inline-block;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.cal-dot--follow-up {
+  background: var(--prog-follow-up-dot);
+}
+
+.cal-dot--contacted {
+  background: var(--prog-contacted-dot);
+}
+
+.cal-dot--confirmed {
+  background: var(--prog-confirmed-dot);
+}
+
+.cal-dot--completed {
+  background: var(--prog-completed-dot);
+}
+
+.cal-dot--pay-pending {
+  background: var(--pay-pending-dot);
+}
+
+.cal-dot--pay-deposit {
+  background: var(--pay-deposit-dot);
+}
+
+.cal-dot--pay-full {
+  background: var(--pay-full-dot);
+}
+
+.cal-dot--pay-cancelled {
+  background: var(--pay-cancelled-dot);
+}
+
+.cal-dot--warn-ring {
+  box-shadow: 0 0 0 1px rgba(169, 101, 94, 0.75);
+}
+
+/* Programme status badges */
+
+.prog-status,
+.pay-status {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.18rem 0.55rem;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  gap: 0.32rem;
+  min-height: 1.35rem;
+  padding: 0.14rem 0.52rem 0.14rem 0.42rem;
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: 999px;
-  border: 0.5px solid transparent;
+  border: 1px solid transparent;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .prog-status--follow-up {
-  color: #8a7348;
-  background: rgba(200, 164, 107, 0.12);
-  border-color: rgba(200, 164, 107, 0.35);
+  color: var(--prog-follow-up-text);
+  background: var(--prog-follow-up-bg);
+  border-color: var(--prog-follow-up-border);
 }
 
 .prog-status--contacted {
-  color: #5f7389;
-  background: rgba(123, 148, 181, 0.12);
-  border-color: rgba(123, 148, 181, 0.35);
+  color: var(--prog-contacted-text);
+  background: var(--prog-contacted-bg);
+  border-color: var(--prog-contacted-border);
 }
 
 .prog-status--confirmed {
-  color: #5f755f;
-  background: rgba(125, 155, 125, 0.12);
-  border-color: rgba(125, 155, 125, 0.35);
+  color: var(--prog-confirmed-text);
+  background: var(--prog-confirmed-bg);
+  border-color: var(--prog-confirmed-border);
 }
 
 .prog-status--completed {
-  color: #7a7a7a;
-  background: rgba(168, 168, 168, 0.1);
-  border-color: rgba(168, 168, 168, 0.35);
+  color: var(--prog-completed-text);
+  background: var(--prog-completed-bg);
+  border-color: var(--prog-completed-border);
 }
 
 .prog-urgency {
   flex-shrink: 0;
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 0.32rem;
+  height: 0.32rem;
   border-radius: 999px;
 }
 
 .prog-urgency--within-7 {
-  background: #c8a46b;
+  background: var(--prog-follow-up-dot);
 }
 
 .prog-urgency--within-3 {
-  background: #c4926a;
+  background: #b8864a;
 }
 
 .prog-urgency--tomorrow {
-  background: #b87a7a;
+  background: var(--pay-cancelled-dot);
 }
 
 .cal-event--status-follow-up {
-  border-left: 2px solid #c8a46b;
+  border-left: 2px solid var(--prog-follow-up-dot);
 }
 
 .cal-event--status-contacted {
-  border-left: 2px solid #7b94b5;
+  border-left: 2px solid var(--prog-contacted-dot);
 }
 
 .cal-event--status-confirmed {
-  border-left: 2px solid #7d9b7d;
+  border-left: 2px solid var(--prog-confirmed-dot);
 }
 
 .cal-event--status-completed {
-  border-left: 2px solid #a8a8a8;
-  opacity: 0.82;
+  border-left: 2px solid var(--prog-completed-dot);
+  opacity: 0.88;
 }
 
 .cal-event-wrap {
@@ -133,40 +228,40 @@
 }
 
 .cal-quick-btn--contacted:hover:not(:disabled) {
-  color: #5f7389;
-  border-color: rgba(123, 148, 181, 0.45);
+  color: var(--prog-contacted-text);
+  border-color: var(--prog-contacted-border);
 }
 
 .cal-quick-btn--confirmed:hover:not(:disabled) {
-  color: #5f755f;
-  border-color: rgba(125, 155, 125, 0.45);
+  color: var(--prog-confirmed-text);
+  border-color: var(--prog-confirmed-border);
 }
 
 .cal-quick-btn--completed:hover:not(:disabled) {
-  color: #7a7a7a;
-  border-color: rgba(168, 168, 168, 0.45);
+  color: var(--prog-completed-text);
+  border-color: var(--prog-completed-border);
 }
 
 .cal-quick-btn.is-active {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .cal-quick-btn--contacted.is-active {
-  color: #5f7389;
-  background: rgba(123, 148, 181, 0.1);
-  border-color: rgba(123, 148, 181, 0.4);
+  color: var(--prog-contacted-text);
+  background: var(--prog-contacted-bg);
+  border-color: var(--prog-contacted-border);
 }
 
 .cal-quick-btn--confirmed.is-active {
-  color: #5f755f;
-  background: rgba(125, 155, 125, 0.1);
-  border-color: rgba(125, 155, 125, 0.4);
+  color: var(--prog-confirmed-text);
+  background: var(--prog-confirmed-bg);
+  border-color: var(--prog-confirmed-border);
 }
 
 .cal-quick-btn--completed.is-active {
-  color: #7a7a7a;
-  background: rgba(168, 168, 168, 0.1);
-  border-color: rgba(168, 168, 168, 0.4);
+  color: var(--prog-completed-text);
+  background: var(--prog-completed-bg);
+  border-color: var(--prog-completed-border);
 }
 
 .cal-quick-btn:disabled {
@@ -243,50 +338,37 @@
 
 /* Payment status badges */
 
-.pay-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.18rem 0.55rem;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  border: 0.5px solid transparent;
-  white-space: nowrap;
-}
-
 .pay-status--pending {
-  color: #8a7348;
-  background: rgba(200, 164, 107, 0.12);
-  border-color: rgba(200, 164, 107, 0.35);
+  color: var(--pay-pending-text);
+  background: var(--pay-pending-bg);
+  border-color: var(--pay-pending-border);
 }
 
 .pay-status--deposit-paid {
-  color: #5f7389;
-  background: rgba(123, 148, 181, 0.12);
-  border-color: rgba(123, 148, 181, 0.35);
+  color: var(--pay-deposit-text);
+  background: var(--pay-deposit-bg);
+  border-color: var(--pay-deposit-border);
 }
 
 .pay-status--fully-paid {
-  color: #5f755f;
-  background: rgba(125, 155, 125, 0.12);
-  border-color: rgba(125, 155, 125, 0.35);
+  color: var(--pay-full-text);
+  background: var(--pay-full-bg);
+  border-color: var(--pay-full-border);
 }
 
 .pay-status--cancelled {
-  color: #7a7a7a;
-  background: rgba(168, 168, 168, 0.1);
-  border-color: rgba(168, 168, 168, 0.35);
+  color: var(--pay-cancelled-text);
+  background: var(--pay-cancelled-bg);
+  border-color: var(--pay-cancelled-border);
 }
 
 .pay-status-warn {
   flex-shrink: 0;
-  width: 0.38rem;
-  height: 0.38rem;
+  width: 0.32rem;
+  height: 0.32rem;
   border-radius: 999px;
-  background: #b87a7a;
+  background: var(--pay-cancelled-dot);
+  box-shadow: 0 0 0 1px rgba(122, 63, 58, 0.35);
 }
 
 .cal-programme-badges {
@@ -314,13 +396,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.18rem 0.45rem 0.18rem 0.55rem;
   cursor: pointer;
   transition: opacity 0.15s, box-shadow 0.15s;
 }
 
 .pay-status-picker-trigger:hover:not(:disabled) {
-  box-shadow: 0 0 0 1px rgba(200, 164, 107, 0.2);
+  filter: brightness(0.98);
+  box-shadow: 0 1px 4px rgba(42, 38, 34, 0.06);
 }
 
 .pay-status-picker-trigger:disabled {
@@ -356,18 +438,19 @@
 .pay-status-menu-item {
   display: flex;
   align-items: center;
+  gap: 0.32rem;
   width: 100%;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.6rem;
+  padding: 0.32rem 0.55rem 0.32rem 0.42rem;
+  font-size: 0.56rem;
   cursor: pointer;
-  border: 0.5px solid transparent;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   text-align: left;
 }
 
 .pay-status-menu-item:hover {
-  filter: brightness(0.97);
+  filter: brightness(0.98);
 }
 
 .pay-status-menu-item.is-selected {
@@ -401,5 +484,5 @@
 .pay-status-error {
   font-size: 0.58rem;
   letter-spacing: 0.03em;
-  color: #b87a7a;
+  color: var(--pay-cancelled-dot);
 }

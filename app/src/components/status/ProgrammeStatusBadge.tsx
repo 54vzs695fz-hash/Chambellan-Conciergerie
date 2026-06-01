@@ -4,6 +4,7 @@ import {
   arrivalUrgencyClass,
   getArrivalUrgency,
 } from "@/lib/calendar/status-styles";
+import { PROGRAMME_STATUS_DOT } from "@/lib/calendar/display-utils";
 import type { TripFollowUpStatus } from "@/lib/types";
 
 interface Props {
@@ -24,11 +25,12 @@ export function ProgrammeStatusBadge({
 
   return (
     <span className={`${statusBadgeClass(status)} ${className}`.trim()}>
+      <span
+        className={`cal-dot ${PROGRAMME_STATUS_DOT[status]}`}
+        aria-hidden
+      />
       {urgency ? (
-        <span
-          className={arrivalUrgencyClass(urgency)}
-          aria-hidden
-        />
+        <span className={arrivalUrgencyClass(urgency)} aria-hidden />
       ) : null}
       {FOLLOW_UP_STATUS_LABELS[status]}
     </span>

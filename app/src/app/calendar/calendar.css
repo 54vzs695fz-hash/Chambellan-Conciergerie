@@ -1240,46 +1240,12 @@
 }
 
 .cal-dot {
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 999px;
   flex-shrink: 0;
 }
 
-.cal-dot--follow-up {
-  background: #c8a46b;
-}
-
-.cal-dot--contacted {
-  background: #7b94b5;
-}
-
-.cal-dot--confirmed {
-  background: #7d9b7d;
-}
-
-.cal-dot--completed {
-  background: #a8a8a8;
-}
-
-.cal-dot--pay-pending {
-  background: #c8a46b;
-}
-
-.cal-dot--pay-deposit {
-  background: #7b94b5;
-}
-
-.cal-dot--pay-full {
-  background: #7d9b7d;
-}
-
-.cal-dot--pay-cancelled {
-  background: #a8a8a8;
-}
-
-.cal-dot--warn-ring {
-  box-shadow: 0 0 0 1px rgba(184, 122, 122, 0.65);
+.cal-dot--legend {
+  width: 0.28rem;
+  height: 0.28rem;
 }
 
 /* Week agenda */
