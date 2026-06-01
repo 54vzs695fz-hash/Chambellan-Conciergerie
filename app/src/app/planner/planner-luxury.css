@@ -1844,6 +1844,7 @@
 
 .lux-print-root {
   --lux-planner-gap: 24px;
+  --lux-planner-content-offset: 1.875rem;
   --lux-day-card-height: auto;
   --lux-content-area-height: auto;
 }
@@ -1901,6 +1902,7 @@
   flex-direction: column;
   gap: var(--lux-planner-gap);
   flex: 0 0 auto;
+  margin-top: var(--lux-planner-content-offset);
 }
 
 .lux-print-root .lux-day-card-body--timeline,

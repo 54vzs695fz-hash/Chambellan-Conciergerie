@@ -71,6 +71,13 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
       });
     }
 
+    function readPlannerContentOffset() {
+      const block = document.querySelector(".lux-print-root .lux-print-planner-block");
+      if (!block) return 0;
+      const style = window.getComputedStyle(block);
+      return parseFloat(style.marginTop) || 0;
+    }
+
     const doc = document.querySelector(".lux-print-root .lux-document");
     if (!doc) return;
 
@@ -93,7 +100,8 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
     const conciergeH = concierge ? Math.ceil(concierge.getBoundingClientRect().height) : 0;
     const gapCount = (stay ? 1 : 0) + (concierge && (stay || gridStage) ? 1 : 0);
     const ancillaryH = stayH + conciergeH + gapCount * PLANNER_GAP_PX;
-    const availableForDays = Math.max(DAY_MIN_PX, contentArea - ancillaryH - 8);
+    const contentOffset = readPlannerContentOffset();
+    const availableForDays = Math.max(DAY_MIN_PX, contentArea - ancillaryH - 8 - contentOffset);
 
     let maxContent = measureMaxDayScrollHeight(doc);
     if (maxContent > availableForDays) {
