@@ -666,7 +666,7 @@
 .cal-fu-panel {
   margin-bottom: 1.25rem;
   padding: 1rem 1.1rem;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(250, 247, 242, 0.96);
   border: 0.5px solid rgba(229, 221, 210, 0.85);
   border-radius: 6px;
 }
@@ -732,88 +732,39 @@
   cursor: pointer;
 }
 
-.cal-fu-loading,
-.cal-fu-empty-priority {
+.cal-fu-loading {
   margin: 0;
   font-size: 0.78rem;
   color: #9a948c;
 }
 
-.cal-fu-priority {
-  margin-bottom: 0.85rem;
-  padding-bottom: 0.85rem;
-  border-bottom: 0.5px solid rgba(229, 221, 210, 0.65);
-}
-
-.cal-fu-priority-title {
-  margin: 0 0 0.5rem;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #7a736c;
-}
-
-.cal-fu-priority-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.cal-fu-priority-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.cal-fu-priority-label {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.78rem;
-  color: #5c5650;
-}
-
-.cal-fu-toolbar {
-  margin-bottom: 0.65rem;
-}
-
-.cal-fu-toggle {
-  min-height: 44px;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9a7b4f;
-  background: transparent;
-  border: 0.5px solid rgba(154, 123, 79, 0.35);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .cal-fu-sections {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .cal-fu-section {
-  border: 0.5px solid rgba(221, 212, 200, 0.65);
+  border: 0.5px solid rgba(221, 212, 200, 0.55);
   border-radius: 5px;
   overflow: hidden;
-  background: rgba(250, 247, 242, 0.5);
+  background: rgba(255, 255, 255, 0.45);
+  transition: background 0.15s ease;
+}
+
+.cal-fu-section.is-open {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(221, 212, 200, 0.75);
 }
 
 .cal-fu-section-header {
   width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.55rem 0.75rem;
-  background: rgba(255, 255, 255, 0.65);
+  padding: 0.65rem 0.8rem;
+  background: transparent;
   border: none;
   cursor: pointer;
   text-align: left;
@@ -840,12 +791,18 @@
 }
 
 .cal-fu-section-title {
-  flex: 1;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #5c5650;
+}
+
+.cal-fu-section-progress {
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: #9a948c;
 }
 
 .cal-fu-section-counts {
@@ -861,20 +818,34 @@
 .cal-fu-items {
   list-style: none;
   margin: 0;
-  padding: 0.45rem 0.55rem 0.65rem;
+  padding: 0.35rem 0.55rem 0.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  border-top: 0.5px solid rgba(221, 212, 200, 0.45);
 }
 
 .cal-fu-item {
-  border: 0.5px solid rgba(221, 212, 200, 0.55);
+  border: 0.5px solid rgba(221, 212, 200, 0.45);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .cal-fu-item--done {
-  opacity: 0.72;
+  opacity: 0.62;
+  background: rgba(250, 247, 242, 0.75);
+  border-color: rgba(221, 212, 200, 0.35);
+}
+
+.cal-fu-item--done .cal-fu-item-title {
+  color: #9a948c;
+  text-decoration: line-through;
+  text-decoration-color: rgba(154, 148, 140, 0.35);
+}
+
+.cal-fu-item--done .cal-fu-status {
+  color: #9a948c;
+  background: rgba(250, 247, 242, 0.9);
 }
 
 .cal-fu-item-main {
