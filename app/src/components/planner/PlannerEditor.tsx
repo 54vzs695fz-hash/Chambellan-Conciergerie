@@ -372,7 +372,18 @@ export function PlannerEditor({ initialTrip }: Props) {
             disabled={pdfLoading !== null}
             onClick={() => downloadPdf("client")}
           >
-            {pdfLoading === "client" ? "Generating…" : "Export Client PDF"}
+            {pdfLoading === "client" ? (
+              "Generating…"
+            ) : (
+              <>
+                <span className="lux-export-label lux-export-label--long">
+                  Export Client PDF
+                </span>
+                <span className="lux-export-label lux-export-label--short">
+                  Client PDF
+                </span>
+              </>
+            )}
           </button>
           <button
             type="button"
@@ -380,7 +391,18 @@ export function PlannerEditor({ initialTrip }: Props) {
             disabled={pdfLoading !== null}
             onClick={() => downloadPdf("concierge")}
           >
-            {pdfLoading === "concierge" ? "Generating…" : "Export Concierge PDF"}
+            {pdfLoading === "concierge" ? (
+              "Generating…"
+            ) : (
+              <>
+                <span className="lux-export-label lux-export-label--long">
+                  Export Concierge PDF
+                </span>
+                <span className="lux-export-label lux-export-label--short">
+                  Concierge PDF
+                </span>
+              </>
+            )}
           </button>
         </div>
       </div>

@@ -435,6 +435,79 @@
 
 /* Mobile — iPhone Safari */
 @media (max-width: 767px) {
+  .adm-root {
+    overflow-x: hidden;
+  }
+
+  .adm-content {
+    padding: 1rem 0.875rem calc(var(--mobile-nav-h) + 1rem);
+    gap: 0.65rem;
+  }
+
+  .adm-panel--collapsible {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .adm-panel--collapsible.is-open {
+    padding-bottom: 0.15rem;
+  }
+
+  .adm-panel-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font: inherit;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: left;
+    color: #9a7b4f;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .adm-panel-toggle-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .adm-panel-chevron {
+    flex-shrink: 0;
+    font-size: 1rem;
+    line-height: 1;
+    color: #7a736c;
+  }
+
+  .adm-panel-body {
+    padding: 0 1rem 1rem;
+  }
+
+  .adm-panel--collapsible .adm-panel-title {
+    display: none;
+  }
+
+  .adm-dates-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .adm-dates-sep {
+    display: none;
+  }
+
+  .adm-input--time {
+    max-width: none;
+    width: 100%;
+  }
+
   .adm-days,
   .adm-days--wide {
     grid-template-columns: 1fr;
@@ -468,12 +541,23 @@
     gap: 0.5rem;
   }
 
-  .adm-input {
-    min-height: 44px;
+  .adm-activity {
+    padding: 0.65rem;
   }
 
-  .adm-content {
-    padding-bottom: calc(var(--mobile-nav-h) + 1rem);
+  .adm-input,
+  .adm-textarea,
+  select.adm-input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .adm-textarea {
+    min-height: 5.5rem;
+  }
+
+  .adm-team-card {
+    padding: 0.85rem;
   }
 }
 

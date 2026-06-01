@@ -37,6 +37,7 @@ import {
 import { teamAutofillFromEstablishment } from "@/lib/establishments/autofill";
 import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
+import { PlannerCollapsibleSection } from "./PlannerCollapsibleSection";
 
 interface DashboardProps {
   trip: TripWithDays;
@@ -145,8 +146,7 @@ export function PlannerConciergeDashboard({
   return (
     <div className="adm-root">
       <div className="adm-content">
-        <section className="adm-panel">
-          <h2 className="adm-panel-title">Client Information</h2>
+        <PlannerCollapsibleSection title="Client Information" defaultOpen>
           <div className="adm-grid adm-grid--2">
             <Field label="Client profile">
               <select
@@ -271,10 +271,9 @@ export function PlannerConciergeDashboard({
               />
             </Field>
           </div>
-        </section>
+        </PlannerCollapsibleSection>
 
-        <section className="adm-panel">
-          <h2 className="adm-panel-title">Travel Information</h2>
+        <PlannerCollapsibleSection title="Travel Information">
           <div className="adm-grid adm-grid--2">
             <Field label="Destination">
               <input
@@ -342,10 +341,9 @@ export function PlannerConciergeDashboard({
               );
             })}
           </div>
-        </section>
+        </PlannerCollapsibleSection>
 
-        <section className="adm-panel">
-          <h2 className="adm-panel-title">Events</h2>
+        <PlannerCollapsibleSection title="Events">
           <div className="adm-grid adm-grid--2">
             <Field label="Event">
               <LibraryAutocomplete
@@ -368,10 +366,9 @@ export function PlannerConciergeDashboard({
               />
             </Field>
           </div>
-        </section>
+        </PlannerCollapsibleSection>
 
-        <section className="adm-panel adm-panel--wide">
-          <h2 className="adm-panel-title">Activities</h2>
+        <PlannerCollapsibleSection title="Activities" wide defaultOpen>
           <PlannerActivitiesEditor
             days={trip.days}
             destination={trip.destination}
@@ -381,10 +378,9 @@ export function PlannerConciergeDashboard({
             onUpdateSections={onUpdateSections}
             onReorderActivities={onReorderActivities}
           />
-        </section>
+        </PlannerCollapsibleSection>
 
-        <section className="adm-panel">
-          <h2 className="adm-panel-title">Your Stay</h2>
+        <PlannerCollapsibleSection title="Your Stay">
           <div className="adm-grid adm-grid--2">
             {HOST_STAY_FIELDS.map((field) => (
               <Field key={field.key} label={field.label}>
@@ -404,10 +400,9 @@ export function PlannerConciergeDashboard({
               </Field>
             ))}
           </div>
-        </section>
+        </PlannerCollapsibleSection>
 
-        <section className="adm-panel">
-          <h2 className="adm-panel-title">Concierge Team</h2>
+        <PlannerCollapsibleSection title="Concierge Team">
           <div className="adm-grid adm-grid--2">
             {CONCIERGE_TEAM_FIELDS.map((row) => {
               const category = TEAM_ROW_ESTABLISHMENT_CATEGORY[row.key];
@@ -471,10 +466,9 @@ export function PlannerConciergeDashboard({
               );
             })}
           </div>
-        </section>
+        </PlannerCollapsibleSection>
 
-        <section className="adm-panel">
-          <h2 className="adm-panel-title">Internal</h2>
+        <PlannerCollapsibleSection title="Internal Notes" desktopTitle="Internal">
           <div className="adm-grid adm-grid--2">
             {INTERNAL_FIELDS.map((field) => (
               <Field key={field.key} label={field.label}>
@@ -500,7 +494,7 @@ export function PlannerConciergeDashboard({
               rows={4}
             />
           </Field>
-        </section>
+        </PlannerCollapsibleSection>
       </div>
     </div>
   );
