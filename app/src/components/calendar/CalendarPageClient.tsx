@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CalendarChecklistPanel } from "@/components/calendar/CalendarChecklistPanel";
 import { CalendarFiltersBar } from "@/components/calendar/CalendarFilters";
 import { CalendarFollowUpPanel } from "@/components/calendar/CalendarFollowUpPanel";
 import { CalendarListView } from "@/components/calendar/CalendarListView";
@@ -21,7 +22,7 @@ import {
   type CalendarProgramme,
   type CalendarView,
 } from "@/lib/calendar/programmes";
-import type { Trip, TripFollowUpStatus } from "@/lib/types";
+import type { PendingChecklistItem, Trip, TripFollowUpStatus } from "@/lib/types";
 
 interface Props {
   initialTrips: Trip[];
@@ -50,6 +51,12 @@ export function CalendarPageClient({ initialTrips }: Props) {
     tripsToCalendarProgrammes(initialTrips)
   );
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [checklistUpdatingId, setChecklistUpdatingId] = useState<number | null>(
+    null
+  );
+  const [pendingChecklist, setPendingChecklist] = useState<
+    PendingChecklistItem[]
+  >([]);
   const [toast, setToast] = useState<string | null>(null);
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -66,7 +73,17 @@ export function CalendarPageClient({ initialTrips }: Props) {
         setProgrammes(tripsToCalendarProgrammes(data as Trip[]));
       }
     };
-    const onFocus = () => void refresh();
+    const refreshChecklist = async () => {
+      const res = await fetch("/api/checklist/pending");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setPendingChecklist(data as PendingChecklistItem[]);
+    };
+    const onFocus = () => {
+      void refresh();
+      void refreshChecklist();
+    };
+    void refreshChecklist();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
@@ -104,6 +121,24 @@ export function CalendarPageClient({ initialTrips }: Props) {
       showToast("Could not update status.");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleChecklistDone = async (id: number) => {
+    setChecklistUpdatingId(id);
+    try {
+      const res = await fetch(`/api/checklist-items/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "done" }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      setPendingChecklist((prev) => prev.filter((item) => item.id !== id));
+      showToast("Checklist item marked done.");
+    } catch {
+      showToast("Could not update checklist item.");
+    } finally {
+      setChecklistUpdatingId(null);
     }
   };
 
@@ -157,6 +192,12 @@ export function CalendarPageClient({ initialTrips }: Props) {
       />
 
       <CalendarFollowUpPanel programmes={programmes} today={today} />
+
+      <CalendarChecklistPanel
+        items={pendingChecklist}
+        updatingId={checklistUpdatingId}
+        onMarkDone={handleChecklistDone}
+      />
 
       {view !== "list" ? (
         <div className="cal-nav">

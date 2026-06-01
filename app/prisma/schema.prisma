@@ -57,9 +57,26 @@ model Trip {
   updated_at               DateTime  @updatedAt
   client                   Client?   @relation(fields: [client_id], references: [id], onDelete: SetNull)
   days                     TripDay[]
+  checklist_items          TripChecklistItem[]
 
   @@index([client_id], map: "idx_trips_client")
   @@map("trips")
+}
+
+model TripChecklistItem {
+  id            Int    @id @default(autoincrement())
+  trip_id       Int
+  category      String
+  title         String @default("")
+  status        String @default("todo")
+  notes         String @default("")
+  due_date      String @default("")
+  reminder_date String @default("")
+  sort_order    Int    @default(0)
+  trip          Trip   @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+
+  @@index([trip_id], map: "idx_checklist_trip")
+  @@map("trip_checklist_items")
 }
 
 model TripDay {

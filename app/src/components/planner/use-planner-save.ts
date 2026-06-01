@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Activity, TripWithDays } from "@/lib/types";
+import type { Activity, ChecklistItem, TripWithDays } from "@/lib/types";
 import { tripPayloadForApi } from "@/lib/planner/planner-sheet-model";
 
 export const PLANNER_AUTOSAVE_MS = 800;
@@ -14,6 +14,10 @@ export function usePlannerSave(tripId: number) {
   const tripPersistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activityTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const pendingActivityPatches = useRef(new Map<number, Partial<Activity>>());
+  const checklistTimers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+  const pendingChecklistPatches = useRef(
+    new Map<number, Partial<ChecklistItem>>()
+  );
   const inFlight = useRef(0);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -151,16 +155,87 @@ export function usePlannerSave(tripId: number) {
     await Promise.all(ids.map((id) => flushActivityPatch(id)));
   }, [flushActivityPatch]);
 
+  const flushChecklistPatch = useCallback(
+    async (itemId: number): Promise<ChecklistItem | null> => {
+      if (itemId <= 0) return null;
+      const fields = pendingChecklistPatches.current.get(itemId);
+      if (!fields || Object.keys(fields).length === 0) return null;
+      pendingChecklistPatches.current.delete(itemId);
+
+      markSaving();
+      try {
+        const res = await fetch(`/api/checklist-items/${itemId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        });
+        if (!res.ok) {
+          markError();
+          return null;
+        }
+        markSuccess();
+        return (await res.json()) as ChecklistItem;
+      } catch {
+        markError();
+        return null;
+      }
+    },
+    [markSaving, markSuccess, markError]
+  );
+
+  const scheduleChecklistPatch = useCallback(
+    (itemId: number, fields: Partial<ChecklistItem>, immediate = false) => {
+      if (itemId <= 0) return;
+      if (Object.keys(fields).length > 0) {
+        pendingChecklistPatches.current.set(itemId, {
+          ...pendingChecklistPatches.current.get(itemId),
+          ...fields,
+        });
+      }
+
+      const existing = checklistTimers.current.get(itemId);
+      if (existing) clearTimeout(existing);
+
+      if (immediate) {
+        checklistTimers.current.delete(itemId);
+        void flushChecklistPatch(itemId);
+        return;
+      }
+
+      checklistTimers.current.set(
+        itemId,
+        setTimeout(() => {
+          checklistTimers.current.delete(itemId);
+          void flushChecklistPatch(itemId);
+        }, PLANNER_AUTOSAVE_MS)
+      );
+    },
+    [flushChecklistPatch]
+  );
+
+  const flushAllChecklistPatches = useCallback(async () => {
+    for (const timer of checklistTimers.current.values()) {
+      clearTimeout(timer);
+    }
+    checklistTimers.current.clear();
+    const ids = [...pendingChecklistPatches.current.keys()];
+    await Promise.all(ids.map((id) => flushChecklistPatch(id)));
+  }, [flushChecklistPatch]);
+
   const flushAll = useCallback(async (): Promise<TripWithDays | null> => {
     await flushAllActivityPatches();
+    await flushAllChecklistPatches();
     return flushTripPersist();
-  }, [flushAllActivityPatches, flushTripPersist]);
+  }, [flushAllActivityPatches, flushAllChecklistPatches, flushTripPersist]);
 
   useEffect(() => {
     return () => {
       if (tripPersistTimer.current) clearTimeout(tripPersistTimer.current);
       if (savedTimer.current) clearTimeout(savedTimer.current);
       for (const timer of activityTimers.current.values()) {
+        clearTimeout(timer);
+      }
+      for (const timer of checklistTimers.current.values()) {
         clearTimeout(timer);
       }
     };
@@ -174,6 +249,7 @@ export function usePlannerSave(tripId: number) {
     flushTripPersist,
     scheduleActivityPatch,
     flushActivityPatch,
+    scheduleChecklistPatch,
     flushAll,
   };
 }

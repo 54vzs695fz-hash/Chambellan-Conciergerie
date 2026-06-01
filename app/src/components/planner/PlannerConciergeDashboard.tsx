@@ -5,6 +5,8 @@ import Image from "next/image";
 import type {
   Activity,
   ActivityType,
+  ChecklistCategory,
+  ChecklistItem,
   Client,
   DaySection,
   Establishment,
@@ -29,6 +31,7 @@ import {
 import { teamAutofillFromEstablishment } from "@/lib/establishments/autofill";
 import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
+import { PlannerChecklistEditor } from "./PlannerChecklistEditor";
 
 interface DashboardProps {
   trip: TripWithDays;
@@ -62,6 +65,13 @@ interface DashboardProps {
     sectionId: string,
     orderedIds: number[]
   ) => void;
+  onPatchChecklistItem: (
+    id: number,
+    fields: Partial<ChecklistItem>,
+    options?: { immediate?: boolean }
+  ) => void;
+  onAddChecklistItem: (category: ChecklistCategory) => void;
+  onRemoveChecklistItem: (id: number) => void;
 }
 
 const TRAVEL_FIELDS = OPTIONAL_SERVICE_FIELDS.filter((f) =>
@@ -133,6 +143,9 @@ export function PlannerConciergeDashboard({
   onRemoveActivity,
   onUpdateSections,
   onReorderActivities,
+  onPatchChecklistItem,
+  onAddChecklistItem,
+  onRemoveChecklistItem,
 }: DashboardProps) {
   return (
     <div className="adm-root">
@@ -277,6 +290,19 @@ export function PlannerConciergeDashboard({
               />
             </Field>
           </div>
+        </section>
+
+        <section className="adm-panel adm-panel--wide">
+          <h2 className="adm-panel-title">Follow-up & Operations</h2>
+          <p className="chk-panel-intro">
+            Track confirmations, payments, and operational tasks for this programme.
+          </p>
+          <PlannerChecklistEditor
+            items={trip.checklist ?? []}
+            onPatchItem={onPatchChecklistItem}
+            onAddItem={onAddChecklistItem}
+            onRemoveItem={onRemoveChecklistItem}
+          />
         </section>
 
         <section className="adm-panel adm-panel--wide">

@@ -1,4 +1,9 @@
 import { getClient } from "./clients";
+import {
+  ensureChecklistSeeded,
+  listChecklistItems,
+  copyChecklistItems,
+} from "./checklist";
 import { prisma } from "@/lib/prisma";
 import type {
   Activity,
@@ -79,7 +84,9 @@ export async function getTrip(id: number): Promise<TripWithDays | undefined> {
   if (!row) return undefined;
   const trip = mapTrip(row);
   const client = trip.client_id ? await getClient(trip.client_id) : null;
-  return { ...trip, days: await loadDays(id), client: client ?? null };
+  await ensureChecklistSeeded(id);
+  const checklist = await listChecklistItems(id);
+  return { ...trip, days: await loadDays(id), client: client ?? null, checklist };
 }
 
 export async function listTrips(): Promise<Trip[]> {
@@ -334,5 +341,9 @@ export async function duplicateTrip(tripId: number): Promise<TripWithDays | unde
       });
     }
   }
+
+  await prisma.tripChecklistItem.deleteMany({ where: { trip_id: copy.id } });
+  await copyChecklistItems(tripId, copy.id);
+
   return getTrip(copy.id);
 }

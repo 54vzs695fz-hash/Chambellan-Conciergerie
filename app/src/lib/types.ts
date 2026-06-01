@@ -23,6 +23,39 @@ export type TripFollowUpStatus =
   | "confirmed"
   | "completed";
 
+export type ChecklistItemStatus = "todo" | "in_progress" | "done";
+
+export type ChecklistCategory =
+  | "programme"
+  | "reservations"
+  | "transport"
+  | "accommodation"
+  | "payments"
+  | "concierge_services"
+  | "arrival"
+  | "during_stay"
+  | "departure";
+
+export interface ChecklistItem {
+  id: number;
+  trip_id: number;
+  category: ChecklistCategory;
+  title: string;
+  status: ChecklistItemStatus;
+  notes: string;
+  due_date: string;
+  reminder_date: string;
+  sort_order: number;
+}
+
+export interface PendingChecklistItem extends ChecklistItem {
+  client_name: string;
+  destination: string;
+  arrival_date: string;
+  departure_date: string;
+  planner_href: string;
+}
+
 export interface Client {
   id: number;
   full_name: string;
@@ -98,6 +131,7 @@ export interface TripDay {
 export interface TripWithDays extends Trip {
   days: TripDay[];
   client?: Client | null;
+  checklist: ChecklistItem[];
 }
 
 export interface Establishment {

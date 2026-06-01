@@ -142,8 +142,13 @@ export function tripPayloadForApi(
     updated_at: _u,
     days: _d,
     client: _cl,
+    checklist: _chk,
     ...rest
-  } = trip as TripWithDays & { days?: unknown; client?: unknown };
+  } = trip as TripWithDays & {
+    days?: unknown;
+    client?: unknown;
+    checklist?: unknown;
+  };
   return { ...EMPTY_TRIP_HEADER, ...rest };
 }
 
