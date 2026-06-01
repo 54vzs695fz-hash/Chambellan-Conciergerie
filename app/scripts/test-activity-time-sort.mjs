@@ -7,9 +7,19 @@
 const LATE_NIGHT_END_HOUR = 5;
 const MINUTES_PER_DAY = 24 * 60;
 
+function isEveningNightSection(periodId, sectionLabel = "") {
+  const safePeriodId = String(periodId ?? "");
+  const normalized = String(sectionLabel ?? "").trim().toLowerCase();
+  if (safePeriodId === "evening") return true;
+  return normalized.includes("evening") || normalized.includes("night");
+}
+
 function activityTimeSortKey(time, { eveningSection = false } = {}) {
-  if (!time) return Number.MAX_SAFE_INTEGER;
-  const [h, m] = time.split(":").map(Number);
+  const safeTime = String(time ?? "").trim();
+  if (!safeTime) return Number.MAX_SAFE_INTEGER;
+  const [hRaw, mRaw] = safeTime.split(":");
+  const h = Number(hRaw);
+  const m = Number(mRaw);
   if (Number.isNaN(h) || Number.isNaN(m)) return Number.MAX_SAFE_INTEGER;
   let minutes = h * 60 + m;
   if (eveningSection && h >= 0 && h <= LATE_NIGHT_END_HOUR) {
@@ -27,11 +37,12 @@ function sortByTime(times, eveningSection = false) {
   );
 }
 
-const EVENING_CASE = ["00:00", "21:00", "22:00", "01:30"];
-const EXPECTED_EVENING = ["21:00", "22:00", "00:00", "01:30"];
+const EVENING_CASE = ["00:00", "21:00", "22:00", "23:00", "01:30"];
+const EXPECTED_EVENING = ["21:00", "22:00", "23:00", "00:00", "01:30"];
 
 const afternoonSorted = sortByTime(["14:00", "12:30", "16:00"], false);
 const eveningSorted = sortByTime(EVENING_CASE, true);
+const missingTimeSorted = sortByTime(["21:00", "", "00:00"], true);
 
 let failed = 0;
 
@@ -49,6 +60,16 @@ assertEqual(
   "evening/night late-night order",
   eveningSorted,
   EXPECTED_EVENING
+);
+assertEqual(
+  "evening section id keeps late-night grouping",
+  isEveningNightSection("evening", ""),
+  true
+);
+assertEqual(
+  "missing time sorts last in evening",
+  missingTimeSorted,
+  ["21:00", "00:00", ""]
 );
 assertEqual(
   "afternoon daytime order",

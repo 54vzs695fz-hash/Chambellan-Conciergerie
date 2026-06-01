@@ -177,7 +177,11 @@ function ClientDayCard({ day }: { day: TripDay }) {
       ),
       section.id,
       section.label
-    ).map((activity) => ({ activity, sectionLabel: section.label }))
+    ).map((activity) => ({
+      activity,
+      sectionLabel: section.label,
+      sectionId: section.id,
+    }))
   );
 
   if (items.length === 0) return null;

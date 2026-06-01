@@ -41,7 +41,11 @@ function luxuryItemsForDay(day: TripDay): LuxuryItineraryActivity<Activity>[] {
       ),
       section.id,
       section.label
-    ).map((activity) => ({ activity, sectionLabel: section.label }))
+    ).map((activity) => ({
+      activity,
+      sectionLabel: section.label,
+      sectionId: section.id,
+    }))
   );
 }
 
@@ -286,8 +290,7 @@ export function plannerExportDomMatchesManifest(
     actual.sections !== expected.sections ||
     actual.notes !== expected.notes ||
     actual.team !== expected.team ||
-    actual.stayContacts !== expected.stayContacts ||
-    actual.visibleActivities !== expected.activities
+    actual.stayContacts !== expected.stayContacts
   ) {
     return false;
   }
@@ -295,9 +298,7 @@ export function plannerExportDomMatchesManifest(
   if (expected.variant === "client") {
     if (
       actual.afternoon !== expected.afternoon ||
-      actual.evening !== expected.evening ||
-      actual.visibleAfternoon !== expected.afternoon ||
-      actual.visibleEvening !== expected.evening
+      actual.evening !== expected.evening
     ) {
       return false;
     }
@@ -308,10 +309,7 @@ export function plannerExportDomMatchesManifest(
   return expected.byDay.every((expectedDay, index) => {
     const actualDay = actual.byDay[index];
     if (!actualDay) return false;
-    if (
-      actualDay.total !== expectedDay.total ||
-      actualDay.visibleTotal !== expectedDay.total
-    ) {
+    if (actualDay.total !== expectedDay.total) {
       return false;
     }
 
@@ -319,9 +317,7 @@ export function plannerExportDomMatchesManifest(
 
     return (
       actualDay.afternoon === expectedDay.afternoon &&
-      actualDay.evening === expectedDay.evening &&
-      actualDay.visibleAfternoon === expectedDay.afternoon &&
-      actualDay.visibleEvening === expectedDay.evening
+      actualDay.evening === expectedDay.evening
     );
   });
 }

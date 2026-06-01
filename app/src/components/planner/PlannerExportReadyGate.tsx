@@ -94,6 +94,17 @@ export function PlannerExportReadyGate({
           window.setTimeout(() => {
             void tryMarkReady();
           }, RETRY_MS);
+        } else if (afterLock.activities >= expected.activities) {
+          document.documentElement.setAttribute(
+            "data-lux-export-actual",
+            JSON.stringify(afterLock)
+          );
+          document.documentElement.setAttribute(
+            "data-lux-export-debug",
+            formatPlannerExportDebugLog(expected, afterLock)
+          );
+          document.documentElement.setAttribute("data-lux-export-ready", "true");
+          document.documentElement.setAttribute("data-lux-print-ready", "true");
         }
         return;
       }

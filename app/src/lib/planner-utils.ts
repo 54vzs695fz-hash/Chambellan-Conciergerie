@@ -116,8 +116,9 @@ export function isEveningNightSection(
   periodId: string,
   sectionLabel = ""
 ): boolean {
-  if (periodId === "evening") return true;
-  const normalized = sectionLabel.trim().toLowerCase();
+  const safePeriodId = String(periodId ?? "");
+  const normalized = String(sectionLabel ?? "").trim().toLowerCase();
+  if (safePeriodId === "evening") return true;
   return (
     normalized.includes("evening") ||
     normalized.includes("night") ||
@@ -130,8 +131,11 @@ export function activityTimeSortKey(
   time: string,
   options?: { eveningSection?: boolean }
 ): number {
-  if (!time) return Number.MAX_SAFE_INTEGER;
-  const [h, m] = time.split(":").map(Number);
+  const safeTime = String(time ?? "").trim();
+  if (!safeTime) return Number.MAX_SAFE_INTEGER;
+  const [hRaw, mRaw] = safeTime.split(":");
+  const h = Number(hRaw);
+  const m = Number(mRaw);
   if (Number.isNaN(h) || Number.isNaN(m)) return Number.MAX_SAFE_INTEGER;
 
   let minutes = h * 60 + m;
@@ -142,24 +146,46 @@ export function activityTimeSortKey(
   return minutes;
 }
 
+function safeSortOrder(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function safeActivityId(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 export function sortActivitiesByTime<
   T extends { time: string; sort_order: number; id: number },
 >(activities: T[], options?: { eveningSection?: boolean }): T[] {
-  return [...activities].sort(
-    (a, b) =>
-      activityTimeSortKey(a.time, options) -
-        activityTimeSortKey(b.time, options) ||
-      a.sort_order - b.sort_order ||
-      a.id - b.id
-  );
+  try {
+    const list = Array.isArray(activities)
+      ? activities.filter((activity): activity is T => Boolean(activity))
+      : [];
+    return [...list].sort(
+      (a, b) =>
+        activityTimeSortKey(a.time, options) -
+          activityTimeSortKey(b.time, options) ||
+        safeSortOrder(a.sort_order) - safeSortOrder(b.sort_order) ||
+        safeActivityId(a.id) - safeActivityId(b.id)
+    );
+  } catch {
+    return Array.isArray(activities) ? [...activities] : [];
+  }
 }
 
 export function sortActivitiesForSection<
   T extends { time: string; sort_order: number; id: number },
 >(activities: T[], periodId: string, sectionLabel = ""): T[] {
-  return sortActivitiesByTime(activities, {
-    eveningSection: isEveningNightSection(periodId, sectionLabel),
-  });
+  try {
+    return sortActivitiesByTime(activities, {
+      eveningSection: isEveningNightSection(
+        String(periodId ?? ""),
+        String(sectionLabel ?? "")
+      ),
+    });
+  } catch {
+    return Array.isArray(activities) ? [...activities] : [];
+  }
 }
 
 export function formatDayShort(dateStr: string): string {
@@ -383,10 +409,19 @@ export const LUXURY_DISPLAY_PERIOD_ORDER: LuxuryDisplayPeriod[] = [
 /** Map planner section labels to Afternoon / Evening display slots */
 export function getLuxuryDisplayPeriod(
   sectionLabel: string,
-  time = ""
+  time = "",
+  sectionId = ""
 ): LuxuryDisplayPeriod {
-  const slug = itineraryCategorySlug(sectionLabel);
-  const normalized = sectionLabel.trim().toLowerCase();
+  const safeLabel = String(sectionLabel ?? "");
+  const safeSectionId = String(sectionId ?? "");
+  const safeTime = String(time ?? "");
+
+  if (safeSectionId && isEveningNightSection(safeSectionId, safeLabel)) {
+    return "evening";
+  }
+
+  const slug = itineraryCategorySlug(safeLabel);
+  const normalized = safeLabel.trim().toLowerCase();
 
   if (slug === "dinner" || slug === "club") return "evening";
   if (normalized.includes("evening") || normalized.includes("night")) {
@@ -400,7 +435,12 @@ export function getLuxuryDisplayPeriod(
   }
 
   if (slug === "departure" || slug === "transfer") {
-    if (time && activityTimeSortKey(time) >= 17 * 60) return "evening";
+    if (
+      safeTime &&
+      activityTimeSortKey(safeTime, { eveningSection: true }) >= 17 * 60
+    ) {
+      return "evening";
+    }
     return "afternoon";
   }
 
@@ -414,6 +454,7 @@ export function getLuxuryDisplayPeriod(
 export interface LuxuryItineraryActivity<T extends { time: string }> {
   activity: T;
   sectionLabel: string;
+  sectionId?: string;
 }
 
 export function groupActivitiesByLuxuryPeriod<T extends { time: string }>(
@@ -424,7 +465,12 @@ export function groupActivitiesByLuxuryPeriod<T extends { time: string }>(
   );
 
   for (const item of items) {
-    const period = getLuxuryDisplayPeriod(item.sectionLabel, item.activity.time);
+    if (!item?.activity) continue;
+    const period = getLuxuryDisplayPeriod(
+      item.sectionLabel,
+      item.activity.time ?? "",
+      item.sectionId ?? ""
+    );
     groups.get(period)!.push(item);
   }
 
@@ -437,14 +483,24 @@ export function sortLuxuryItineraryActivities<
   items: LuxuryItineraryActivity<T>[],
   period: LuxuryDisplayPeriod
 ): LuxuryItineraryActivity<T>[] {
-  const eveningSection = period === "evening";
-  return [...items].sort(
-    (a, b) =>
-      activityTimeSortKey(a.activity.time, { eveningSection }) -
-        activityTimeSortKey(b.activity.time, { eveningSection }) ||
-      a.activity.sort_order - b.activity.sort_order ||
-      a.activity.id - b.activity.id
-  );
+  try {
+    const list = Array.isArray(items)
+      ? items.filter((item): item is LuxuryItineraryActivity<T> =>
+          Boolean(item?.activity)
+        )
+      : [];
+    const eveningSection = period === "evening";
+    return [...list].sort(
+      (a, b) =>
+        activityTimeSortKey(a.activity.time, { eveningSection }) -
+          activityTimeSortKey(b.activity.time, { eveningSection }) ||
+        safeSortOrder(a.activity.sort_order) -
+          safeSortOrder(b.activity.sort_order) ||
+        safeActivityId(a.activity.id) - safeActivityId(b.activity.id)
+    );
+  } catch {
+    return Array.isArray(items) ? [...items] : [];
+  }
 }
 
 /** Tertiary category line on client travel cards (e.g. Lunch, Dinner) */
