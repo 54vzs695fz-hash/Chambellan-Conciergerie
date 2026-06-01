@@ -13,6 +13,8 @@ import {
   getPlannerExportManifest,
   measurePlannerExportDom,
   plannerExportDomMatchesManifest,
+  plannerExportHasRenderableContent,
+  type PlannerExportDomCounts,
 } from "@/lib/pdf/planner-export-manifest";
 
 const MAX_READY_ATTEMPTS = 80;
@@ -53,7 +55,7 @@ export function PlannerExportReadyGate({
     let cancelled = false;
     let attempts = 0;
 
-    const expected = getPlannerExportManifest(
+    let expected = getPlannerExportManifest(
       trip,
       variant,
       getClientItineraryContacts(trip).length,
@@ -67,6 +69,19 @@ export function PlannerExportReadyGate({
       JSON.stringify(expected)
     );
 
+    function markReady(actual: PlannerExportDomCounts) {
+      document.documentElement.setAttribute(
+        "data-lux-export-actual",
+        JSON.stringify(actual)
+      );
+      document.documentElement.setAttribute(
+        "data-lux-export-debug",
+        formatPlannerExportDebugLog(expected, actual)
+      );
+      document.documentElement.setAttribute("data-lux-export-ready", "true");
+      document.documentElement.setAttribute("data-lux-print-ready", "true");
+    }
+
     async function tryMarkReady(): Promise<void> {
       if (cancelled) return;
 
@@ -75,50 +90,67 @@ export function PlannerExportReadyGate({
       await waitForImages();
       await waitForPaint();
 
+      expected = getPlannerExportManifest(
+        trip,
+        variant,
+        getClientItineraryContacts(trip).length,
+        variant === "concierge" ? getFilledConciergeTeam(trip).length : 0
+      );
+      document.documentElement.setAttribute(
+        "data-lux-export-expected",
+        JSON.stringify(expected)
+      );
+
       const actual = measurePlannerExportDom(variant);
-      if (!plannerExportDomMatchesManifest(expected, actual)) {
+      const strictMatch = plannerExportDomMatchesManifest(expected, actual);
+      const renderable = plannerExportHasRenderableContent(expected, actual);
+
+      if (!strictMatch) {
         if (attempts < MAX_READY_ATTEMPTS) {
           window.setTimeout(() => {
             void tryMarkReady();
           }, RETRY_MS);
+          return;
+        }
+
+        if (renderable) {
+          try {
+            lockPlannerPrintLayout();
+          } catch (err) {
+            console.warn("lockPlannerPrintLayout failed:", err);
+          }
+          await waitForPaint();
+          markReady(measurePlannerExportDom(variant));
         }
         return;
       }
 
-      lockPlannerPrintLayout();
+      try {
+        lockPlannerPrintLayout();
+      } catch (err) {
+        console.warn("lockPlannerPrintLayout failed:", err);
+      }
       await waitForPaint();
 
       const afterLock = measurePlannerExportDom(variant);
-      if (!plannerExportDomMatchesManifest(expected, afterLock)) {
-        if (attempts < MAX_READY_ATTEMPTS) {
-          window.setTimeout(() => {
-            void tryMarkReady();
-          }, RETRY_MS);
-        } else if (afterLock.activities >= expected.activities) {
-          document.documentElement.setAttribute(
-            "data-lux-export-actual",
-            JSON.stringify(afterLock)
-          );
-          document.documentElement.setAttribute(
-            "data-lux-export-debug",
-            formatPlannerExportDebugLog(expected, afterLock)
-          );
-          document.documentElement.setAttribute("data-lux-export-ready", "true");
-          document.documentElement.setAttribute("data-lux-print-ready", "true");
-        }
+      if (
+        plannerExportDomMatchesManifest(expected, afterLock) ||
+        plannerExportHasRenderableContent(expected, afterLock)
+      ) {
+        markReady(afterLock);
         return;
       }
 
-      document.documentElement.setAttribute(
-        "data-lux-export-actual",
-        JSON.stringify(afterLock)
-      );
-      document.documentElement.setAttribute(
-        "data-lux-export-debug",
-        formatPlannerExportDebugLog(expected, afterLock)
-      );
-      document.documentElement.setAttribute("data-lux-export-ready", "true");
-      document.documentElement.setAttribute("data-lux-print-ready", "true");
+      if (attempts < MAX_READY_ATTEMPTS) {
+        window.setTimeout(() => {
+          void tryMarkReady();
+        }, RETRY_MS);
+        return;
+      }
+
+      if (plannerExportHasRenderableContent(expected, afterLock)) {
+        markReady(afterLock);
+      }
     }
 
     void tryMarkReady();

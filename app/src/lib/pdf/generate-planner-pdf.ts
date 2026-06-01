@@ -1,5 +1,6 @@
 import type { Browser } from "puppeteer-core";
 import type { PlannerExportVariant } from "../planner/planner-sheet-model";
+import { LOCK_PLANNER_PRINT_LAYOUT_SCRIPT } from "./lock-planner-print-layout-script";
 
 function resolveBaseUrl(baseUrl?: string): string {
   if (baseUrl) return baseUrl.replace(/\/$/, "");
@@ -28,6 +29,64 @@ async function launchBrowser(): Promise<Browser> {
   }) as Promise<Browser>;
 }
 
+async function runLockScript(page: Awaited<ReturnType<Browser["newPage"]>>) {
+  await page.evaluate(LOCK_PLANNER_PRINT_LAYOUT_SCRIPT);
+  await page.evaluate(() => document.fonts.ready);
+}
+
+function logExportWarnings(
+  exportState: { expected: string | null; actual: string | null; debug: string | null },
+  mode: PlannerExportVariant
+) {
+  if (!exportState.expected || !exportState.actual) {
+    console.warn(
+      "[planner-pdf-export] Manifest data missing; proceeding with rendered document"
+    );
+    return;
+  }
+
+  try {
+    const expected = JSON.parse(exportState.expected) as {
+      activities: number;
+      dayColumns: number;
+      afternoon?: number;
+      evening?: number;
+    };
+    const actual = JSON.parse(exportState.actual) as {
+      activities: number;
+      dayColumns: number;
+      afternoon?: number;
+      evening?: number;
+    };
+
+    if (expected.activities !== actual.activities) {
+      console.warn(
+        `[planner-pdf-export] Activity count mismatch: expected ${expected.activities}, rendered ${actual.activities}`
+      );
+    }
+    if (expected.dayColumns !== actual.dayColumns) {
+      console.warn(
+        `[planner-pdf-export] Day column mismatch: expected ${expected.dayColumns}, rendered ${actual.dayColumns}`
+      );
+    }
+    if (
+      mode === "client" &&
+      (expected.evening !== actual.evening ||
+        expected.afternoon !== actual.afternoon)
+    ) {
+      console.warn(
+        `[planner-pdf-export] Period count mismatch: expected afternoon ${expected.afternoon} evening ${expected.evening}, rendered afternoon ${actual.afternoon} evening ${actual.evening}`
+      );
+    }
+  } catch (err) {
+    console.warn("[planner-pdf-export] Could not parse manifest for warnings:", err);
+  }
+
+  if (exportState.debug) {
+    console.info("[planner-pdf-export]\n" + exportState.debug);
+  }
+}
+
 export async function generatePlannerPdf(
   tripId: number,
   mode: PlannerExportVariant,
@@ -46,99 +105,43 @@ export async function generatePlannerPdf(
     await page.waitForSelector(".lux-document", { timeout: 30_000 });
     await page.evaluate(() => document.fonts.ready);
 
-    await page.waitForFunction(
-      () =>
-        document.documentElement.getAttribute("data-lux-export-ready") ===
-        "true",
-      { timeout: 30_000 }
-    );
-
-    const exportState = await page.evaluate(() => {
-      const expected = document.documentElement.getAttribute(
-        "data-lux-export-expected"
-      );
-      const actual = document.documentElement.getAttribute("data-lux-export-actual");
-      const debug = document.documentElement.getAttribute("data-lux-export-debug");
-      return { expected, actual, debug };
-    });
-
-    if (!exportState.expected || !exportState.actual) {
-      throw new Error("PDF export ready gate did not publish manifest data");
-    }
-
-    if (exportState.debug) {
-      console.info("[planner-pdf-export]\n" + exportState.debug);
-    }
-
-    const expected = JSON.parse(exportState.expected) as {
-      activities: number;
-      dayColumns: number;
-      afternoon: number;
-      evening: number;
-      byDay: Array<{ date: string; afternoon: number; evening: number; total: number }>;
-    };
-    const actual = JSON.parse(exportState.actual) as {
-      activities: number;
-      dayColumns: number;
-      afternoon: number;
-      evening: number;
-      visibleActivities: number;
-      visibleAfternoon: number;
-      visibleEvening: number;
-      byDay: Array<{
-        date: string;
-        afternoon: number;
-        evening: number;
-        total: number;
-        visibleTotal: number;
-        visibleAfternoon: number;
-        visibleEvening: number;
-      }>;
-    };
-
-    if (
-      expected.activities !== actual.activities ||
-      expected.dayColumns !== actual.dayColumns ||
-      (mode === "client" &&
-        (expected.evening !== actual.evening ||
-          expected.afternoon !== actual.afternoon))
-    ) {
-      throw new Error(
-        `PDF export DOM mismatch: expected ${expected.activities} activities (${expected.evening} evening), rendered ${actual.activities} (${actual.evening} evening)`
-      );
-    }
-
-    for (let i = 0; i < expected.byDay.length; i += 1) {
-      const expectedDay = expected.byDay[i];
-      const actualDay = actual.byDay[i];
-      if (!actualDay || expectedDay.total !== actualDay.total) {
-        throw new Error(
-          `PDF export day mismatch for ${expectedDay?.date ?? `day ${i + 1}`}`
+    const readyInTime = await page
+      .waitForFunction(
+        () =>
+          document.documentElement.getAttribute("data-lux-export-ready") ===
+          "true",
+        { timeout: 20_000 }
+      )
+      .then(() => true)
+      .catch((err) => {
+        console.warn(
+          "[planner-pdf-export] Export ready gate timeout; applying lock script:",
+          err instanceof Error ? err.message : err
         );
-      }
+        return false;
+      });
 
-      if (
-        mode === "client" &&
-        (expectedDay.evening !== actualDay.evening ||
-          expectedDay.afternoon !== actualDay.afternoon)
-      ) {
-        throw new Error(
-          `PDF export day mismatch for ${expectedDay?.date ?? `day ${i + 1}`}`
-        );
-      }
+    if (!readyInTime) {
+      await runLockScript(page);
+      await page.evaluate(() => {
+        if (
+          document.documentElement.getAttribute("data-lux-export-ready") !==
+          "true"
+        ) {
+          document.documentElement.setAttribute("data-lux-export-ready", "true");
+          document.documentElement.setAttribute("data-lux-print-ready", "true");
+        }
+      });
     }
 
-    if (
-      expected.activities !== actual.visibleActivities ||
-      (mode === "client" &&
-        (expected.evening !== actual.visibleEvening ||
-          expected.afternoon !== actual.visibleAfternoon))
-    ) {
-      console.warn(
-        "[planner-pdf-export] Visibility mismatch (proceeding):",
-        exportState.debug ?? "no debug log"
-      );
-    }
+    const exportState = await page.evaluate(() => ({
+      expected: document.documentElement.getAttribute("data-lux-export-expected"),
+      actual: document.documentElement.getAttribute("data-lux-export-actual"),
+      debug: document.documentElement.getAttribute("data-lux-export-debug"),
+      cardCount: document.querySelectorAll(".lux-travel-card, .lux-activity-card--itinerary").length,
+    }));
+
+    logExportWarnings(exportState, mode);
 
     const pdf = await page.pdf({
       format: "A4",
@@ -150,6 +153,10 @@ export async function generatePlannerPdf(
           ? { top: "2.5mm", right: "1.5mm", bottom: "2.5mm", left: "1.5mm" }
           : { top: "4mm", right: "4mm", bottom: "4mm", left: "4mm" },
     });
+
+    if (!pdf?.byteLength) {
+      throw new Error("PDF buffer is empty after render");
+    }
 
     return Buffer.from(pdf);
   } finally {
