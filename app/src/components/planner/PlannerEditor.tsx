@@ -10,8 +10,6 @@ import {
 import type {
   Activity,
   ActivityType,
-  ChecklistCategory,
-  ChecklistItem,
   Client,
   DaySection,
   TripFollowUpStatus,
@@ -50,24 +48,8 @@ function patchActivityInTrip(
   };
 }
 
-function patchChecklistInTrip(
-  prev: TripWithDays,
-  itemId: number,
-  fields: Partial<ChecklistItem>
-): TripWithDays {
-  return {
-    ...prev,
-    checklist: prev.checklist.map((item) =>
-      item.id === itemId ? { ...item, ...fields } : item
-    ),
-  };
-}
-
 export function PlannerEditor({ initialTrip }: Props) {
-  const [trip, setTrip] = useState<TripWithDays>({
-    ...initialTrip,
-    checklist: initialTrip.checklist ?? [],
-  });
+  const [trip, setTrip] = useState(initialTrip);
   const [clientPreviewTrip, setClientPreviewTrip] =
     useState<TripWithDays | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
@@ -84,7 +66,6 @@ export function PlannerEditor({ initialTrip }: Props) {
     scheduleTripPersist,
     flushTripPersist,
     scheduleActivityPatch,
-    scheduleChecklistPatch,
     flushAll,
   } = usePlannerSave(initialTrip.id);
 
@@ -246,38 +227,6 @@ export function PlannerEditor({ initialTrip }: Props) {
     },
     [scheduleActivityPatch]
   );
-
-  const patchChecklistItem = useCallback(
-    (
-      id: number,
-      fields: Partial<ChecklistItem>,
-      options?: { immediate?: boolean }
-    ) => {
-      setTrip((prev) => patchChecklistInTrip(prev, id, fields));
-      scheduleChecklistPatch(id, fields, options?.immediate ?? false);
-    },
-    [scheduleChecklistPatch]
-  );
-
-  const addChecklistItem = async (category: ChecklistCategory) => {
-    const res = await fetch(`/api/trips/${trip.id}/checklist`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category }),
-    });
-    if (!res.ok) return;
-    const item: ChecklistItem = await res.json();
-    setTrip((prev) => ({ ...prev, checklist: [...prev.checklist, item] }));
-  };
-
-  const removeChecklistItem = async (id: number) => {
-    const res = await fetch(`/api/checklist-items/${id}`, { method: "DELETE" });
-    if (!res.ok) return;
-    setTrip((prev) => ({
-      ...prev,
-      checklist: prev.checklist.filter((item) => item.id !== id),
-    }));
-  };
 
   const removeActivity = async (id: number) => {
     if (id <= 0) return;
@@ -457,9 +406,6 @@ export function PlannerEditor({ initialTrip }: Props) {
           onRemoveActivity={removeActivity}
           onUpdateSections={updateSections}
           onReorderActivities={reorderActivities}
-          onPatchChecklistItem={patchChecklistItem}
-          onAddChecklistItem={addChecklistItem}
-          onRemoveChecklistItem={removeChecklistItem}
         />
       ) : (
         <div className="lux-client-preview">
