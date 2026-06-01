@@ -4,7 +4,7 @@ import { formatDateRange } from "@/lib/planner-utils";
 import { CalendarQuickActions } from "@/components/calendar/CalendarQuickActions";
 import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
-import type { TripFollowUpStatus } from "@/lib/types";
+import type { TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 interface Props {
   programmes: CalendarProgramme[];
@@ -12,6 +12,9 @@ interface Props {
   selectedId: number | null;
   onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
+  updatingPaymentId: number | null;
+  paymentErrors: Record<number, string>;
+  onPaymentStatusChange: (id: number, status: TripPaymentStatus) => void;
 }
 
 export function CalendarListView({
@@ -20,6 +23,9 @@ export function CalendarListView({
   selectedId,
   onSelectProgramme,
   onStatusChange,
+  updatingPaymentId,
+  paymentErrors,
+  onPaymentStatusChange,
 }: Props) {
   if (programmes.length === 0) {
     return <p className="cal-empty">No programmes match your filters.</p>;
@@ -44,7 +50,14 @@ export function CalendarListView({
             >
               <div className="cal-list-top">
                 <span className="cal-list-destination">{p.destination}</span>
-                <CalendarProgrammeBadges programme={p} />
+                <CalendarProgrammeBadges
+                  programme={p}
+                  paymentUpdating={updatingPaymentId === p.id}
+                  paymentError={paymentErrors[p.id] ?? null}
+                  onPaymentStatusChange={(status) =>
+                    onPaymentStatusChange(p.id, status)
+                  }
+                />
               </div>
               <p className="cal-list-meta">
                 {p.clientName}

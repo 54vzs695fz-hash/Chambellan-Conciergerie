@@ -16,21 +16,25 @@ import {
   type SectionStatus,
 } from "@/lib/planner/checklist-utils";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
-import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
+import { PaymentStatusPicker } from "@/components/status/PaymentStatusPicker";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
 import type {
   ChecklistCategory,
   ChecklistItem,
   ChecklistItemStatus,
+  TripPaymentStatus,
 } from "@/lib/types";
 
 interface Props {
   programme: CalendarProgramme;
   today: Date;
   updatingId: number | null;
+  updatingPaymentId: number | null;
+  paymentError: string | null;
   onClose: () => void;
   onMarkDone: (id: number) => Promise<void>;
   onPatchItem: (id: number, fields: Partial<ChecklistItem>) => Promise<void>;
+  onPaymentStatusChange: (status: TripPaymentStatus) => void;
 }
 
 function groupItems(items: ChecklistItem[]) {
@@ -171,9 +175,12 @@ export function CalendarProgrammeFollowUpPanel({
   programme,
   today,
   updatingId,
+  updatingPaymentId,
+  paymentError,
   onClose,
   onMarkDone,
   onPatchItem,
+  onPaymentStatusChange,
 }: Props) {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -252,9 +259,12 @@ export function CalendarProgrammeFollowUpPanel({
               showDot
               arrivalDate={programme.arrivalDate}
             />
-            <PaymentStatusBadge
+            <PaymentStatusPicker
               status={programme.paymentStatus}
               arrivalDate={programme.arrivalDate}
+              saving={updatingPaymentId === programme.id}
+              error={paymentError}
+              onSelect={onPaymentStatusChange}
             />
           </span>
         </div>

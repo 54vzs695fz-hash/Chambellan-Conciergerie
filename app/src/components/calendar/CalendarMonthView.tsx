@@ -16,7 +16,7 @@ import {
   toIsoDate,
   type CalendarProgramme,
 } from "@/lib/calendar/programmes";
-import type { TripFollowUpStatus } from "@/lib/types";
+import type { TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 interface Props {
   reference: Date;
@@ -26,6 +26,9 @@ interface Props {
   selectedId: number | null;
   onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
+  updatingPaymentId: number | null;
+  paymentErrors: Record<number, string>;
+  onPaymentStatusChange: (id: number, status: TripPaymentStatus) => void;
 }
 
 export function CalendarMonthView({
@@ -36,6 +39,9 @@ export function CalendarMonthView({
   selectedId,
   onSelectProgramme,
   onStatusChange,
+  updatingPaymentId,
+  paymentErrors,
+  onPaymentStatusChange,
 }: Props) {
   const weeks = buildMonthGrid(reference);
   const weekdays = weeks[0].map(formatDayShort);
@@ -85,6 +91,11 @@ export function CalendarMonthView({
                               <CalendarProgrammeBadges
                                 programme={p}
                                 showFollowUpDot
+                                paymentUpdating={updatingPaymentId === p.id}
+                                paymentError={paymentErrors[p.id] ?? null}
+                                onPaymentStatusChange={(status) =>
+                                  onPaymentStatusChange(p.id, status)
+                                }
                               />
                             </span>
                           ) : null}

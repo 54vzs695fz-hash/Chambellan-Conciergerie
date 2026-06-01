@@ -13,7 +13,7 @@ import {
   toIsoDate,
   type CalendarProgramme,
 } from "@/lib/calendar/programmes";
-import type { TripFollowUpStatus } from "@/lib/types";
+import type { TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 interface Props {
   reference: Date;
@@ -23,6 +23,9 @@ interface Props {
   selectedId: number | null;
   onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
+  updatingPaymentId: number | null;
+  paymentErrors: Record<number, string>;
+  onPaymentStatusChange: (id: number, status: TripPaymentStatus) => void;
 }
 
 export function CalendarWeekView({
@@ -33,6 +36,9 @@ export function CalendarWeekView({
   selectedId,
   onSelectProgramme,
   onStatusChange,
+  updatingPaymentId,
+  paymentErrors,
+  onPaymentStatusChange,
 }: Props) {
   const weekDays = buildWeekDays(reference);
   const todayIso = toIsoDate(today);
@@ -84,7 +90,15 @@ export function CalendarWeekView({
                   <span>
                     {p.clientName} · {p.destination}
                   </span>
-                  <CalendarProgrammeBadges programme={p} showFollowUpDot />
+                  <CalendarProgrammeBadges
+                    programme={p}
+                    showFollowUpDot
+                    paymentUpdating={updatingPaymentId === p.id}
+                    paymentError={paymentErrors[p.id] ?? null}
+                    onPaymentStatusChange={(status) =>
+                      onPaymentStatusChange(p.id, status)
+                    }
+                  />
                 </button>
                 <CalendarQuickActions
                   programme={p}

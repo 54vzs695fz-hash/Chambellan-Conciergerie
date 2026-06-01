@@ -6,8 +6,10 @@ import { IconTrash } from "@/components/establishments/EstablishmentLibraryIcons
 import { LibraryDeleteDialog } from "@/components/library/LibraryDeleteDialog";
 import { PlannerArrivalCountdown } from "@/components/planner/PlannerArrivalCountdown";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { PaymentStatusPicker } from "@/components/status/PaymentStatusPicker";
+import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
 import { formatDateRange, isUntitledDestination } from "@/lib/planner-utils";
-import type { Trip } from "@/lib/types";
+import type { Trip, TripPaymentStatus } from "@/lib/types";
 
 type DeleteMode =
   | { type: "single"; id: number }
@@ -27,6 +29,12 @@ export function PlannerListClient({ initialTrips }: Props) {
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<number | null>(
+    null
+  );
+  const [paymentErrors, setPaymentErrors] = useState<Record<number, string>>(
+    {}
+  );
 
   const untitledCount = useMemo(
     () => trips.filter((t) => isUntitledDestination(t.destination)).length,
@@ -43,6 +51,48 @@ export function PlannerListClient({ initialTrips }: Props) {
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2500);
+  };
+
+  const handlePaymentStatusChange = async (
+    id: number,
+    status: TripPaymentStatus
+  ) => {
+    const previous = normalizeTripPaymentStatus(
+      trips.find((trip) => trip.id === id)?.payment_status
+    );
+    if (previous === status) return;
+
+    setUpdatingPaymentId(id);
+    setPaymentErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setTrips((prev) =>
+      prev.map((trip) =>
+        trip.id === id ? { ...trip, payment_status: status } : trip
+      )
+    );
+    try {
+      const res = await fetch(`/api/trips/${id}/payment`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_status: status }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+    } catch {
+      setTrips((prev) =>
+        prev.map((trip) =>
+          trip.id === id ? { ...trip, payment_status: previous } : trip
+        )
+      );
+      setPaymentErrors((prev) => ({
+        ...prev,
+        [id]: "Could not save.",
+      }));
+    } finally {
+      setUpdatingPaymentId(null);
+    }
   };
 
   const performDelete = async () => {
@@ -123,9 +173,25 @@ export function PlannerListClient({ initialTrips }: Props) {
                     {displayDestination(t.destination)}
                   </p>
                   <p className="text-sm mt-0.5">{t.client_name}</p>
-                  <div className="planner-list-status">
+                  <div
+                    className="planner-list-status"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
                     <ProgrammeStatusBadge
                       status={t.follow_up_status ?? "follow_up"}
+                    />
+                    <PaymentStatusPicker
+                      status={normalizeTripPaymentStatus(t.payment_status)}
+                      arrivalDate={t.arrival_date}
+                      saving={updatingPaymentId === t.id}
+                      error={paymentErrors[t.id] ?? null}
+                      onSelect={(status) =>
+                        void handlePaymentStatusChange(t.id, status)
+                      }
                     />
                   </div>
                   <PlannerArrivalCountdown

@@ -23,7 +23,7 @@ import {
   type CalendarView,
 } from "@/lib/calendar/programmes";
 import { PLANNER_AUTOSAVE_MS } from "@/components/planner/use-planner-save";
-import type { ChecklistItem, Trip, TripFollowUpStatus } from "@/lib/types";
+import type { ChecklistItem, Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 interface Props {
   initialTrips: Trip[];
@@ -54,6 +54,12 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const [selectedProgramme, setSelectedProgramme] =
     useState<CalendarProgramme | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<number | null>(
+    null
+  );
+  const [paymentErrors, setPaymentErrors] = useState<Record<number, string>>(
+    {}
+  );
   const [checklistUpdatingId, setChecklistUpdatingId] = useState<number | null>(
     null
   );
@@ -107,6 +113,51 @@ export function CalendarPageClient({ initialTrips }: Props) {
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2500);
+  };
+
+  const handlePaymentStatusChange = async (
+    id: number,
+    status: TripPaymentStatus
+  ) => {
+    const previous =
+      programmes.find((p) => p.id === id)?.paymentStatus ?? "pending";
+    if (previous === status) return;
+
+    setUpdatingPaymentId(id);
+    setPaymentErrors((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setProgrammes((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, paymentStatus: status } : p))
+    );
+    setSelectedProgramme((prev) =>
+      prev?.id === id ? { ...prev, paymentStatus: status } : prev
+    );
+    try {
+      const res = await fetch(`/api/trips/${id}/payment`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_status: status }),
+      });
+      if (!res.ok) throw new Error("Update failed");
+    } catch {
+      setProgrammes((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, paymentStatus: previous } : p
+        )
+      );
+      setSelectedProgramme((prev) =>
+        prev?.id === id ? { ...prev, paymentStatus: previous } : prev
+      );
+      setPaymentErrors((prev) => ({
+        ...prev,
+        [id]: "Could not save.",
+      }));
+    } finally {
+      setUpdatingPaymentId(null);
+    }
   };
 
   const handleStatusChange = async (id: number, status: TripFollowUpStatus) => {
@@ -254,6 +305,9 @@ export function CalendarPageClient({ initialTrips }: Props) {
         programmes={programmes}
         today={today}
         onSelectProgramme={setSelectedProgramme}
+        updatingPaymentId={updatingPaymentId}
+        paymentErrors={paymentErrors}
+        onPaymentStatusChange={handlePaymentStatusChange}
       />
 
       {selectedProgramme ? (
@@ -261,9 +315,14 @@ export function CalendarPageClient({ initialTrips }: Props) {
           programme={selectedProgramme}
           today={today}
           updatingId={checklistUpdatingId}
+          updatingPaymentId={updatingPaymentId}
+          paymentError={paymentErrors[selectedProgramme.id] ?? null}
           onClose={() => setSelectedProgramme(null)}
           onMarkDone={handleChecklistDone}
           onPatchItem={handlePatchChecklistItem}
+          onPaymentStatusChange={(status) =>
+            handlePaymentStatusChange(selectedProgramme.id, status)
+          }
         />
       ) : null}
 
@@ -307,6 +366,9 @@ export function CalendarPageClient({ initialTrips }: Props) {
           selectedId={selectedProgramme?.id ?? null}
           onSelectProgramme={setSelectedProgramme}
           onStatusChange={handleStatusChange}
+          updatingPaymentId={updatingPaymentId}
+          paymentErrors={paymentErrors}
+          onPaymentStatusChange={handlePaymentStatusChange}
         />
       ) : null}
 
@@ -319,6 +381,9 @@ export function CalendarPageClient({ initialTrips }: Props) {
           selectedId={selectedProgramme?.id ?? null}
           onSelectProgramme={setSelectedProgramme}
           onStatusChange={handleStatusChange}
+          updatingPaymentId={updatingPaymentId}
+          paymentErrors={paymentErrors}
+          onPaymentStatusChange={handlePaymentStatusChange}
         />
       ) : null}
 
@@ -329,6 +394,9 @@ export function CalendarPageClient({ initialTrips }: Props) {
           selectedId={selectedProgramme?.id ?? null}
           onSelectProgramme={setSelectedProgramme}
           onStatusChange={handleStatusChange}
+          updatingPaymentId={updatingPaymentId}
+          paymentErrors={paymentErrors}
+          onPaymentStatusChange={handlePaymentStatusChange}
         />
       ) : null}
     </div>

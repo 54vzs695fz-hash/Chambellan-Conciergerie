@@ -242,6 +242,21 @@ export async function updateTripFollowUpStatus(
   }
 }
 
+export async function updateTripPaymentStatus(
+  id: number,
+  payment_status: Trip["payment_status"]
+): Promise<Trip | undefined> {
+  try {
+    const row = await prisma.trip.update({
+      where: { id },
+      data: { payment_status },
+    });
+    return mapTrip(row);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function deleteTrip(id: number): Promise<boolean> {
   try {
     await prisma.trip.delete({ where: { id } });

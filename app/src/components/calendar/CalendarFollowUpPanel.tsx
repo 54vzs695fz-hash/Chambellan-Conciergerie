@@ -2,24 +2,31 @@
 
 import { formatDateRange } from "@/lib/planner-utils";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
-import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
+import { PaymentStatusPicker } from "@/components/status/PaymentStatusPicker";
 import { getActiveFollowUpSuggestions } from "@/lib/calendar/follow-up";
 import {
   daysUntilArrival,
   programmesArrivingWithinDays,
   type CalendarProgramme,
 } from "@/lib/calendar/programmes";
+import type { TripPaymentStatus } from "@/lib/types";
 
 interface Props {
   programmes: CalendarProgramme[];
   today: Date;
   onSelectProgramme: (programme: CalendarProgramme) => void;
+  updatingPaymentId: number | null;
+  paymentErrors: Record<number, string>;
+  onPaymentStatusChange: (id: number, status: TripPaymentStatus) => void;
 }
 
 export function CalendarFollowUpPanel({
   programmes,
   today,
   onSelectProgramme,
+  updatingPaymentId,
+  paymentErrors,
+  onPaymentStatusChange,
 }: Props) {
   const arrivingSoon = programmesArrivingWithinDays(programmes, 7, today);
   const suggestions = getActiveFollowUpSuggestions(arrivingSoon, today);
@@ -52,9 +59,12 @@ export function CalendarFollowUpPanel({
                     showDot
                     arrivalDate={p.arrivalDate}
                   />
-                  <PaymentStatusBadge
+                  <PaymentStatusPicker
                     status={p.paymentStatus}
                     arrivalDate={p.arrivalDate}
+                    saving={updatingPaymentId === p.id}
+                    error={paymentErrors[p.id] ?? null}
+                    onSelect={(status) => onPaymentStatusChange(p.id, status)}
                   />
                 </span>
               </div>
