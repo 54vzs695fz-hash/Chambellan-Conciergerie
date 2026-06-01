@@ -30,6 +30,8 @@ import {
   isGenericActivityNote,
   LUXURY_DISPLAY_PERIOD_ORDER,
   LUXURY_ITINERARY_PERIOD_TITLES,
+  sortActivitiesForSection,
+  sortLuxuryItineraryActivities,
   sortSectionsByItineraryOrder,
 } from "@/lib/planner-utils";
 import { getVisibleSections } from "@/lib/planner/day-sections";
@@ -39,12 +41,6 @@ const PLANNER_LOGO = PLANNER_BRAND_LOGO;
 export interface PlannerLuxuryDocumentProps {
   trip: TripWithDays;
   variant?: PlannerExportVariant;
-}
-
-function sortActivities(activities: Activity[]): Activity[] {
-  return [...activities].sort(
-    (a, b) => a.sort_order - b.sort_order || a.id - b.id
-  );
 }
 
 function activityHasVisibleContent(activity: Activity): boolean {
@@ -173,18 +169,26 @@ function ClientDayCard({ day }: { day: TripDay }) {
   );
 
   const items = orderedSections.flatMap((section) =>
-    sortActivities(
+    sortActivitiesForSection(
       day.activities.filter(
         (a) =>
           a.period === section.id &&
           (a.time || a.title?.trim() || a.details?.trim())
-      )
+      ),
+      section.id,
+      section.label
     ).map((activity) => ({ activity, sectionLabel: section.label }))
   );
 
   if (items.length === 0) return null;
 
   const periodGroups = groupActivitiesByLuxuryPeriod(items);
+  for (const period of LUXURY_DISPLAY_PERIOD_ORDER) {
+    periodGroups.set(
+      period,
+      sortLuxuryItineraryActivities(periodGroups.get(period) ?? [], period)
+    );
+  }
   const sparseDay = isSparseTimelineDay(day);
   const afternoonItems = periodGroups.get("afternoon") ?? [];
   const eveningItems = periodGroups.get("evening") ?? [];
@@ -315,13 +319,15 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
     (s) => s.id !== "afternoon" && s.id !== "evening"
   );
 
-  const sectionActs = (sectionId: string) =>
-    sortActivities(
+  const sectionActs = (sectionId: string, sectionLabel: string) =>
+    sortActivitiesForSection(
       day.activities.filter(
         (a) =>
           a.period === sectionId &&
           (a.time || a.title?.trim() || a.details?.trim())
-      )
+      ),
+      sectionId,
+      sectionLabel
     );
 
   return (
@@ -338,7 +344,7 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
               {afternoonSection ? (
                 <ConciergeSectionBlock
                   section={afternoonSection}
-                  acts={sectionActs(afternoonSection.id)}
+                  acts={sectionActs(afternoonSection.id, afternoonSection.label)}
                 />
               ) : null}
             </div>
@@ -347,7 +353,7 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
                 <ConciergeSectionBlock
                   key={section.id}
                   section={section}
-                  acts={sectionActs(section.id)}
+                  acts={sectionActs(section.id, section.label)}
                 />
               ))}
             </div>
@@ -355,7 +361,7 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
               {eveningSection ? (
                 <ConciergeSectionBlock
                   section={eveningSection}
-                  acts={sectionActs(eveningSection.id)}
+                  acts={sectionActs(eveningSection.id, eveningSection.label)}
                 />
               ) : null}
             </div>
@@ -366,7 +372,7 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
               <ConciergeSectionBlock
                 key={section.id}
                 section={section}
-                acts={sectionActs(section.id)}
+                acts={sectionActs(section.id, section.label)}
               />
             ))}
           </div>

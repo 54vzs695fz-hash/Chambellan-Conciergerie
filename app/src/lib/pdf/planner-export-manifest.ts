@@ -3,6 +3,7 @@ import { getVisibleSections } from "@/lib/planner/day-sections";
 import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
 import {
   groupActivitiesByLuxuryPeriod,
+  sortActivitiesForSection,
   sortSectionsByItineraryOrder,
   type LuxuryItineraryActivity,
 } from "@/lib/planner-utils";
@@ -32,13 +33,15 @@ function orderedActiveSections(day: TripDay) {
 
 function luxuryItemsForDay(day: TripDay): LuxuryItineraryActivity<Activity>[] {
   return orderedActiveSections(day).flatMap((section) =>
-    day.activities
-      .filter(
+    sortActivitiesForSection(
+      day.activities.filter(
         (activity) =>
           activity.period === section.id &&
           activityHasVisibleExportContent(activity)
-      )
-      .map((activity) => ({ activity, sectionLabel: section.label }))
+      ),
+      section.id,
+      section.label
+    ).map((activity) => ({ activity, sectionLabel: section.label }))
   );
 }
 

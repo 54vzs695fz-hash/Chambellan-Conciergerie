@@ -19,6 +19,7 @@
     "test:mobile": "node scripts/test-mobile-flows.mjs",
     "test:website-import": "node scripts/test-website-import.mjs",
     "test:guest-name": "node scripts/test-format-guest-name.mjs",
+    "test:activity-time-sort": "node scripts/test-activity-time-sort.mjs",
     "seed:library-v3": "node scripts/seed-library-v3.mjs"
   },
   "dependencies": {

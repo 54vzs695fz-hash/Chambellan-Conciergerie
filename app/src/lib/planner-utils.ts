@@ -108,22 +108,58 @@ export function formatTimeDisplay(time: string): string {
   return `${h}:${m}`;
 }
 
-export function activityTimeSortKey(time: string): number {
+const LATE_NIGHT_END_HOUR = 5;
+const MINUTES_PER_DAY = 24 * 60;
+
+/** Evening / Night sections treat 00:00–05:59 as after 23:59. */
+export function isEveningNightSection(
+  periodId: string,
+  sectionLabel = ""
+): boolean {
+  if (periodId === "evening") return true;
+  const normalized = sectionLabel.trim().toLowerCase();
+  return (
+    normalized.includes("evening") ||
+    normalized.includes("night") ||
+    normalized.includes("dinner") ||
+    (normalized.includes("club") && !normalized.includes("beach"))
+  );
+}
+
+export function activityTimeSortKey(
+  time: string,
+  options?: { eveningSection?: boolean }
+): number {
   if (!time) return Number.MAX_SAFE_INTEGER;
   const [h, m] = time.split(":").map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return Number.MAX_SAFE_INTEGER;
-  return h * 60 + m;
+
+  let minutes = h * 60 + m;
+  if (options?.eveningSection && h >= 0 && h <= LATE_NIGHT_END_HOUR) {
+    minutes += MINUTES_PER_DAY;
+  }
+
+  return minutes;
 }
 
-export function sortActivitiesByTime<T extends { time: string; sort_order: number; id: number }>(
-  activities: T[]
-): T[] {
+export function sortActivitiesByTime<
+  T extends { time: string; sort_order: number; id: number },
+>(activities: T[], options?: { eveningSection?: boolean }): T[] {
   return [...activities].sort(
     (a, b) =>
-      activityTimeSortKey(a.time) - activityTimeSortKey(b.time) ||
+      activityTimeSortKey(a.time, options) -
+        activityTimeSortKey(b.time, options) ||
       a.sort_order - b.sort_order ||
       a.id - b.id
   );
+}
+
+export function sortActivitiesForSection<
+  T extends { time: string; sort_order: number; id: number },
+>(activities: T[], periodId: string, sectionLabel = ""): T[] {
+  return sortActivitiesByTime(activities, {
+    eveningSection: isEveningNightSection(periodId, sectionLabel),
+  });
 }
 
 export function formatDayShort(dateStr: string): string {
@@ -393,6 +429,22 @@ export function groupActivitiesByLuxuryPeriod<T extends { time: string }>(
   }
 
   return groups;
+}
+
+export function sortLuxuryItineraryActivities<
+  T extends { time: string; sort_order: number; id: number },
+>(
+  items: LuxuryItineraryActivity<T>[],
+  period: LuxuryDisplayPeriod
+): LuxuryItineraryActivity<T>[] {
+  const eveningSection = period === "evening";
+  return [...items].sort(
+    (a, b) =>
+      activityTimeSortKey(a.activity.time, { eveningSection }) -
+        activityTimeSortKey(b.activity.time, { eveningSection }) ||
+      a.activity.sort_order - b.activity.sort_order ||
+      a.activity.id - b.activity.id
+  );
 }
 
 /** Tertiary category line on client travel cards (e.g. Lunch, Dinner) */

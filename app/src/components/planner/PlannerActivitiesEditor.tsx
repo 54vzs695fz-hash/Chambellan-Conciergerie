@@ -18,6 +18,7 @@ import { PLANNER_AUTOSAVE_MS } from "./use-planner-save";
 import {
   formatGridDayDate,
   formatGridDayName,
+  sortActivitiesForSection,
 } from "@/lib/planner-utils";
 
 function reorderItems<T>(items: T[], from: number, to: number): T[] {
@@ -26,12 +27,6 @@ function reorderItems<T>(items: T[], from: number, to: number): T[] {
   const [moved] = next.splice(from, 1);
   next.splice(to, 0, moved);
   return next;
-}
-
-function sortActivities(activities: Activity[]): Activity[] {
-  return [...activities].sort(
-    (a, b) => a.sort_order - b.sort_order || a.id - b.id
-  );
 }
 
 interface Props {
@@ -409,8 +404,10 @@ const DayEditor = memo(function DayEditor({
 
       <div className="adm-day-sections">
         {sections.map((section) => {
-          const acts = sortActivities(
-            day.activities.filter((a) => a.period === section.id)
+          const acts = sortActivitiesForSection(
+            day.activities.filter((a) => a.period === section.id),
+            section.id,
+            section.label
           );
 
           const moveActivity = (activityId: number, dir: -1 | 1) => {
