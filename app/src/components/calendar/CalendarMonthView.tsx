@@ -35,6 +35,7 @@ export function CalendarMonthView({
   const weekdays = weeks[0].map(formatDayShort);
 
   return (
+    <div className="cal-month-scroll">
     <div className="cal-month">
       <div className="cal-month-head">
         {weekdays.map((label) => (
@@ -85,6 +86,7 @@ export function CalendarMonthView({
           })}
         </div>
       ))}
+    </div>
     </div>
   );
 }

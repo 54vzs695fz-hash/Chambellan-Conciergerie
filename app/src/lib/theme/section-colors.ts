@@ -29,25 +29,62 @@ export interface NavItem {
   href: string;
   label: string;
   short: string;
+  mobileLabel: string;
+  section: AdminSection;
+}
+
+export interface MobileMoreLink {
+  href: string;
+  label: string;
   section: AdminSection;
 }
 
 export const MAIN_NAV: NavItem[] = [
-  { href: "/", label: "Dashboard", short: "Home", section: "dashboard" },
-  { href: "/calendar", label: "Calendar", short: "Cal", section: "calendar" },
+  {
+    href: "/",
+    label: "Dashboard",
+    short: "Home",
+    mobileLabel: "Home",
+    section: "dashboard",
+  },
+  {
+    href: "/calendar",
+    label: "Calendar",
+    short: "Cal",
+    mobileLabel: "Calendar",
+    section: "calendar",
+  },
   {
     href: "/planner",
     label: "Weekly Planner",
     short: "Plans",
+    mobileLabel: "Plans",
     section: "planner",
   },
-  { href: "/clients", label: "Clients", short: "Clients", section: "clients" },
+  {
+    href: "/clients",
+    label: "Clients",
+    short: "Clients",
+    mobileLabel: "Clients",
+    section: "clients",
+  },
   {
     href: "/establishments",
     label: "Library",
     short: "Library",
+    mobileLabel: "Library",
     section: "library",
   },
+];
+
+/** Secondary routes reachable from desktop UI but not in the bottom bar. */
+export const MOBILE_MORE_LINKS: MobileMoreLink[] = [
+  { href: "/events", label: "Events", section: "library" },
+  { href: "/event-venues", label: "Event Venues", section: "library" },
+  { href: "/establishments/import", label: "Import establishments", section: "library" },
+  { href: "/planner/new", label: "New weekly planner", section: "planner" },
+  { href: "/clients/new", label: "New client", section: "clients" },
+  { href: "/establishments/new", label: "New establishment", section: "library" },
 ];
 
 export function resolveSectionFromPath(pathname: string): AdminSection {
@@ -69,4 +106,19 @@ export function isNavActive(pathname: string, href: string): boolean {
   return href === "/"
     ? pathname === "/"
     : pathname.startsWith(href);
+}
+
+export function isMainNavActive(pathname: string, item: NavItem): boolean {
+  if (item.section === "library") {
+    return resolveSectionFromPath(pathname) === "library";
+  }
+  return isNavActive(pathname, item.href);
+}
+
+export function isMobileMoreActive(pathname: string): boolean {
+  return MOBILE_MORE_LINKS.some((link) =>
+    link.href === "/"
+      ? pathname === "/"
+      : pathname.startsWith(link.href)
+  );
 }
