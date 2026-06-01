@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { IconTrash } from "@/components/establishments/EstablishmentLibraryIcons";
 import { LibraryDeleteDialog } from "@/components/library/LibraryDeleteDialog";
-import { programmeStatusLabel } from "@/lib/planner/programme-status";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { formatDateRange, isUntitledDestination } from "@/lib/planner-utils";
 import type { Trip } from "@/lib/types";
 
@@ -122,9 +122,11 @@ export function PlannerListClient({ initialTrips }: Props) {
                     {displayDestination(t.destination)}
                   </p>
                   <p className="text-sm mt-0.5">{t.client_name}</p>
-                  <p className="text-xs text-muted mt-0.5">
-                    {programmeStatusLabel(t.follow_up_status)}
-                  </p>
+                  <div className="planner-list-status">
+                    <ProgrammeStatusBadge
+                      status={t.follow_up_status ?? "follow_up"}
+                    />
+                  </div>
                 </div>
                 <p className="text-xs text-muted text-right shrink-0">
                   {formatDateRange(t.arrival_date, t.departure_date)}
