@@ -211,6 +211,16 @@
   margin-top: 0.35rem;
 }
 
+.planner-list-arrival {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  color: #9a948c;
+}
+
 .client-list-status {
   margin-top: 0.35rem;
 }

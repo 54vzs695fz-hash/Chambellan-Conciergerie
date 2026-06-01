@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { IconTrash } from "@/components/establishments/EstablishmentLibraryIcons";
 import { LibraryDeleteDialog } from "@/components/library/LibraryDeleteDialog";
+import { PlannerArrivalCountdown } from "@/components/planner/PlannerArrivalCountdown";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { formatDateRange, isUntitledDestination } from "@/lib/planner-utils";
 import type { Trip } from "@/lib/types";
@@ -127,6 +128,10 @@ export function PlannerListClient({ initialTrips }: Props) {
                       status={t.follow_up_status ?? "follow_up"}
                     />
                   </div>
+                  <PlannerArrivalCountdown
+                    arrivalDate={t.arrival_date}
+                    departureDate={t.departure_date}
+                  />
                 </div>
                 <p className="text-xs text-muted text-right shrink-0">
                   {formatDateRange(t.arrival_date, t.departure_date)}
