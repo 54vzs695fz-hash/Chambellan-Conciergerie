@@ -26,6 +26,7 @@ import { PlannerExportReadyGate } from "./PlannerExportReadyGate";
 import { usePlannerSave } from "./use-planner-save";
 
 type ViewMode = "concierge" | "client";
+type PreviewDisplay = "fit" | "full";
 
 interface Props {
   initialTrip: TripWithDays;
@@ -58,6 +59,7 @@ export function PlannerEditor({ initialTrip }: Props) {
     null
   );
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [previewDisplay, setPreviewDisplay] = useState<PreviewDisplay>("fit");
 
   const {
     saveStatus,
@@ -314,6 +316,7 @@ export function PlannerEditor({ initialTrip }: Props) {
     setPdfError(null);
     await flushAll();
     setClientPreviewTrip(tripRef.current ?? trip);
+    setPreviewDisplay("fit");
     setViewMode("client");
   };
 
@@ -347,7 +350,7 @@ export function PlannerEditor({ initialTrip }: Props) {
             </span>
           ) : null}
         </div>
-        <div className="lux-toolbar-center">
+        <div className="lux-toolbar-center lux-toolbar-desktop-only">
           <div className="lux-toolbar-toggle">
             <button
               type="button"
@@ -365,7 +368,7 @@ export function PlannerEditor({ initialTrip }: Props) {
             </button>
           </div>
         </div>
-        <div className="lux-toolbar-right">
+        <div className="lux-toolbar-right lux-toolbar-desktop-only">
           <button
             type="button"
             className="lux-btn lux-btn--ghost"
@@ -430,15 +433,82 @@ export function PlannerEditor({ initialTrip }: Props) {
           onReorderActivities={reorderActivities}
         />
       ) : (
-        <div className="lux-client-preview">
-          <PlannerPreviewErrorBoundary key={`preview-${trip.id}-${previewTrip.updated_at}`}>
-            <div className="lux-print-root lux-print-root--client">
-              <PlannerLuxuryDocument trip={previewTrip} variant="client" />
-              <PlannerExportReadyGate trip={previewTrip} variant="client" />
+        <div
+          className={`lux-client-preview lux-client-preview--${previewDisplay}`}
+        >
+          <div className="lux-client-preview-controls md:hidden">
+            <button
+              type="button"
+              className={previewDisplay === "fit" ? "is-active" : ""}
+              onClick={() => setPreviewDisplay("fit")}
+            >
+              Fit to screen
+            </button>
+            <button
+              type="button"
+              className={previewDisplay === "full" ? "is-active" : ""}
+              onClick={() => setPreviewDisplay("full")}
+            >
+              Full size
+            </button>
+          </div>
+          <div className="lux-client-preview-scroller">
+            <div className="lux-client-preview-scaler">
+              <div className="lux-client-preview-stage">
+                <PlannerPreviewErrorBoundary
+                  key={`preview-${trip.id}-${previewTrip.updated_at}`}
+                >
+                  <div className="lux-print-root lux-print-root--client">
+                    <PlannerLuxuryDocument trip={previewTrip} variant="client" />
+                    <PlannerExportReadyGate trip={previewTrip} variant="client" />
+                  </div>
+                </PlannerPreviewErrorBoundary>
+              </div>
             </div>
-          </PlannerPreviewErrorBoundary>
+          </div>
         </div>
       )}
+
+      <div
+        className="lux-mobile-action-bar md:hidden"
+        role="toolbar"
+        aria-label="Planner actions"
+      >
+        <div className="lux-toolbar-toggle lux-mobile-action-toggle">
+          <button
+            type="button"
+            className={viewMode === "concierge" ? "is-active" : ""}
+            onClick={() => setViewMode("concierge")}
+          >
+            Concierge
+          </button>
+          <button
+            type="button"
+            className={viewMode === "client" ? "is-active" : ""}
+            onClick={() => void switchToClientPreview()}
+          >
+            Client preview
+          </button>
+        </div>
+        <div className="lux-mobile-action-exports">
+          <button
+            type="button"
+            className="lux-btn lux-btn--ghost"
+            disabled={pdfLoading !== null}
+            onClick={() => downloadPdf("client")}
+          >
+            {pdfLoading === "client" ? "Generating…" : "Export Client PDF"}
+          </button>
+          <button
+            type="button"
+            className="lux-btn lux-btn--gold"
+            disabled={pdfLoading !== null}
+            onClick={() => downloadPdf("concierge")}
+          >
+            {pdfLoading === "concierge" ? "Generating…" : "Export Concierge PDF"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

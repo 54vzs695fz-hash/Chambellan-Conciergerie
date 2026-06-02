@@ -2381,16 +2381,11 @@
     gap: 0.4rem;
   }
 
-  .lux-toolbar-left,
-  .lux-toolbar-center,
-  .lux-toolbar-right {
-    width: 100%;
-    justify-content: space-between;
-  }
-
   .lux-toolbar-left {
+    width: 100%;
     flex-wrap: wrap;
     gap: 0.35rem 0.65rem;
+    justify-content: flex-start;
   }
 
   .adm-nav-brand {
@@ -2398,7 +2393,7 @@
   }
 
   .lux-toolbar-status {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
     text-align: center;
     padding: 0.25rem 0;
     font-size: 0.56rem;
@@ -2412,48 +2407,12 @@
     align-items: center;
   }
 
-  .lux-btn {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  .lux-toolbar-toggle button {
-    min-height: 44px;
-    padding: 0.5rem 0.75rem;
-    flex: 1;
-  }
-
-  .lux-toolbar-right {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-  }
-
-  .lux-toolbar-right .lux-btn {
-    flex: 1 1 calc(50% - 0.2rem);
-    width: auto;
-    min-width: 0;
-    padding: 0.45rem 0.5rem;
-    font-size: 0.52rem;
-    letter-spacing: 0.08em;
-  }
-
   .lux-export-label--short {
     display: inline;
   }
 
   .lux-export-label--long {
     display: none;
-  }
-
-  .lux-client-preview {
-    padding: 0.5rem 0.35rem 1rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .lux-client-preview .lux-print-root--client {
-    min-width: 320px;
   }
 }
 
