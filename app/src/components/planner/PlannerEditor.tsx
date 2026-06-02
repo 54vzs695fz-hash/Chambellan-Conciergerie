@@ -67,7 +67,11 @@ export function PlannerEditor({ initialTrip }: Props) {
   );
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [previewDisplay, setPreviewDisplay] = useState<PreviewDisplay>("fit");
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767px)").matches
+  );
   const [pdfExportModal, setPdfExportModal] =
     useState<PlannerExportVariant | null>(null);
 
