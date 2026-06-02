@@ -339,7 +339,7 @@ export const EMPTY_TRIP_HEADER: Omit<
   club_reservations: "",
   event_booking: "",
   event_venue: "",
-  host_name: "Matthieu Dubourg",
+  host_name: "Chambellan Conciergerie",
   host_phone: "+1 332 733 9543",
   host_contact: "",
   tailored_for: "",

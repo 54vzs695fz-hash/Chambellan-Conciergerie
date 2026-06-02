@@ -51,7 +51,7 @@ export const HOST_STAY_FIELDS: HostStayField[] = [
     label: "Number of guests / Tailored for",
     tripField: "tailored_for",
   },
-  { key: "name", label: "Host name", tripField: "host_name" },
+  { key: "name", label: "Host", tripField: "host_name" },
   { key: "phone", label: "Host phone", tripField: "host_phone" },
   {
     key: "contact",
@@ -59,6 +59,27 @@ export const HOST_STAY_FIELDS: HostStayField[] = [
     tripField: "host_contact",
   },
 ];
+
+export const PLANNER_HOST_OPTIONS = [
+  "Matthieu Dubourg",
+  "Yanis Mousli",
+  "Chambellan Conciergerie",
+] as const;
+
+export type PlannerHostOption = (typeof PLANNER_HOST_OPTIONS)[number];
+
+export const DEFAULT_PLANNER_HOST: PlannerHostOption = "Chambellan Conciergerie";
+
+export function resolvePlannerHostName(
+  hostName: string | undefined | null
+): PlannerHostOption {
+  const trimmed = String(hostName ?? "").trim();
+  if (!trimmed) return DEFAULT_PLANNER_HOST;
+  if ((PLANNER_HOST_OPTIONS as readonly string[]).includes(trimmed)) {
+    return trimmed as PlannerHostOption;
+  }
+  return DEFAULT_PLANNER_HOST;
+}
 
 export interface OptionalServiceField {
   key: string;
@@ -160,9 +181,9 @@ export const PLANNER_BRAND_LOGO = "/brand/chambellan-logo-vertical.jpg";
 
 export const PLANNER_DOCUMENT_SUBTITLE = "Weekly Planner";
 
-/** Principal concierge host — shown on client itinerary footer */
+/** Default host contact details when phone is omitted from the trip */
 export const CLIENT_ITINERARY_HOST = {
-  name: "Matthieu Dubourg",
+  name: DEFAULT_PLANNER_HOST,
   phone: "+1 332 733 9543",
 };
 
@@ -247,7 +268,7 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
   pushContact(contacts, {
     key: "host",
     label: "Host",
-    name: String(trip.host_name ?? "").trim() || CLIENT_ITINERARY_HOST.name,
+    name: resolvePlannerHostName(trip.host_name),
     phone:
       String(trip.host_phone ?? "").trim() || CLIENT_ITINERARY_HOST.phone,
     detail: String(trip.host_contact ?? "").trim() || undefined,

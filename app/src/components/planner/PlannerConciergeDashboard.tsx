@@ -18,6 +18,8 @@ import {
   HOST_STAY_FIELDS,
   OPTIONAL_SERVICE_FIELDS,
   PLANNER_BRAND_LOGO,
+  PLANNER_HOST_OPTIONS,
+  resolvePlannerHostName,
 } from "@/lib/planner/planner-sheet-model";
 import {
   PROGRAMME_STATUS_LABELS,
@@ -384,19 +386,36 @@ export function PlannerConciergeDashboard({
           <div className="adm-grid adm-grid--2">
             {HOST_STAY_FIELDS.map((field) => (
               <Field key={field.key} label={field.label}>
-                <input
-                  className="adm-input"
-                  value={String(trip[field.tripField] ?? "")}
-                  onChange={(e) =>
-                    onFieldChange(field.tripField, e.target.value)
-                  }
-                  onBlur={onFieldBlur}
-                  placeholder={
-                    field.key === "tailored"
-                      ? "e.g. 4 guests, 2 persons, Family of 4"
-                      : field.label
-                  }
-                />
+                {field.key === "name" ? (
+                  <select
+                    className="adm-input"
+                    value={resolvePlannerHostName(trip.host_name)}
+                    onChange={(e) =>
+                      onFieldChange(field.tripField, e.target.value)
+                    }
+                    onBlur={onFieldBlur}
+                  >
+                    {PLANNER_HOST_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className="adm-input"
+                    value={String(trip[field.tripField] ?? "")}
+                    onChange={(e) =>
+                      onFieldChange(field.tripField, e.target.value)
+                    }
+                    onBlur={onFieldBlur}
+                    placeholder={
+                      field.key === "tailored"
+                        ? "e.g. 4 guests, 2 persons, Family of 4"
+                        : field.label
+                    }
+                  />
+                )}
               </Field>
             ))}
           </div>
