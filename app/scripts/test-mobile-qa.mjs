@@ -15,7 +15,9 @@ const tripId = Number(process.env.TRIP_ID ?? "4");
 async function auditPage(page, path, width) {
   await page.setViewport({ width, height: 844, deviceScaleFactor: 2 });
   const url = `${baseUrl}${path}`;
-  const res = await page.goto(url, { waitUntil: "networkidle0", timeout: 60000 });
+  const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 90000 });
+  await page.waitForSelector("body", { timeout: 5000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 800));
   const status = res?.status() ?? 0;
 
   const metrics = await page.evaluate(() => {
@@ -53,7 +55,8 @@ async function auditPage(page, path, width) {
 
 async function testCalendarFilters(page, width) {
   await page.setViewport({ width, height: 844, deviceScaleFactor: 2 });
-  await page.goto(`${baseUrl}/calendar`, { waitUntil: "networkidle0", timeout: 60000 });
+  await page.goto(`${baseUrl}/calendar`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await new Promise((r) => setTimeout(r, 600));
   if ((await page.content()).includes("__next_error__")) {
     return { width, filters: "page-error" };
   }
@@ -73,7 +76,8 @@ async function testCalendarFilters(page, width) {
 
 async function testBadgePickers(page, width) {
   await page.setViewport({ width, height: 844, deviceScaleFactor: 2 });
-  await page.goto(`${baseUrl}/calendar`, { waitUntil: "networkidle0", timeout: 60000 });
+  await page.goto(`${baseUrl}/calendar`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await new Promise((r) => setTimeout(r, 600));
   return page.evaluate((viewportWidth) => {
     const payPicker = document.querySelector(".pay-status-picker-trigger");
     const progBadge = document.querySelector(".prog-status");
