@@ -1,3 +1,6 @@
+import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
+import { buildDefaultPlannerPdfFilename } from "@/lib/planner/planner-pdf-filename";
+
 async function isPdfBlob(blob: Blob): Promise<boolean> {
   if (!blob.size) return false;
   if (blob.type.includes("pdf")) return true;
@@ -7,17 +10,8 @@ async function isPdfBlob(blob: Blob): Promise<boolean> {
 
 function triggerPdfDownload(blob: Blob, filename: string, apiUrl: string) {
   const blobUrl = URL.createObjectURL(blob);
-  const isIOS =
-    typeof navigator !== "undefined" &&
-    /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   try {
-    if (isIOS) {
-      window.open(blobUrl, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-      return;
-    }
-
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = filename;
@@ -32,10 +26,44 @@ function triggerPdfDownload(blob: Blob, filename: string, apiUrl: string) {
   }
 }
 
-export async function downloadPlannerPdf(
-  tripId: number,
-  mode: "client" | "concierge"
+function canSharePdfFile(file: File): boolean {
+  if (typeof navigator === "undefined") return false;
+  if (typeof navigator.share !== "function") return false;
+  if (typeof navigator.canShare !== "function") return false;
+  try {
+    return navigator.canShare({ files: [file] });
+  } catch {
+    return false;
+  }
+}
+
+export async function deliverPlannerPdf(
+  blob: Blob,
+  filename: string,
+  apiUrl: string,
+  options?: { preferShare?: boolean }
 ): Promise<void> {
+  const file = new File([blob], filename, { type: "application/pdf" });
+
+  if (options?.preferShare && canSharePdfFile(file)) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: filename.replace(/\.pdf$/i, ""),
+      });
+      return;
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+    }
+  }
+
+  triggerPdfDownload(blob, filename, apiUrl);
+}
+
+export async function fetchPlannerPdf(
+  tripId: number,
+  mode: PlannerExportVariant
+): Promise<{ blob: Blob; apiUrl: string }> {
   const apiUrl = `/api/trips/${tripId}/pdf?mode=${mode}`;
   const res = await fetch(apiUrl);
 
@@ -57,14 +85,21 @@ export async function downloadPlannerPdf(
     );
   }
 
-  const disposition = res.headers.get("Content-Disposition");
-  let filename = "Weekly Planner - Client.pdf";
-  if (disposition) {
-    const utfMatch = disposition.match(/filename\*=UTF-8''([^;\n]+)/i);
-    const asciiMatch = disposition.match(/filename="([^"]+)"/i);
-    if (utfMatch?.[1]) filename = decodeURIComponent(utfMatch[1]);
-    else if (asciiMatch?.[1]) filename = asciiMatch[1];
-  }
+  return { blob, apiUrl };
+}
 
-  triggerPdfDownload(blob, filename, apiUrl);
+export async function downloadPlannerPdf(
+  tripId: number,
+  mode: PlannerExportVariant,
+  filename?: string,
+  options?: { preferShare?: boolean; trip?: { destination?: string | null; client_name?: string | null } }
+): Promise<void> {
+  const { blob, apiUrl } = await fetchPlannerPdf(tripId, mode);
+  const resolvedFilename =
+    filename ??
+    (options?.trip
+      ? buildDefaultPlannerPdfFilename(mode, options.trip)
+      : "Planner.pdf");
+
+  await deliverPlannerPdf(blob, resolvedFilename, apiUrl, options);
 }

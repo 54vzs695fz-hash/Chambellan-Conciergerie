@@ -23,9 +23,14 @@ import {
   syncTripDaysInState,
 } from "@/lib/planner/trip-days-sync";
 import { downloadPlannerPdf } from "./planner-pdf-download";
+import { PlannerPdfExportModal } from "./PlannerPdfExportModal";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
 import { PlannerExportReadyGate } from "./PlannerExportReadyGate";
 import { usePlannerSave } from "./use-planner-save";
+import {
+  buildDefaultPlannerPdfFilename,
+  sanitizePdfFilename,
+} from "@/lib/planner/planner-pdf-filename";
 
 type ViewMode = "concierge" | "client";
 type PreviewDisplay = "fit" | "full";
@@ -62,6 +67,17 @@ export function PlannerEditor({ initialTrip }: Props) {
   );
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [previewDisplay, setPreviewDisplay] = useState<PreviewDisplay>("fit");
+  const [isMobile, setIsMobile] = useState(false);
+  const [pdfExportModal, setPdfExportModal] =
+    useState<PlannerExportVariant | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const {
     saveStatus,
@@ -287,13 +303,24 @@ export function PlannerEditor({ initialTrip }: Props) {
     }));
   };
 
-  const downloadPdf = async (mode: PlannerExportVariant) => {
+  const downloadPdf = async (
+    mode: PlannerExportVariant,
+    filename?: string
+  ) => {
     if (pdfLoading) return;
     setPdfError(null);
     setPdfLoading(mode);
     try {
       await flushAll();
-      await downloadPlannerPdf(trip.id, mode);
+      await downloadPlannerPdf(
+        trip.id,
+        mode,
+        sanitizePdfFilename(
+          filename ?? buildDefaultPlannerPdfFilename(mode, trip)
+        ),
+        { preferShare: isMobile, trip }
+      );
+      setPdfExportModal(null);
     } catch (err) {
       setPdfError(
         err instanceof Error ? err.message : "PDF export failed. Please try again."
@@ -301,6 +328,21 @@ export function PlannerEditor({ initialTrip }: Props) {
     } finally {
       setPdfLoading(null);
     }
+  };
+
+  const requestPdfExport = (mode: PlannerExportVariant) => {
+    if (pdfLoading) return;
+    setPdfError(null);
+    if (isMobile) {
+      setPdfExportModal(mode);
+      return;
+    }
+    void downloadPdf(mode);
+  };
+
+  const confirmPdfExport = (filename: string) => {
+    if (!pdfExportModal || pdfLoading) return;
+    void downloadPdf(pdfExportModal, filename);
   };
 
   const linkClient = (clientId: string) => {
@@ -331,7 +373,7 @@ export function PlannerEditor({ initialTrip }: Props) {
   };
 
   const statusLabel = pdfLoading
-    ? `Generating ${pdfLoading === "concierge" ? "concierge" : "client"} PDF…`
+    ? "Generating PDF…"
     : saveStatus === "saving"
       ? "Saving…"
       : saveStatus === "saved"
@@ -383,10 +425,10 @@ export function PlannerEditor({ initialTrip }: Props) {
             type="button"
             className="lux-btn lux-btn--ghost"
             disabled={pdfLoading !== null}
-            onClick={() => downloadPdf("client")}
+            onClick={() => requestPdfExport("client")}
           >
             {pdfLoading === "client" ? (
-              "Generating…"
+              "Generating PDF…"
             ) : (
               <>
                 <span className="lux-export-label lux-export-label--long">
@@ -402,10 +444,10 @@ export function PlannerEditor({ initialTrip }: Props) {
             type="button"
             className="lux-btn lux-btn--gold"
             disabled={pdfLoading !== null}
-            onClick={() => downloadPdf("concierge")}
+            onClick={() => requestPdfExport("concierge")}
           >
             {pdfLoading === "concierge" ? (
-              "Generating…"
+              "Generating PDF…"
             ) : (
               <>
                 <span className="lux-export-label lux-export-label--long">
@@ -506,20 +548,35 @@ export function PlannerEditor({ initialTrip }: Props) {
             type="button"
             className="lux-btn lux-btn--ghost"
             disabled={pdfLoading !== null}
-            onClick={() => downloadPdf("client")}
+            onClick={() => requestPdfExport("client")}
           >
-            {pdfLoading === "client" ? "Generating…" : "Export Client PDF"}
+            {pdfLoading === "client" ? "Generating PDF…" : "Export Client PDF"}
           </button>
           <button
             type="button"
             className="lux-btn lux-btn--gold"
             disabled={pdfLoading !== null}
-            onClick={() => downloadPdf("concierge")}
+            onClick={() => requestPdfExport("concierge")}
           >
-            {pdfLoading === "concierge" ? "Generating…" : "Export Concierge PDF"}
+            {pdfLoading === "concierge" ? "Generating PDF…" : "Export Concierge PDF"}
           </button>
         </div>
       </div>
+
+      <PlannerPdfExportModal
+        open={pdfExportModal !== null}
+        mode={pdfExportModal ?? "client"}
+        defaultFilename={
+          pdfExportModal
+            ? buildDefaultPlannerPdfFilename(pdfExportModal, trip)
+            : ""
+        }
+        loading={pdfLoading !== null && pdfExportModal !== null}
+        onConfirm={confirmPdfExport}
+        onCancel={() => {
+          if (!pdfLoading) setPdfExportModal(null);
+        }}
+      />
     </div>
   );
 }

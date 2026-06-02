@@ -765,6 +765,90 @@
   .lux-client-preview .lux-print-root--client .lux-day-card {
     overflow: visible;
   }
+
+  .lux-pdf-error {
+    position: fixed;
+    left: 0.875rem;
+    right: 0.875rem;
+    bottom: calc(var(--mobile-nav-h) + var(--lux-mobile-action-h, 7.75rem) + 0.45rem);
+    z-index: 44;
+    border-radius: 6px;
+    box-shadow: 0 4px 18px rgba(28, 24, 20, 0.12);
+  }
+}
+
+body.lux-pdf-export-open {
+  overflow: hidden;
+}
+
+.lux-pdf-export-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  padding-bottom: calc(var(--mobile-nav-h) + var(--lux-mobile-action-h, 7.75rem) + 1rem);
+}
+
+.lux-pdf-export-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(28, 24, 20, 0.42);
+  cursor: pointer;
+}
+
+.lux-pdf-export-dialog {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 22rem;
+  padding: 1rem;
+  background: #faf7f2;
+  border: 0.5px solid rgba(221, 212, 200, 0.85);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(28, 24, 20, 0.16);
+}
+
+.lux-pdf-export-title {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+}
+
+.lux-pdf-export-subtitle {
+  margin: 0.25rem 0 0.85rem;
+  font-size: 0.72rem;
+  color: #7a736c;
+}
+
+.lux-pdf-export-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a736c;
+}
+
+.lux-pdf-export-input {
+  margin-bottom: 0.85rem;
+  font-size: 16px;
+  min-height: 44px;
+}
+
+.lux-pdf-export-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.lux-pdf-export-btn {
+  flex: 1;
+  min-height: 44px;
 }
 
 /* Weekly Planner list — delete actions */
