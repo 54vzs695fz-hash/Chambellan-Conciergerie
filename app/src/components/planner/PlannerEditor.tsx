@@ -15,6 +15,8 @@ import type {
   TripFollowUpStatus,
   TripWithDays,
 } from "@/lib/types";
+import type { PlannerHostOption } from "@/lib/planner/planner-sheet-model";
+import { PLANNER_HOST_PROFILES } from "@/lib/planner/planner-sheet-model";
 import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
 import {
   datesMatchRange,
@@ -129,6 +131,14 @@ export function PlannerEditor({ initialTrip }: Props) {
     value: TripWithDays[K]
   ) => {
     applyTripUpdate((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateHost = (hostName: PlannerHostOption) => {
+    applyTripUpdate((prev) => ({
+      ...prev,
+      host_name: hostName,
+      host_phone: PLANNER_HOST_PROFILES[hostName].phone,
+    }));
   };
 
   const updateStatus = (status: TripFollowUpStatus) => {
@@ -421,6 +431,7 @@ export function PlannerEditor({ initialTrip }: Props) {
           trip={trip}
           clients={clients}
           onFieldChange={updateField}
+          onHostChange={updateHost}
           onFieldBlur={onFieldBlur}
           onDateFieldChange={onDateFieldChange}
           onDatesCommit={onDatesCommit}

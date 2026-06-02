@@ -20,7 +20,9 @@ import {
   PLANNER_BRAND_LOGO,
   PLANNER_HOST_OPTIONS,
   resolvePlannerHostName,
+  resolvePlannerHostPhone,
 } from "@/lib/planner/planner-sheet-model";
+import type { PlannerHostOption } from "@/lib/planner/planner-sheet-model";
 import {
   PROGRAMME_STATUS_LABELS,
   PROGRAMME_STATUS_OPTIONS,
@@ -48,6 +50,7 @@ interface DashboardProps {
     key: K,
     value: TripWithDays[K]
   ) => void;
+  onHostChange: (hostName: PlannerHostOption) => void;
   onFieldBlur: () => void;
   onDateFieldChange: (
     key: "arrival_date" | "departure_date",
@@ -134,6 +137,7 @@ export function PlannerConciergeDashboard({
   trip,
   clients,
   onFieldChange,
+  onHostChange,
   onFieldBlur,
   onDateFieldChange,
   onDatesCommit,
@@ -391,7 +395,7 @@ export function PlannerConciergeDashboard({
                     className="adm-input"
                     value={resolvePlannerHostName(trip.host_name)}
                     onChange={(e) =>
-                      onFieldChange(field.tripField, e.target.value)
+                      onHostChange(e.target.value as PlannerHostOption)
                     }
                     onBlur={onFieldBlur}
                   >
@@ -401,6 +405,19 @@ export function PlannerConciergeDashboard({
                       </option>
                     ))}
                   </select>
+                ) : field.key === "phone" ? (
+                  <input
+                    className="adm-input"
+                    value={resolvePlannerHostPhone(
+                      trip.host_name,
+                      trip.host_phone
+                    )}
+                    onChange={(e) =>
+                      onFieldChange(field.tripField, e.target.value)
+                    }
+                    onBlur={onFieldBlur}
+                    placeholder={field.label}
+                  />
                 ) : (
                   <input
                     className="adm-input"

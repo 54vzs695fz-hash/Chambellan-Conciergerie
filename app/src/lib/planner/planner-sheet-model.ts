@@ -70,6 +70,26 @@ export type PlannerHostOption = (typeof PLANNER_HOST_OPTIONS)[number];
 
 export const DEFAULT_PLANNER_HOST: PlannerHostOption = "Chambellan Conciergerie";
 
+export const PLANNER_HOST_PHONE = "+1 332 733 9543";
+
+export const PLANNER_HOST_PROFILES: Record<
+  PlannerHostOption,
+  { name: PlannerHostOption; phone: string }
+> = {
+  "Matthieu Dubourg": {
+    name: "Matthieu Dubourg",
+    phone: PLANNER_HOST_PHONE,
+  },
+  "Yanis Mousli": {
+    name: "Yanis Mousli",
+    phone: PLANNER_HOST_PHONE,
+  },
+  "Chambellan Conciergerie": {
+    name: "Chambellan Conciergerie",
+    phone: PLANNER_HOST_PHONE,
+  },
+};
+
 export function resolvePlannerHostName(
   hostName: string | undefined | null
 ): PlannerHostOption {
@@ -79,6 +99,21 @@ export function resolvePlannerHostName(
     return trimmed as PlannerHostOption;
   }
   return DEFAULT_PLANNER_HOST;
+}
+
+export function getPlannerHostProfile(
+  hostName: string | undefined | null
+): { name: PlannerHostOption; phone: string } {
+  return PLANNER_HOST_PROFILES[resolvePlannerHostName(hostName)];
+}
+
+export function resolvePlannerHostPhone(
+  hostName: string | undefined | null,
+  hostPhone?: string | null
+): string {
+  const stored = String(hostPhone ?? "").trim();
+  if (stored) return stored;
+  return getPlannerHostProfile(hostName).phone;
 }
 
 export interface OptionalServiceField {
@@ -184,7 +219,7 @@ export const PLANNER_DOCUMENT_SUBTITLE = "Weekly Planner";
 /** Default host contact details when phone is omitted from the trip */
 export const CLIENT_ITINERARY_HOST = {
   name: DEFAULT_PLANNER_HOST,
-  phone: "+1 332 733 9543",
+  phone: PLANNER_HOST_PHONE,
 };
 
 export interface ClientItineraryContact {
@@ -269,8 +304,7 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
     key: "host",
     label: "Host",
     name: resolvePlannerHostName(trip.host_name),
-    phone:
-      String(trip.host_phone ?? "").trim() || CLIENT_ITINERARY_HOST.phone,
+    phone: resolvePlannerHostPhone(trip.host_name, trip.host_phone),
     detail: String(trip.host_contact ?? "").trim() || undefined,
   });
 
