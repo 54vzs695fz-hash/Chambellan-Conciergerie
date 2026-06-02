@@ -163,6 +163,13 @@
   color: #5c5650;
 }
 
+.adm-host-phone {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  color: #7a736c;
+}
+
 .adm-textarea {
   resize: vertical;
   min-height: 5rem;

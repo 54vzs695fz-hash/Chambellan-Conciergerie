@@ -40,7 +40,7 @@ export const CONCIERGE_TEAM_FIELDS: ConciergeTeamRow[] = [
 ];
 
 export interface HostStayField {
-  key: "name" | "phone" | "contact" | "tailored";
+  key: "tailored" | "contact";
   label: string;
   tripField: keyof Trip;
 }
@@ -51,8 +51,6 @@ export const HOST_STAY_FIELDS: HostStayField[] = [
     label: "Number of guests / Tailored for",
     tripField: "tailored_for",
   },
-  { key: "name", label: "Host", tripField: "host_name" },
-  { key: "phone", label: "Host phone", tripField: "host_phone" },
   {
     key: "contact",
     label: "Email or WhatsApp",
@@ -114,6 +112,19 @@ export function resolvePlannerHostPhone(
   const stored = String(hostPhone ?? "").trim();
   if (stored) return stored;
   return getPlannerHostProfile(hostName).phone;
+}
+
+export function getPlannerHostContact(trip: Trip): ClientItineraryContact {
+  const name = resolvePlannerHostName(trip.host_name);
+  const phone = resolvePlannerHostPhone(trip.host_name, trip.host_phone);
+  const detail = String(trip.host_contact ?? "").trim();
+  return {
+    key: "host",
+    label: "Host",
+    name,
+    phone,
+    detail: detail && detail !== phone ? detail : undefined,
+  };
 }
 
 export interface OptionalServiceField {
@@ -300,13 +311,7 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
     phone: String(trip.driver_phone ?? ""),
   });
 
-  pushContact(contacts, {
-    key: "host",
-    label: "Host",
-    name: resolvePlannerHostName(trip.host_name),
-    phone: resolvePlannerHostPhone(trip.host_name, trip.host_phone),
-    detail: String(trip.host_contact ?? "").trim() || undefined,
-  });
+  contacts.push(getPlannerHostContact(trip));
 
   pushContact(contacts, {
     key: "butler",
@@ -327,5 +332,8 @@ export function getClientItineraryContacts(trip: Trip): ClientItineraryContact[]
     name: String(trip.emergency_contact ?? ""),
   });
 
-  return contacts;
+  return contacts.filter((contact, index, list) => {
+    if (contact.key !== "host") return true;
+    return list.findIndex((item) => item.key === "host") === index;
+  });
 }

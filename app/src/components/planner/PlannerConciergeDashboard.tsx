@@ -390,51 +390,41 @@ export function PlannerConciergeDashboard({
           <div className="adm-grid adm-grid--2">
             {HOST_STAY_FIELDS.map((field) => (
               <Field key={field.key} label={field.label}>
-                {field.key === "name" ? (
-                  <select
-                    className="adm-input"
-                    value={resolvePlannerHostName(trip.host_name)}
-                    onChange={(e) =>
-                      onHostChange(e.target.value as PlannerHostOption)
-                    }
-                    onBlur={onFieldBlur}
-                  >
-                    {PLANNER_HOST_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                ) : field.key === "phone" ? (
-                  <input
-                    className="adm-input"
-                    value={resolvePlannerHostPhone(
-                      trip.host_name,
-                      trip.host_phone
-                    )}
-                    onChange={(e) =>
-                      onFieldChange(field.tripField, e.target.value)
-                    }
-                    onBlur={onFieldBlur}
-                    placeholder={field.label}
-                  />
-                ) : (
-                  <input
-                    className="adm-input"
-                    value={String(trip[field.tripField] ?? "")}
-                    onChange={(e) =>
-                      onFieldChange(field.tripField, e.target.value)
-                    }
-                    onBlur={onFieldBlur}
-                    placeholder={
-                      field.key === "tailored"
-                        ? "e.g. 4 guests, 2 persons, Family of 4"
-                        : field.label
-                    }
-                  />
-                )}
+                <input
+                  className="adm-input"
+                  value={String(trip[field.tripField] ?? "")}
+                  onChange={(e) =>
+                    onFieldChange(field.tripField, e.target.value)
+                  }
+                  onBlur={onFieldBlur}
+                  placeholder={
+                    field.key === "tailored"
+                      ? "e.g. 4 guests, 2 persons, Family of 4"
+                      : field.label
+                  }
+                />
               </Field>
             ))}
+            <Field label="Host">
+              <select
+                className="adm-input adm-status-select adm-host-select"
+                value={resolvePlannerHostName(trip.host_name)}
+                onChange={(e) =>
+                  onHostChange(e.target.value as PlannerHostOption)
+                }
+                onBlur={onFieldBlur}
+                aria-label="Host"
+              >
+                {PLANNER_HOST_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <p className="adm-host-phone" aria-live="polite">
+                {resolvePlannerHostPhone(trip.host_name, trip.host_phone)}
+              </p>
+            </Field>
           </div>
         </PlannerCollapsibleSection>
 
