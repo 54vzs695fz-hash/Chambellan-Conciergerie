@@ -37,6 +37,7 @@ import {
   formatBookingStatusSummary,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
+import { PaymentsCategorySection } from "@/components/payments/PaymentsCategorySection";
 
 interface ChecklistPanelData {
   items: ChecklistItem[];
@@ -57,6 +58,18 @@ interface Props {
   onMarkDone: (id: number) => Promise<void>;
   onPatchItem: (id: number, fields: Partial<ChecklistItem>) => Promise<void>;
   onPaymentStatusChange: (status: TripPaymentStatus) => void;
+  onPaymentFieldsChange?: (
+    fields: Partial<
+      Pick<
+        Trip,
+        | "payment_status"
+        | "total_amount"
+        | "amount_received"
+        | "payment_method"
+        | "payment_notes"
+      >
+    >
+  ) => Promise<void>;
   variant?: "full" | "embedded";
 }
 
@@ -279,6 +292,7 @@ export function CalendarProgrammeFollowUpPanel({
   onMarkDone,
   onPatchItem,
   onPaymentStatusChange,
+  onPaymentFieldsChange,
   variant = "full",
 }: Props) {
   const [panelData, setPanelData] = useState<ChecklistPanelData | null>(null);
@@ -403,6 +417,30 @@ export function CalendarProgrammeFollowUpPanel({
     await onMarkDone(id);
   };
 
+  useEffect(() => {
+    setPanelData((current) => {
+      if (!current) return current;
+      if (current.trip.payment_status === programme.paymentStatus) return current;
+      const items =
+        programme.paymentStatus === "fully_paid"
+          ? current.items.map((item) =>
+              item.category === "payments" && item.status !== "done"
+                ? { ...item, status: "done" as const }
+                : item
+            )
+          : current.items;
+      return {
+        ...current,
+        trip: { ...current.trip, payment_status: programme.paymentStatus },
+        items,
+      };
+    });
+  }, [programme.paymentStatus]);
+
+  const handlePaymentStatusFromCard = async (status: TripPaymentStatus) => {
+    await handlePaymentFieldsChange({ payment_status: status });
+  };
+
   const handleAddCategory = async (category: ChecklistCategory) => {
     setAddingCategory(true);
     setShowCategoryPicker(false);
@@ -418,6 +456,52 @@ export function CalendarProgrammeFollowUpPanel({
       setExpandedSection(category);
     } finally {
       setAddingCategory(false);
+    }
+  };
+
+  const handlePaymentFieldsChange = async (
+    fields: Partial<
+      Pick<
+        Trip,
+        | "payment_status"
+        | "total_amount"
+        | "amount_received"
+        | "payment_method"
+        | "payment_notes"
+      >
+    >
+  ) => {
+    setPanelData((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        trip: { ...current.trip, ...fields },
+      };
+    });
+    if (onPaymentFieldsChange) {
+      await onPaymentFieldsChange(fields);
+      return;
+    }
+    const res = await fetch(`/api/trips/${programme.id}/payment`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+    if (!res.ok) return;
+    const trip = (await res.json()) as Trip;
+    setPanelData((current) =>
+      current ? { ...current, trip: { ...current.trip, ...trip } } : current
+    );
+    if (trip.payment_status === "fully_paid") {
+      setPanelData((current) => {
+        if (!current) return current;
+        const items = current.items.map((item) =>
+          item.category === "payments" && item.status !== "done"
+            ? { ...item, status: "done" as const }
+            : item
+        );
+        return { ...current, items };
+      });
     }
   };
 
@@ -545,23 +629,46 @@ export function CalendarProgrammeFollowUpPanel({
               </p>
             ) : null}
 
-            {visibleCategories.map((category) => (
-              <ChecklistCategorySection
-                key={category}
-                category={category}
-                sectionItems={grouped.get(category) ?? []}
-                isOpen={expandedSection === category}
-                todayStr={todayStr}
-                arrivalDate={programme.arrivalDate}
-                departureDate={programme.departureDate}
-                updatingId={updatingId}
-                addingTaskCategory={addingTaskCategory}
-                onToggle={() => toggleSection(category)}
-                onMarkDone={(id) => void handleDone(id)}
-                onPatchItem={(id, fields) => void handlePatch(id, fields)}
-                onAddTask={() => void handleAddTask(category)}
-              />
-            ))}
+            {visibleCategories.map((category) =>
+              category === "payments" && panelData ? (
+                <PaymentsCategorySection
+                  key={category}
+                  trip={panelData.trip}
+                  sectionItems={grouped.get(category) ?? []}
+                  isOpen={expandedSection === category}
+                  todayStr={todayStr}
+                  arrivalDate={programme.arrivalDate}
+                  departureDate={programme.departureDate}
+                  updatingId={updatingId}
+                  addingTaskCategory={addingTaskCategory === category}
+                  savingPayment={updatingPaymentId === programme.id}
+                  paymentError={paymentError}
+                  onToggle={() => toggleSection(category)}
+                  onMarkDone={(id) => void handleDone(id)}
+                  onPatchItem={(id, fields) => void handlePatch(id, fields)}
+                  onAddTask={() => void handleAddTask(category)}
+                  onPaymentStatusChange={handlePaymentStatusFromCard}
+                  onPaymentFieldsChange={handlePaymentFieldsChange}
+                  FollowUpItemRow={FollowUpItemRow}
+                />
+              ) : (
+                <ChecklistCategorySection
+                  key={category}
+                  category={category}
+                  sectionItems={grouped.get(category) ?? []}
+                  isOpen={expandedSection === category}
+                  todayStr={todayStr}
+                  arrivalDate={programme.arrivalDate}
+                  departureDate={programme.departureDate}
+                  updatingId={updatingId}
+                  addingTaskCategory={addingTaskCategory}
+                  onToggle={() => toggleSection(category)}
+                  onMarkDone={(id) => void handleDone(id)}
+                  onPatchItem={(id, fields) => void handlePatch(id, fields)}
+                  onAddTask={() => void handleAddTask(category)}
+                />
+              )
+            )}
           </div>
 
           {addableCategories.length > 0 ? (

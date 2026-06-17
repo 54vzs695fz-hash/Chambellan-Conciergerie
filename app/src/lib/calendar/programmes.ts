@@ -1,6 +1,7 @@
 import { formatClientGuestCount } from "@/lib/planner/planner-sheet-model";
 import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
 import { needsPaymentWarning } from "@/lib/planner/payment-status";
+import { paymentRemainingBadgeLabel } from "@/lib/planner/payment-summary";
 import type { Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 export type CalendarView = "agenda" | "month" | "list";
@@ -14,6 +15,7 @@ export interface CalendarProgramme {
   guestCount: string | null;
   followUpStatus: TripFollowUpStatus;
   paymentStatus: TripPaymentStatus;
+  paymentDetail: string | null;
   plannerHref: string;
 }
 
@@ -111,6 +113,7 @@ export function tripToCalendarProgramme(trip: Trip): CalendarProgramme | null {
     guestCount: formatClientGuestCount(trip.tailored_for),
     followUpStatus: trip.follow_up_status ?? "follow_up",
     paymentStatus: normalizeTripPaymentStatus(trip.payment_status),
+    paymentDetail: paymentRemainingBadgeLabel(trip),
     plannerHref: `/planner/${trip.id}`,
   };
 }

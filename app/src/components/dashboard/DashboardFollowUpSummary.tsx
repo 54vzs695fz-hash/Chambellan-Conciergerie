@@ -93,6 +93,7 @@ export function DashboardFollowUpSummary({ initialProgrammes }: Props) {
                   <PaymentStatusBadge
                     status={programme.payment_status}
                     arrivalDate={programme.arrival_date}
+                    detail={programme.payment_detail}
                   />
                 </div>
 

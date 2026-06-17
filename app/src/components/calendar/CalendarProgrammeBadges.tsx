@@ -38,6 +38,7 @@ export function CalendarProgrammeBadges({
         <PaymentStatusBadge
           status={programme.paymentStatus}
           arrivalDate={programme.arrivalDate}
+          detail={programme.paymentDetail}
         />
       )}
     </span>

@@ -8,6 +8,10 @@ import {
 import { getArrivalCountdown } from "@/lib/planner/arrival-countdown";
 import { needsPaymentWarning } from "@/lib/planner/payment-status";
 import {
+  buildTripPaymentSummary,
+  paymentRemainingBadgeLabel,
+} from "@/lib/planner/payment-summary";
+import {
   isActionRequiredChecklistItem,
   isImportantChecklistItem,
   isOpenChecklistStatus,
@@ -75,7 +79,8 @@ function resolveCardTone(
   const paymentNeedsAttention =
     trip.payment_status === "pending" ||
     trip.payment_status === "deposit_paid" ||
-    needsPaymentWarning(trip.arrival_date, trip.payment_status);
+    needsPaymentWarning(trip.arrival_date, trip.payment_status) ||
+    (buildTripPaymentSummary(trip).remainingBalance ?? 0) > 0;
 
   if (paymentNeedsAttention) {
     return "payment";
@@ -203,6 +208,7 @@ export function buildDashboardProgrammeFollowUpCards(
       arrival_countdown: countdown,
       follow_up_status: trip.follow_up_status ?? "follow_up",
       payment_status: trip.payment_status ?? "pending",
+      payment_detail: paymentRemainingBadgeLabel(trip),
       tasks_completed: tasksCompleted,
       tasks_total: tasksTotal,
       outstanding_tasks: openActionItems

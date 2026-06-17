@@ -111,6 +111,7 @@ export interface DashboardProgrammeFollowUpCard {
   arrival_countdown: string;
   follow_up_status: TripFollowUpStatus;
   payment_status: TripPaymentStatus;
+  payment_detail: string | null;
   tasks_completed: number;
   tasks_total: number;
   outstanding_tasks: string[];

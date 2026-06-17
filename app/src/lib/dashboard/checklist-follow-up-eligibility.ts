@@ -1,4 +1,5 @@
 import { DEFAULT_CHECKLIST_ITEMS } from "@/lib/planner/checklist-defaults";
+import { isRelevantPaymentChecklistTitle } from "@/lib/planner/payment-summary";
 import { isOpenChecklistStatus } from "@/lib/planner/checklist-utils";
 import { toIsoDate, startOfDay } from "@/lib/calendar/programmes";
 import type { ActivityType, ChecklistItem, Trip } from "@/lib/types";
@@ -81,8 +82,12 @@ function isRelevantDefaultTitle(
 ): boolean {
   const key = normTitle(title);
 
-  if (category === "programme" || category === "payments") {
+  if (category === "programme") {
     return true;
+  }
+
+  if (category === "payments") {
+    return isRelevantPaymentChecklistTitle(title, trip);
   }
 
   if (category === "arrival") {

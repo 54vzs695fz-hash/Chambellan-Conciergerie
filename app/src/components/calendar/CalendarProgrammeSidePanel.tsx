@@ -10,7 +10,7 @@ import { CalendarProgrammeChip } from "@/components/calendar/CalendarProgrammeCh
 import { CalendarProgrammeFollowUpPanel } from "@/components/calendar/CalendarProgrammeFollowUpPanel";
 import { formatDayNum, formatDayShort } from "@/lib/calendar/programmes";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
-import type { ChecklistItem, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
+import type { ChecklistItem, TripFollowUpStatus, TripPaymentStatus, Trip } from "@/lib/types";
 
 interface Props {
   programme: CalendarProgramme | null;
@@ -27,6 +27,18 @@ interface Props {
   onSelectProgramme: (programme: CalendarProgramme) => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
   onPaymentStatusChange: (status: TripPaymentStatus) => void;
+  onPaymentFieldsChange?: (
+    fields: Partial<
+      Pick<
+        Trip,
+        | "payment_status"
+        | "total_amount"
+        | "amount_received"
+        | "payment_method"
+        | "payment_notes"
+      >
+    >
+  ) => Promise<void>;
   onMarkDone: (id: number) => Promise<void>;
   onPatchItem: (id: number, fields: Partial<ChecklistItem>) => Promise<void>;
 }
@@ -134,6 +146,7 @@ const MobileProgrammeDetail = memo(function MobileProgrammeDetail({
   onClose,
   onStatusChange,
   onPaymentStatusChange,
+  onPaymentFieldsChange,
   onMarkDone,
   onPatchItem,
 }: {
@@ -147,6 +160,7 @@ const MobileProgrammeDetail = memo(function MobileProgrammeDetail({
   onClose: () => void;
   onStatusChange: (id: number, status: TripFollowUpStatus) => void;
   onPaymentStatusChange: (status: TripPaymentStatus) => void;
+  onPaymentFieldsChange?: Props["onPaymentFieldsChange"];
   onMarkDone: (id: number) => Promise<void>;
   onPatchItem: (id: number, fields: Partial<ChecklistItem>) => Promise<void>;
 }) {
@@ -189,6 +203,7 @@ const MobileProgrammeDetail = memo(function MobileProgrammeDetail({
           onMarkDone={onMarkDone}
           onPatchItem={onPatchItem}
           onPaymentStatusChange={onPaymentStatusChange}
+          onPaymentFieldsChange={onPaymentFieldsChange}
           variant="embedded"
         />
       </div>
@@ -253,6 +268,7 @@ export function CalendarProgrammeSidePanel({
   onSelectProgramme,
   onStatusChange,
   onPaymentStatusChange,
+  onPaymentFieldsChange,
   onMarkDone,
   onPatchItem,
 }: Props) {
@@ -323,6 +339,7 @@ export function CalendarProgrammeSidePanel({
         onClose={onClose}
         onStatusChange={onStatusChange}
         onPaymentStatusChange={onPaymentStatusChange}
+        onPaymentFieldsChange={onPaymentFieldsChange}
         onMarkDone={onMarkDone}
         onPatchItem={onPatchItem}
       />
@@ -340,6 +357,7 @@ export function CalendarProgrammeSidePanel({
       onMarkDone={onMarkDone}
       onPatchItem={onPatchItem}
       onPaymentStatusChange={onPaymentStatusChange}
+      onPaymentFieldsChange={onPaymentFieldsChange}
       variant="embedded"
     />
   );

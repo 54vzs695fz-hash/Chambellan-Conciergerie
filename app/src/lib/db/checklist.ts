@@ -102,6 +102,20 @@ export async function updateChecklistItem(
   }
 }
 
+export async function completePaymentChecklistItems(
+  tripId: number
+): Promise<number> {
+  const result = await prisma.tripChecklistItem.updateMany({
+    where: {
+      trip_id: tripId,
+      category: "payments",
+      status: { not: "done" },
+    },
+    data: { status: "done" },
+  });
+  return result.count;
+}
+
 export async function deleteChecklistItem(id: number): Promise<boolean> {
   try {
     await prisma.tripChecklistItem.delete({ where: { id } });

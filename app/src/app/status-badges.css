@@ -362,6 +362,35 @@
   border-color: var(--pay-cancelled-border);
 }
 
+.pay-status-badge-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pay-status-badge-copy {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  line-height: 1.15;
+}
+
+.pay-status-badge-label {
+  font-size: inherit;
+}
+
+.pay-status-badge-detail {
+  font-size: 0.58rem;
+  letter-spacing: 0.03em;
+  opacity: 0.88;
+  font-weight: 500;
+}
+
+.pay-status--fully-paid .pay-status-badge-detail {
+  color: var(--pay-full-text);
+}
+
 .pay-status-warn {
   flex-shrink: 0;
   width: 0.32rem;

@@ -3,6 +3,7 @@ import {
   isTrackedProgrammeChecklistItem,
   type TripProgrammeContext,
 } from "@/lib/dashboard/checklist-follow-up-eligibility";
+import { shouldShowPaymentsCategory } from "@/lib/planner/payment-summary";
 import { startOfDay } from "@/lib/calendar/programmes";
 import type { ChecklistCategory, ChecklistItem, Trip } from "@/lib/types";
 
@@ -27,6 +28,9 @@ export function getVisibleChecklistCategories(
   const categories = new Set<ChecklistCategory>();
   for (const item of visibleItems) {
     categories.add(item.category);
+  }
+  if (shouldShowPaymentsCategory(trip)) {
+    categories.add("payments");
   }
   return CHECKLIST_CATEGORY_ORDER.filter((category) => categories.has(category));
 }

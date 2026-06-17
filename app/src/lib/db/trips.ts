@@ -5,6 +5,11 @@ import {
   copyChecklistItems,
 } from "./checklist";
 import { prisma } from "@/lib/prisma";
+import { parsePaymentAmount } from "@/lib/planner/payment-summary";
+import {
+  normalizeTripPaymentMethod,
+  normalizeTripPaymentStatus,
+} from "@/lib/planner/payment-status";
 import type {
   Activity,
   ActivityPeriod,
@@ -24,10 +29,6 @@ import {
   serializeDefaultDaySections,
 } from "../planner/trip-days-sync";
 import { isUntitledDestination } from "../planner-utils";
-import {
-  normalizeTripPaymentMethod,
-  normalizeTripPaymentStatus,
-} from "../planner/payment-status";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -247,10 +248,63 @@ export async function updateTripPaymentStatus(
   id: number,
   payment_status: Trip["payment_status"]
 ): Promise<Trip | undefined> {
+  return updateTripPaymentFields(id, { payment_status });
+}
+
+export async function updateTripPaymentFields(
+  id: number,
+  fields: Partial<
+    Pick<
+      Trip,
+      | "payment_status"
+      | "total_amount"
+      | "amount_received"
+      | "payment_method"
+      | "payment_notes"
+    >
+  >
+): Promise<Trip | undefined> {
   try {
+    const existing = await prisma.trip.findUnique({ where: { id } });
+    if (!existing) return undefined;
+
+    const payment_status = fields.payment_status
+      ? normalizeTripPaymentStatus(fields.payment_status)
+      : normalizeTripPaymentStatus(existing.payment_status);
+    const total_amount =
+      fields.total_amount !== undefined
+        ? fields.total_amount
+        : (existing.total_amount ?? "");
+    let amount_received =
+      fields.amount_received !== undefined
+        ? fields.amount_received
+        : (existing.amount_received ?? "");
+
+    if (payment_status === "fully_paid") {
+      const total = parsePaymentAmount(total_amount);
+      if (total !== null) {
+        amount_received = String(total);
+      }
+    }
+
     const row = await prisma.trip.update({
       where: { id },
-      data: { payment_status },
+      data: {
+        ...(fields.payment_status !== undefined ? { payment_status } : {}),
+        ...(fields.total_amount !== undefined ? { total_amount } : {}),
+        amount_received,
+        ...(fields.payment_method !== undefined
+          ? {
+              payment_method: fields.payment_method
+                ? normalizeTripPaymentMethod(fields.payment_method) ||
+                  fields.payment_method
+                : "",
+            }
+          : {}),
+        ...(fields.payment_notes !== undefined
+          ? { payment_notes: fields.payment_notes }
+          : {}),
+      },
     });
     return mapTrip(row);
   } catch {

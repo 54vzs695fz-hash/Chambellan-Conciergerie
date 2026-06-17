@@ -36,6 +36,8 @@ import type {
   TripFollowUpStatus,
   TripPaymentStatus,
 } from "@/lib/types";
+import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
+import { paymentRemainingBadgeLabel } from "@/lib/planner/payment-summary";
 
 interface Props {
   initialTrips: Trip[];
@@ -282,6 +284,21 @@ export function CalendarPageClient({
         body: JSON.stringify({ payment_status: status }),
       });
       if (!res.ok) throw new Error("Update failed");
+      const trip = (await res.json()) as Trip;
+      const paymentStatus = normalizeTripPaymentStatus(trip.payment_status);
+      const paymentDetail = paymentRemainingBadgeLabel(trip);
+      setProgrammes((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? { ...p, paymentStatus, paymentDetail }
+            : p
+        )
+      );
+      setSelectedProgramme((prev) =>
+        prev?.id === id
+          ? { ...prev, paymentStatus, paymentDetail }
+          : prev
+      );
     } catch {
       setProgrammes((prev) =>
         prev.map((p) =>
@@ -390,6 +407,61 @@ export function CalendarPageClient({
       setChecklistUpdatingId(null);
     }
   };
+
+  const handlePaymentFieldsChange = useCallback(
+    async (
+      fields: Partial<
+        Pick<
+          Trip,
+          | "payment_status"
+          | "total_amount"
+          | "amount_received"
+          | "payment_method"
+          | "payment_notes"
+        >
+      >
+    ) => {
+      if (!selectedProgramme) return;
+      const id = selectedProgramme.id;
+      setUpdatingPaymentId(id);
+      setPaymentErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      try {
+        const res = await fetch(`/api/trips/${id}/payment`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        });
+        if (!res.ok) throw new Error("Update failed");
+        const trip = (await res.json()) as Trip;
+        const paymentStatus = normalizeTripPaymentStatus(trip.payment_status);
+        const paymentDetail = paymentRemainingBadgeLabel(trip);
+        setProgrammes((prev) =>
+          prev.map((p) =>
+            p.id === id
+              ? { ...p, paymentStatus, paymentDetail }
+              : p
+          )
+        );
+        setSelectedProgramme((prev) =>
+          prev?.id === id
+            ? { ...prev, paymentStatus, paymentDetail }
+            : prev
+        );
+      } catch {
+        setPaymentErrors((prev) => ({
+          ...prev,
+          [id]: "Could not save.",
+        }));
+      } finally {
+        setUpdatingPaymentId(null);
+      }
+    },
+    [selectedProgramme]
+  );
 
   const navTitle =
     view === "month"
@@ -582,6 +654,7 @@ export function CalendarPageClient({
             void handlePaymentStatusChange(selectedProgramme.id, status);
           }
         }}
+        onPaymentFieldsChange={handlePaymentFieldsChange}
         onMarkDone={handleChecklistDone}
         onPatchItem={handlePatchChecklistItem}
       />

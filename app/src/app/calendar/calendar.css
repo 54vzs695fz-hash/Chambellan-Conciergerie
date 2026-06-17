@@ -1823,3 +1823,176 @@
     flex-shrink: 0;
   }
 }
+
+/* Payment summary card (follow-up Payments section) */
+.pay-summary-card {
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(221, 212, 200, 0.75);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.pay-summary-card--pending {
+  border-color: rgba(201, 130, 43, 0.45);
+  background: rgba(255, 247, 235, 0.95);
+}
+
+.pay-summary-card--deposit-paid {
+  border-color: rgba(63, 127, 122, 0.45);
+  background: rgba(240, 250, 247, 0.95);
+}
+
+.pay-summary-card--fully-paid {
+  border-color: rgba(79, 138, 99, 0.5);
+  background: rgba(241, 249, 243, 0.98);
+}
+
+.pay-summary-card--cancelled {
+  border-color: rgba(122, 63, 58, 0.35);
+  background: rgba(248, 244, 244, 0.95);
+}
+
+.pay-summary-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.pay-summary-indicator {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.pay-summary-indicator--pending { color: #a8641a; }
+.pay-summary-indicator--deposit { color: #2f6f68; }
+.pay-summary-indicator--paid { color: #3f7550; }
+.pay-summary-indicator--cancelled { color: #7a4a46; }
+
+.pay-summary-grid {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.pay-summary-row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 38%) 1fr;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.pay-summary-row dt {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a948c;
+}
+
+.pay-summary-row dd {
+  margin: 0;
+}
+
+.pay-summary-row--highlight {
+  padding-top: 0.35rem;
+  border-top: 0.5px solid rgba(221, 212, 200, 0.55);
+}
+
+.pay-summary-input,
+.pay-summary-select,
+.pay-summary-textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.82rem;
+  color: #3d3833;
+  background: rgba(255, 255, 255, 0.95);
+  border: 0.5px solid rgba(221, 212, 200, 0.75);
+  border-radius: 4px;
+}
+
+.pay-summary-value--balance {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2a2622;
+}
+
+.pay-summary-card--fully-paid .pay-summary-value--balance {
+  color: #3f7550;
+}
+
+.pay-summary-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.65rem;
+}
+
+.pay-summary-notes-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a948c;
+}
+
+.pay-summary-textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.pay-summary-footnote {
+  margin: 0.65rem 0 0;
+  font-size: 0.68rem;
+  color: #7a736c;
+}
+
+.pay-summary-footnote--paid {
+  color: #3f7550;
+}
+
+.cal-fu-section--payments .cal-fu-payments-body {
+  padding: 0 0.45rem 0.55rem;
+}
+
+.cal-fu-payment-tasks {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 0.5px dashed rgba(221, 212, 200, 0.65);
+}
+
+.cal-fu-payment-tasks-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.35rem 0.15rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a948c;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.cal-fu-items--secondary,
+.cal-fu-add-task--secondary {
+  opacity: 0.92;
+}
+
+.cal-fu-section-progress--muted {
+  color: #7a736c;
+  font-size: 0.62rem;
+}
+
+@media (min-width: 640px) {
+  .pay-summary-card-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
