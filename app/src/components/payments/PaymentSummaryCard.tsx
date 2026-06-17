@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildTripPaymentSummary,
   formatPaymentAmount,
-  paymentSummaryCardClass,
 } from "@/lib/planner/payment-summary";
 import {
   PAYMENT_METHOD_OPTIONS,
@@ -85,6 +84,11 @@ export function PaymentSummaryCard({
     [draft]
   );
 
+  const remainingComplete =
+    summary.remainingBalance !== null && summary.remainingBalance === 0;
+  const remainingDue =
+    summary.remainingBalance !== null && summary.remainingBalance > 0;
+
   const flush = (immediate = false) => {
     const payload = pendingRef.current;
     if (!payload || Object.keys(payload).length === 0) return;
@@ -126,105 +130,102 @@ export function PaymentSummaryCard({
   };
 
   return (
-    <article
-      className={`${paymentSummaryCardClass(summary.status)}${compact ? " pay-summary-card--compact" : ""}`}
-      aria-label="Payment summary"
-    >
+    <article className="pay-summary-card" aria-label="Payment summary">
       <header className="pay-summary-card-head">
-        <div className="pay-summary-card-status">
-          <PaymentStatusPicker
-            status={summary.status}
-            arrivalDate={trip.arrival_date}
-            saving={saving}
-            error={paymentError}
-            onSelect={onStatusChange}
-          />
-        </div>
-        <p
-          className={`pay-summary-indicator pay-summary-indicator--${summary.indicatorTone}`}
-        >
-          {summary.indicator}
-        </p>
+        <PaymentStatusPicker
+          status={summary.status}
+          arrivalDate={trip.arrival_date}
+          saving={saving}
+          error={paymentError}
+          onSelect={onStatusChange}
+        />
       </header>
 
-      <dl className="pay-summary-grid">
-        <div className="pay-summary-row">
-          <dt>Total amount</dt>
-          <dd>
-            <input
-              className="pay-summary-input"
-              value={draft.total_amount}
-              onChange={(e) =>
-                updateDraft({ total_amount: e.target.value }, {
-                  field: "total_amount",
-                })
-              }
-              onBlur={() => flush(true)}
-              placeholder="e.g. 15000"
-              inputMode="decimal"
-              aria-label="Total amount"
-            />
-          </dd>
+      <div className="pay-amount-tiles">
+        <div className="pay-amount-tile pay-amount-tile--total">
+          <span className="pay-amount-tile-label">Total amount</span>
+          <input
+            className="pay-amount-tile-input"
+            value={draft.total_amount}
+            onChange={(e) =>
+              updateDraft({ total_amount: e.target.value }, {
+                field: "total_amount",
+              })
+            }
+            onBlur={() => flush(true)}
+            placeholder="—"
+            inputMode="decimal"
+            aria-label="Total amount"
+          />
         </div>
 
-        {summary.showAmountReceived ? (
-          <div className="pay-summary-row">
-            <dt>Amount received</dt>
-            <dd>
-              <input
-                className="pay-summary-input"
-                value={draft.amount_received}
-                onChange={(e) =>
-                  updateDraft({ amount_received: e.target.value }, {
-                    field: "amount_received",
-                  })
+        <div className="pay-amount-tile pay-amount-tile--paid">
+          <span className="pay-amount-tile-label">Paid</span>
+          <input
+            className="pay-amount-tile-input"
+            value={draft.amount_received}
+            onChange={(e) =>
+              updateDraft({ amount_received: e.target.value }, {
+                field: "amount_received",
+              })
+            }
+            onBlur={() => flush(true)}
+            placeholder="—"
+            inputMode="decimal"
+            aria-label="Amount paid"
+          />
+        </div>
+
+        <div
+          className={`pay-amount-tile pay-amount-tile--remaining${
+            remainingComplete ? " is-complete" : remainingDue ? " is-due" : ""
+          }`}
+        >
+          <span className="pay-amount-tile-label">Remaining</span>
+          <p className="pay-amount-tile-value" aria-live="polite">
+            {summary.remainingBalanceLabel}
+          </p>
+        </div>
+      </div>
+
+      {remainingComplete ? (
+        <p className="pay-summary-banner pay-summary-banner--complete">
+          Payment complete
+        </p>
+      ) : remainingDue ? (
+        <p className="pay-summary-banner pay-summary-banner--due">
+          Remaining to collect:{" "}
+          {formatPaymentAmount(summary.remainingBalance)}
+        </p>
+      ) : null}
+
+      <div className="pay-summary-meta">
+        <label className="pay-summary-meta-field">
+          <span className="pay-summary-meta-label">Payment method</span>
+          <select
+            className="pay-summary-input pay-summary-select"
+            value={draft.payment_method}
+            onChange={(e) => {
+              const value = e.target.value as TripPaymentMethod | "";
+              updateDraft(
+                { payment_method: value },
+                {
+                  field: "payment_method",
+                  immediate: true,
                 }
-                onBlur={() => flush(true)}
-                placeholder="e.g. 5000"
-                inputMode="decimal"
-                aria-label="Amount received"
-              />
-            </dd>
-          </div>
-        ) : null}
-
-        {summary.showRemainingBalance ? (
-          <div className="pay-summary-row pay-summary-row--highlight">
-            <dt>Remaining balance</dt>
-            <dd className="pay-summary-value pay-summary-value--balance">
-              {summary.remainingBalanceLabel}
-            </dd>
-          </div>
-        ) : null}
-
-        <div className="pay-summary-row">
-          <dt>Payment method</dt>
-          <dd>
-            <select
-              className="pay-summary-input pay-summary-select"
-              value={draft.payment_method}
-              onChange={(e) => {
-                const value = e.target.value as TripPaymentMethod | "";
-                updateDraft(
-                  { payment_method: value },
-                  {
-                    field: "payment_method",
-                    immediate: true,
-                  }
-                );
-              }}
-              aria-label="Payment method"
-            >
-              <option value="">Not set</option>
-              {PAYMENT_METHOD_OPTIONS.map((method) => (
-                <option key={method} value={method}>
-                  {PAYMENT_METHOD_LABELS[method]}
-                </option>
-              ))}
-            </select>
-          </dd>
-        </div>
-      </dl>
+              );
+            }}
+            aria-label="Payment method"
+          >
+            <option value="">Not set</option>
+            {PAYMENT_METHOD_OPTIONS.map((method) => (
+              <option key={method} value={method}>
+                {PAYMENT_METHOD_LABELS[method]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       {!compact ? (
         <label className="pay-summary-notes">
@@ -242,17 +243,6 @@ export function PaymentSummaryCard({
             placeholder="Internal payment notes…"
           />
         </label>
-      ) : null}
-
-      {summary.status === "fully_paid" ? (
-        <p className="pay-summary-footnote pay-summary-footnote--paid">
-          All payment tasks are marked complete.
-        </p>
-      ) : summary.remainingBalance !== null &&
-        summary.remainingBalance > 0 ? (
-        <p className="pay-summary-footnote">
-          {formatPaymentAmount(summary.remainingBalance)} outstanding
-        </p>
       ) : null}
     </article>
   );

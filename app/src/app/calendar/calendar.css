@@ -1827,79 +1827,155 @@
 /* Payment summary card (follow-up Payments section) */
 .pay-summary-card {
   margin-bottom: 0.75rem;
-  padding: 0.85rem 0.9rem;
+  padding: 0.9rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid rgba(221, 212, 200, 0.75);
-  background: rgba(255, 255, 255, 0.92);
-}
-
-.pay-summary-card--pending {
-  border-color: rgba(201, 130, 43, 0.45);
-  background: rgba(255, 247, 235, 0.95);
-}
-
-.pay-summary-card--deposit-paid {
-  border-color: rgba(63, 127, 122, 0.45);
-  background: rgba(240, 250, 247, 0.95);
-}
-
-.pay-summary-card--fully-paid {
-  border-color: rgba(79, 138, 99, 0.5);
-  background: rgba(241, 249, 243, 0.98);
-}
-
-.pay-summary-card--cancelled {
-  border-color: rgba(122, 63, 58, 0.35);
-  background: rgba(248, 244, 244, 0.95);
+  border: 0.5px solid rgba(221, 212, 200, 0.75);
+  background: rgba(250, 247, 242, 0.55);
 }
 
 .pay-summary-card-head {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  align-items: center;
+  justify-content: flex-start;
   margin-bottom: 0.75rem;
 }
 
-.pay-summary-indicator {
-  margin: 0;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  font-weight: 500;
-}
-
-.pay-summary-indicator--pending { color: #a8641a; }
-.pay-summary-indicator--deposit { color: #2f6f68; }
-.pay-summary-indicator--paid { color: #3f7550; }
-.pay-summary-indicator--cancelled { color: #7a4a46; }
-
-.pay-summary-grid {
+.pay-amount-tiles {
   display: grid;
-  gap: 0.55rem;
-  margin: 0;
-}
-
-.pay-summary-row {
-  display: grid;
-  grid-template-columns: minmax(6.5rem, 38%) 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.45rem;
-  align-items: center;
 }
 
-.pay-summary-row dt {
-  margin: 0;
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
+.pay-amount-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.65rem 0.55rem;
+  border-radius: 6px;
+  border: 0.5px solid rgba(221, 212, 200, 0.65);
+}
+
+.pay-amount-tile-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #9a948c;
 }
 
-.pay-summary-row dd {
-  margin: 0;
+.pay-amount-tile--total {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(221, 212, 200, 0.75);
 }
 
-.pay-summary-row--highlight {
-  padding-top: 0.35rem;
-  border-top: 0.5px solid rgba(221, 212, 200, 0.55);
+.pay-amount-tile--paid {
+  background: rgba(241, 249, 243, 0.95);
+  border-color: rgba(79, 138, 99, 0.35);
+}
+
+.pay-amount-tile--paid .pay-amount-tile-label,
+.pay-amount-tile--paid .pay-amount-tile-input {
+  color: #3f7550;
+}
+
+.pay-amount-tile--remaining {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.pay-amount-tile--remaining.is-due {
+  background: rgba(255, 247, 235, 0.98);
+  border-color: rgba(201, 130, 43, 0.42);
+}
+
+.pay-amount-tile--remaining.is-due .pay-amount-tile-label,
+.pay-amount-tile--remaining.is-due .pay-amount-tile-value {
+  color: #a8641a;
+}
+
+.pay-amount-tile--remaining.is-complete {
+  background: rgba(241, 249, 243, 0.98);
+  border-color: rgba(79, 138, 99, 0.42);
+}
+
+.pay-amount-tile--remaining.is-complete .pay-amount-tile-label,
+.pay-amount-tile--remaining.is-complete .pay-amount-tile-value {
+  color: #3f7550;
+}
+
+.pay-amount-tile-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  letter-spacing: 0.01em;
+  color: #2a2622;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.pay-amount-tile--paid .pay-amount-tile-input {
+  color: #3f7550;
+}
+
+.pay-amount-tile-input::placeholder {
+  color: #c4bdb4;
+}
+
+.pay-amount-tile-value {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #2a2622;
+}
+
+.pay-amount-tile-hint {
+  font-size: 0.68rem;
+  color: #b8b0a6;
+}
+
+.pay-summary-banner {
+  margin: 0.65rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.pay-summary-banner--complete {
+  color: #3f7550;
+  background: rgba(241, 249, 243, 0.95);
+  border: 0.5px solid rgba(79, 138, 99, 0.35);
+}
+
+.pay-summary-banner--due {
+  color: #a8641a;
+  background: rgba(255, 247, 235, 0.95);
+  border: 0.5px solid rgba(201, 130, 43, 0.35);
+}
+
+.pay-summary-meta {
+  margin-top: 0.65rem;
+}
+
+.pay-summary-meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pay-summary-meta-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a948c;
 }
 
 .pay-summary-input,
@@ -1915,16 +1991,6 @@
   border-radius: 4px;
 }
 
-.pay-summary-value--balance {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #2a2622;
-}
-
-.pay-summary-card--fully-paid .pay-summary-value--balance {
-  color: #3f7550;
-}
-
 .pay-summary-notes {
   display: flex;
   flex-direction: column;
@@ -1933,7 +1999,7 @@
 }
 
 .pay-summary-notes-label {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9a948c;
@@ -1942,16 +2008,6 @@
 .pay-summary-textarea {
   min-height: 4.5rem;
   resize: vertical;
-}
-
-.pay-summary-footnote {
-  margin: 0.65rem 0 0;
-  font-size: 0.68rem;
-  color: #7a736c;
-}
-
-.pay-summary-footnote--paid {
-  color: #3f7550;
 }
 
 .cal-fu-section--payments .cal-fu-payments-body {
@@ -1989,10 +2045,22 @@
   font-size: 0.62rem;
 }
 
-@media (min-width: 640px) {
-  .pay-summary-card-head {
+@media (max-width: 380px) {
+  .pay-amount-tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .pay-amount-tile {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    gap: 0.65rem;
+  }
+
+  .pay-amount-tile-input,
+  .pay-amount-tile-value {
+    min-height: auto;
+    text-align: right;
+    justify-content: flex-end;
   }
 }
