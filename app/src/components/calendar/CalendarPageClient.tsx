@@ -36,6 +36,7 @@ import type {
 
 interface Props {
   initialTrips: Trip[];
+  initialProgrammeId?: number | null;
 }
 
 function useIsMobile(): boolean {
@@ -69,7 +70,10 @@ function initialCalendarView(): CalendarView {
   return "agenda";
 }
 
-export function CalendarPageClient({ initialTrips }: Props) {
+export function CalendarPageClient({
+  initialTrips,
+  initialProgrammeId = null,
+}: Props) {
   const isMobile = useIsMobile();
   const [view, setView] = useState<CalendarView>(initialCalendarView);
   const [reference, setReference] = useState(() => startOfDay(new Date()));
@@ -80,7 +84,14 @@ export function CalendarPageClient({ initialTrips }: Props) {
     tripsToCalendarProgrammes(initialTrips)
   );
   const [selectedProgramme, setSelectedProgramme] =
-    useState<CalendarProgramme | null>(null);
+    useState<CalendarProgramme | null>(() => {
+      if (!initialProgrammeId) return null;
+      return (
+        tripsToCalendarProgrammes(initialTrips).find(
+          (programme) => programme.id === initialProgrammeId
+        ) ?? null
+      );
+    });
   const [dayPanel, setDayPanel] = useState<{
     iso: string;
     date: Date;

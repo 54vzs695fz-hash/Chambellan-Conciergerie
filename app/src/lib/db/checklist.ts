@@ -248,6 +248,13 @@ export async function listPendingChecklistItems(
   return pending.slice(0, 30);
 }
 
+export async function listAllChecklistItems(): Promise<ChecklistItem[]> {
+  const rows = await prisma.tripChecklistItem.findMany({
+    orderBy: [{ trip_id: "asc" }, { sort_order: "asc" }, { id: "asc" }],
+  });
+  return rows.map(mapChecklistItem);
+}
+
 export async function listOpenChecklistItems(): Promise<ChecklistItem[]> {
   const rows = await prisma.tripChecklistItem.findMany({
     where: { status: { in: ["todo", "in_progress"] } },
@@ -286,16 +293,16 @@ async function listTripProgrammeContextByTripId(): Promise<
 }
 
 export async function listDashboardFollowUpItems() {
-  const { buildDashboardFollowUpSummary } = await import(
-    "@/lib/dashboard/follow-up-summary"
+  const { buildDashboardProgrammeFollowUpCards } = await import(
+    "@/lib/dashboard/programme-follow-up-cards"
   );
   const { listTrips } = await import("@/lib/db/trips");
   const [trips, checklistItems, programmeContextByTripId] = await Promise.all([
     listTrips(),
-    listOpenChecklistItems(),
+    listAllChecklistItems(),
     listTripProgrammeContextByTripId(),
   ]);
-  return buildDashboardFollowUpSummary(
+  return buildDashboardProgrammeFollowUpCards(
     trips,
     checklistItems,
     programmeContextByTripId

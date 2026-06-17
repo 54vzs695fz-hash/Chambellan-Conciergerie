@@ -29,6 +29,22 @@
   --dash-accent: #9b4f5c;
 }
 
+.dash-card--prog-urgent {
+  --dash-accent: #9b4f5c;
+}
+
+.dash-card--prog-payment {
+  --dash-accent: #c9822b;
+}
+
+.dash-card--prog-arrival {
+  --dash-accent: #3e6fa8;
+}
+
+.dash-card--prog-complete {
+  --dash-accent: #4f8a63;
+}
+
 .dash-card--library {
   --dash-accent: #7556a8;
 }
@@ -102,7 +118,135 @@
   font-size: 0.72rem;
 }
 
-/* Follow-up items */
+/* Follow-up programme cards */
+
+.dash-follow-up-programme.dash-card {
+  display: block;
+  padding: 1rem 1.05rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.dash-follow-up-programme.dash-card:hover {
+  background: color-mix(in srgb, var(--dash-accent) 10%, var(--shell-card-bg, #fff));
+  border-left-color: var(--dash-accent);
+  transform: translateY(-1px);
+}
+
+.dash-follow-up-programme-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dash-follow-up-programme-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-follow-up-countdown {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--dash-accent) 58%, var(--shell-text-muted, #6b7280));
+}
+
+.dash-follow-up-programme-chevron {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--dash-accent) 50%, #999);
+}
+
+.dash-follow-up-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.dash-follow-up-progress {
+  margin-top: 0.85rem;
+}
+
+.dash-follow-up-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.dash-follow-up-progress-label,
+.dash-follow-up-outstanding-label {
+  margin: 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.dash-follow-up-progress-count {
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--dash-accent) 70%, var(--shell-text, #111));
+}
+
+.dash-follow-up-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--dash-accent) 10%, #ece7df);
+}
+
+.dash-follow-up-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--dash-accent) 82%, #fff),
+    var(--dash-accent)
+  );
+  transition: width 0.25s ease;
+}
+
+.dash-follow-up-outstanding {
+  margin-top: 0.85rem;
+}
+
+.dash-follow-up-outstanding-list {
+  list-style: none;
+  margin: 0.45rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.dash-follow-up-outstanding-list li {
+  position: relative;
+  padding-left: 0.85rem;
+  font-size: 0.78rem;
+  color: #5c5650;
+}
+
+.dash-follow-up-outstanding-list li::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: color-mix(in srgb, var(--dash-accent) 55%, #999);
+}
+
+.dash-follow-up-all-clear {
+  margin: 0.85rem 0 0;
+  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--dash-accent) 62%, var(--shell-text-muted, #6b7280));
+}
+
+/* Follow-up items (legacy task rows) */
 
 .dash-follow-up-item.dash-card {
   padding: 0.85rem 1rem;

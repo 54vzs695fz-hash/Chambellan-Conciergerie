@@ -187,6 +187,23 @@ export function isFollowUpEligibleChecklistItem(
   );
 }
 
+/** Checklist rows that belong to a programme's operational progress total. */
+export function isTrackedProgrammeChecklistItem(
+  item: ChecklistItem,
+  trip: Trip,
+  context: TripProgrammeContext,
+  today = startOfDay(new Date())
+): boolean {
+  if (!isPristineDefaultChecklistItem(item)) return true;
+  return isRelevantDefaultTitle(
+    item.title,
+    item.category,
+    trip,
+    context,
+    toIsoDate(today)
+  );
+}
+
 export function buildEmptyProgrammeContext(): TripProgrammeContext {
   return { activityTypes: new Set(), transferCount: 0 };
 }

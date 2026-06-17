@@ -47,7 +47,7 @@ export default async function DashboardPage() {
 
       <DashboardPaymentSummary trips={allTrips} />
 
-      <DashboardFollowUpSummary initialItems={pendingFollowUp} />
+      <DashboardFollowUpSummary initialProgrammes={pendingFollowUp} />
 
       <section className="mb-10" data-section="planner">
         <div className="flex items-center justify-between mb-4">

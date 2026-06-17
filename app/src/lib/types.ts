@@ -88,6 +88,28 @@ export interface DashboardFollowUpItem {
   timing: string;
 }
 
+export type DashboardProgrammeCardTone =
+  | "urgent"
+  | "payment"
+  | "arrival"
+  | "complete";
+
+export interface DashboardProgrammeFollowUpCard {
+  key: string;
+  tripId: number;
+  client_name: string;
+  destination: string;
+  arrival_date: string;
+  arrival_countdown: string;
+  follow_up_status: TripFollowUpStatus;
+  payment_status: TripPaymentStatus;
+  tasks_completed: number;
+  tasks_total: number;
+  outstanding_tasks: string[];
+  tone: DashboardProgrammeCardTone;
+  href: string;
+}
+
 export interface Client {
   id: number;
   full_name: string;

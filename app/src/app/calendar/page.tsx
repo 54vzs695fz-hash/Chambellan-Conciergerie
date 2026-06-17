@@ -5,8 +5,16 @@ import "./calendar.css";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function CalendarPage() {
+export default async function CalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ programme?: string }>;
+}) {
   const trips = await listTrips();
+  const params = await searchParams;
+  const programmeId = params.programme ? Number(params.programme) : null;
+  const initialProgrammeId =
+    programmeId && Number.isFinite(programmeId) ? programmeId : null;
 
   return (
     <div className="page-shell cal-shell">
@@ -19,7 +27,10 @@ export default async function CalendarPage() {
         </div>
       </header>
 
-      <CalendarPageClient initialTrips={trips} />
+      <CalendarPageClient
+        initialTrips={trips}
+        initialProgrammeId={initialProgrammeId}
+      />
     </div>
   );
 }

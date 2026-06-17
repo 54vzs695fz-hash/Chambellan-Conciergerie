@@ -2,47 +2,48 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { KIND_LABELS } from "@/lib/dashboard/follow-up-summary";
-import type { DashboardFollowUpItem } from "@/lib/types";
+import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import type { DashboardProgrammeFollowUpCard } from "@/lib/types";
 
 interface Props {
-  initialItems: DashboardFollowUpItem[];
+  initialProgrammes: DashboardProgrammeFollowUpCard[];
 }
 
-export function DashboardFollowUpSummary({ initialItems }: Props) {
-  const [items, setItems] = useState(initialItems);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+const TONE_CARD_CLASS: Record<
+  DashboardProgrammeFollowUpCard["tone"],
+  string
+> = {
+  urgent: "dash-card--prog-urgent",
+  payment: "dash-card--prog-payment",
+  arrival: "dash-card--prog-arrival",
+  complete: "dash-card--prog-complete",
+};
+
+function progressPercent(completed: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.round((completed / total) * 100);
+}
+
+export function DashboardFollowUpSummary({ initialProgrammes }: Props) {
+  const [programmes, setProgrammes] =
+    useState<DashboardProgrammeFollowUpCard[]>(initialProgrammes);
 
   useEffect(() => {
     const refresh = async () => {
       const res = await fetch("/api/dashboard/follow-up");
       if (!res.ok) return;
       const data = await res.json();
-      if (Array.isArray(data)) setItems(data as DashboardFollowUpItem[]);
+      if (Array.isArray(data)) {
+        setProgrammes(data as DashboardProgrammeFollowUpCard[]);
+      }
     };
     const onFocus = () => void refresh();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  const handleMarkDone = async (checklistItemId: number) => {
-    setUpdatingId(checklistItemId);
-    try {
-      const res = await fetch(`/api/checklist-items/${checklistItemId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "done" }),
-      });
-      if (!res.ok) throw new Error("Update failed");
-      setItems((prev) =>
-        prev.filter((item) => item.checklistItemId !== checklistItemId)
-      );
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  if (items.length === 0) return null;
+  if (programmes.length === 0) return null;
 
   return (
     <section className="dash-follow-up mb-10" data-section="planner">
@@ -53,46 +54,93 @@ export function DashboardFollowUpSummary({ initialItems }: Props) {
         </Link>
       </div>
       <ul className="dash-follow-up-list">
-        {items.map((item) => (
-          <li
-            key={item.key}
-            className={`dash-follow-up-item dash-card ${
-              item.kind === "urgent" ? "dash-card--urgent" : "dash-card--follow-up"
-            }`}
-          >
-            <div className="dash-follow-up-copy">
-              <span className={`dash-follow-up-kind dash-follow-up-kind--${item.kind}`}>
-                {KIND_LABELS[item.kind]}
-              </span>
-              <p className="dash-follow-up-client">
-                {item.client_name}
-                <span className="dash-follow-up-sep">·</span>
-                {item.destination}
-              </p>
-              <p className="dash-follow-up-task">{item.task}</p>
-              {item.timing ? (
-                <p className="dash-follow-up-timing">{item.timing}</p>
-              ) : null}
-            </div>
-            {item.checklistItemId ? (
-              <button
-                type="button"
-                className="dash-follow-up-done min-h-[44px]"
-                disabled={updatingId === item.checklistItemId}
-                onClick={() => void handleMarkDone(item.checklistItemId!)}
-              >
-                {updatingId === item.checklistItemId ? "…" : "Done"}
-              </button>
-            ) : (
+        {programmes.map((programme) => {
+          const percent = progressPercent(
+            programme.tasks_completed,
+            programme.tasks_total
+          );
+
+          return (
+            <li key={programme.key}>
               <Link
-                href="/calendar"
-                className="dash-follow-up-view min-h-[44px]"
+                href={programme.href}
+                className={`dash-follow-up-programme dash-card ${TONE_CARD_CLASS[programme.tone]}`}
               >
-                View
+                <div className="dash-follow-up-programme-head">
+                  <div className="dash-follow-up-programme-title">
+                    <p className="dash-follow-up-client">
+                      {programme.client_name}
+                      <span className="dash-follow-up-sep">·</span>
+                      {programme.destination}
+                    </p>
+                    {programme.arrival_countdown ? (
+                      <p className="dash-follow-up-countdown">
+                        {programme.arrival_countdown}
+                      </p>
+                    ) : null}
+                  </div>
+                  <span className="dash-follow-up-programme-chevron" aria-hidden>
+                    ›
+                  </span>
+                </div>
+
+                <div className="dash-follow-up-badges">
+                  <ProgrammeStatusBadge
+                    status={programme.follow_up_status}
+                    showDot
+                    arrivalDate={programme.arrival_date}
+                  />
+                  <PaymentStatusBadge
+                    status={programme.payment_status}
+                    arrivalDate={programme.arrival_date}
+                  />
+                </div>
+
+                <div className="dash-follow-up-progress">
+                  <div className="dash-follow-up-progress-head">
+                    <span className="dash-follow-up-progress-label">
+                      Progress
+                    </span>
+                    <span className="dash-follow-up-progress-count">
+                      {programme.tasks_completed} / {programme.tasks_total}{" "}
+                      completed
+                    </span>
+                  </div>
+                  <div
+                    className="dash-follow-up-progress-bar"
+                    role="progressbar"
+                    aria-valuenow={percent}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`${programme.tasks_completed} of ${programme.tasks_total} tasks completed`}
+                  >
+                    <span
+                      className="dash-follow-up-progress-fill"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {programme.outstanding_tasks.length > 0 ? (
+                  <div className="dash-follow-up-outstanding">
+                    <p className="dash-follow-up-outstanding-label">
+                      Outstanding tasks
+                    </p>
+                    <ul className="dash-follow-up-outstanding-list">
+                      {programme.outstanding_tasks.map((task) => (
+                        <li key={task}>{task}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : programme.tone === "complete" ? (
+                  <p className="dash-follow-up-all-clear">
+                    All tasks completed
+                  </p>
+                ) : null}
               </Link>
-            )}
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

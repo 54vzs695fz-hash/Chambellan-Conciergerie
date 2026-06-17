@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Verify dashboard follow-up excludes untouched template tasks.
- * Run: node scripts/test-dashboard-follow-up.mjs (from app/)
+ * Verify dashboard follow-up programme cards.
+ * Run: npx tsx scripts/test-dashboard-follow-up.mjs (from app/)
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -22,8 +22,8 @@ function makeItem(overrides) {
   return {
     id: 1,
     trip_id: 10,
-    category: "concierge_services",
-    title: "Yacht confirmed",
+    category: "programme",
+    title: "Programme confirmation",
     status: "todo",
     notes: "",
     due_date: "",
@@ -37,11 +37,11 @@ function makeTrip(overrides) {
   return {
     id: 10,
     client_id: null,
-    client_name: "Test Client",
+    client_name: "Ricardo Ferreira",
     destination: "Monaco",
     arrival_date: "2026-06-15",
     departure_date: "2026-06-22",
-    hotel: "",
+    hotel: "Hotel de Paris",
     villa: "",
     driver: "",
     butler: "",
@@ -76,160 +76,64 @@ function makeTrip(overrides) {
 }
 
 async function runUnitTests() {
-  const {
-    isFollowUpEligibleChecklistItem,
-    isPristineDefaultChecklistItem,
-    buildEmptyProgrammeContext,
-  } = await loadModule("src/lib/dashboard/checklist-follow-up-eligibility.ts");
-
-  const { buildDashboardFollowUpSummary } = await loadModule(
-    "src/lib/dashboard/follow-up-summary.ts"
-  );
-  const { isActionRequiredChecklistItem } = await loadModule(
-    "src/lib/planner/checklist-utils.ts"
+  const { buildDashboardProgrammeFollowUpCards } = await loadModule(
+    "src/lib/dashboard/programme-follow-up-cards.ts"
   );
 
   const today = new Date("2026-06-01T12:00:00");
-  const context = buildEmptyProgrammeContext();
   const trip = makeTrip();
+  const context = { activityTypes: new Set(), transferCount: 0 };
 
-  assert(
-    isPristineDefaultChecklistItem(makeItem()),
-    "untouched yacht template should be pristine"
-  );
-  assert(
-    !isFollowUpEligibleChecklistItem(makeItem(), trip, context, today),
-    "yacht template hidden when programme has no yacht"
-  );
-
-  const yachtTrip = makeTrip({ yacht: "Sunseeker 90" });
-  assert(
-    isFollowUpEligibleChecklistItem(makeItem(), yachtTrip, context, today),
-    "yacht template shown when yacht service exists"
-  );
-
-  const engaged = makeItem({ status: "in_progress" });
-  assert(
-    isFollowUpEligibleChecklistItem(engaged, trip, context, today),
-    "engaged custom task always eligible"
-  );
-
-  const custom = makeItem({
-    category: "concierge_services",
-    title: "Helicopter confirmed",
-  });
-  assert(
-    isFollowUpEligibleChecklistItem(custom, trip, context, today),
-    "custom checklist item always eligible"
-  );
-
-  const summary = buildDashboardFollowUpSummary(
+  const cards = buildDashboardProgrammeFollowUpCards(
     [trip],
     [
-      makeItem(),
-      makeItem({ id: 2, category: "programme", title: "Programme confirmation" }),
+      makeItem({ id: 1, status: "done", title: "Programme confirmation" }),
+      makeItem({ id: 2, category: "accommodation", title: "Hotel confirmed" }),
       makeItem({ id: 3, category: "payments", title: "Deposit requested" }),
+      makeItem({
+        id: 4,
+        category: "concierge_services",
+        title: "Yacht confirmed",
+      }),
     ],
     new Map([[trip.id, context]]),
     today
   );
 
+  assert(cards.length === 1, "expected one programme card");
+  const card = cards[0];
+  assert(card.client_name === "Ricardo Ferreira", "client name on card");
+  assert(card.destination === "Monaco", "destination on card");
+  assert(card.arrival_countdown.includes("days"), "arrival countdown on card");
+  assert(card.tasks_total >= 3, "progress total uses tracked tasks");
+  assert(card.tasks_completed >= 1, "progress includes completed tasks");
   assert(
-    !summary.some((entry) => entry.task === "Yacht confirmed"),
-    "dashboard summary must not include yacht template without yacht service"
+    card.outstanding_tasks.includes("Hotel confirmed"),
+    "outstanding tasks listed on card"
   );
   assert(
-    summary.some((entry) => entry.task === "Programme confirmation"),
-    "programme tasks remain visible"
+    !card.outstanding_tasks.includes("Yacht confirmed"),
+    "untouched yacht template excluded from outstanding tasks"
   );
+  assert(card.href === "/calendar?programme=10", "card links to calendar follow-up");
   assert(
-    !summary.some((entry) => entry.checklistItemId === null),
-    "dashboard must not include synthetic non-database cards"
+    cards.filter((entry) => entry.tripId === trip.id).length === 1,
+    "dashboard must not create one card per task"
   );
 
-  const farTrip = makeTrip({
-    arrival_date: "2026-12-01",
-    departure_date: "2026-12-08",
-  });
-  const backlogSummary = buildDashboardFollowUpSummary(
-    [farTrip],
-    [
-      makeItem({
-        id: 20,
-        trip_id: farTrip.id,
-        category: "payments",
-        title: "Deposit requested",
-      }),
-    ],
-    new Map([[farTrip.id, context]]),
-    today
-  );
-  assert(
-    backlogSummary.length === 0,
-    "backlog tasks far from arrival must stay hidden"
-  );
-
-  const doneSummary = buildDashboardFollowUpSummary(
+  const completedCards = buildDashboardProgrammeFollowUpCards(
     [trip],
     [
-      makeItem({
-        id: 21,
-        status: "done",
-        category: "programme",
-        title: "Programme confirmation",
-      }),
+      makeItem({ id: 10, status: "done" }),
+      makeItem({ id: 11, category: "accommodation", title: "Hotel confirmed", status: "done" }),
+      makeItem({ id: 12, category: "payments", title: "Deposit requested", status: "done" }),
     ],
     new Map([[trip.id, context]]),
     today
   );
   assert(
-    doneSummary.length === 0,
-    "done tasks must never appear on dashboard follow-up"
-  );
-
-  const futureDueSummary = buildDashboardFollowUpSummary(
-    [trip],
-    [
-      makeItem({
-        id: 22,
-        category: "programme",
-        title: "Programme confirmation",
-        due_date: "2026-08-01",
-      }),
-    ],
-    new Map([[trip.id, context]]),
-    today
-  );
-  assert(
-    futureDueSummary.length === 0,
-    "future due dates must not appear until action is required"
-  );
-
-  assert(
-    isActionRequiredChecklistItem(
-      makeItem({ status: "in_progress" }),
-      "2026-06-01",
-      "2026-12-01",
-      "2026-12-08"
-    ),
-    "in-progress tasks always require action"
-  );
-
-  const completedProgrammeSummary = buildDashboardFollowUpSummary(
-    [makeTrip({ follow_up_status: "completed" })],
-    [
-      makeItem({
-        id: 23,
-        category: "programme",
-        title: "Programme confirmation",
-      }),
-    ],
-    new Map([[10, context]]),
-    today
-  );
-  assert(
-    completedProgrammeSummary.length === 0,
-    "completed programmes must not surface follow-up tasks"
+    completedCards[0]?.tone === "payment" || completedCards[0]?.tone === "complete",
+    "completed tasks shift card tone away from urgent"
   );
 
   console.log("Unit checks passed.");
@@ -265,12 +169,8 @@ async function runDatabaseVerification() {
   const { prisma } = await loadModule("src/lib/prisma.ts");
 
   let items;
-  let trips;
   try {
     items = await listDashboardFollowUpItems();
-    trips = await prisma.trip.findMany({
-      select: { id: true, yacht: true, client_name: true, destination: true },
-    });
   } catch (error) {
     const code =
       error && typeof error === "object" && "code" in error
@@ -288,31 +188,21 @@ async function runDatabaseVerification() {
     }
     throw error;
   }
-  const tripById = new Map(trips.map((trip) => [trip.id, trip]));
+
+  const tripIds = new Set(items.map((item) => item.tripId));
+  assert(
+    tripIds.size === items.length,
+    "dashboard must return one card per programme"
+  );
 
   for (const item of items) {
-    assert(item.checklistItemId !== null, "follow-up item must map to checklist row");
-    const checklistRow = await prisma.tripChecklistItem.findUnique({
-      where: { id: item.checklistItemId },
-      select: { status: true },
-    });
-    assert(
-      checklistRow &&
-        (checklistRow.status === "todo" ||
-          checklistRow.status === "in_progress"),
-      `follow-up item must be open: ${item.task}`
-    );
-    if (item.task.toLowerCase() === "yacht confirmed") {
-      const trip = tripById.get(item.tripId);
-      assert(
-        trip && String(trip.yacht ?? "").trim(),
-        `Yacht confirmed shown for trip without yacht: ${trip?.client_name} / ${trip?.destination}`
-      );
-    }
+    assert(typeof item.outstanding_tasks === "object", "card includes outstanding tasks");
+    assert(typeof item.tasks_total === "number", "card includes progress total");
+    assert(item.href.includes("/calendar?programme="), "card links to calendar follow-up");
   }
 
   console.log(
-    `Database verification passed (${items.length} dashboard follow-up item(s)).`
+    `Database verification passed (${items.length} programme card(s)).`
   );
 
   await prisma.$disconnect();
