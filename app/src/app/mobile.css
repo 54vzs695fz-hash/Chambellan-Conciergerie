@@ -117,6 +117,14 @@
   padding-bottom: 0;
 }
 
+@media (max-width: 767px) {
+  @media (display-mode: standalone), (display-mode: fullscreen) {
+    .app-main {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
+  }
+}
+
 /* Establishment autocomplete */
 .est-field {
   position: relative;
