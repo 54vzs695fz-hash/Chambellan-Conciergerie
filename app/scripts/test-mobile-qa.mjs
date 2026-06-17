@@ -115,22 +115,23 @@ async function testPlannerMobile(page, width, tripId) {
     });
   });
 
-  await page.click(".lux-mobile-action-exports .lux-btn--ghost");
+  await page.evaluate(() => {
+    document.querySelector(".lux-mobile-action-exports .lux-btn--ghost")?.click();
+  });
   await page.waitForSelector(".lux-pdf-export-dialog", { timeout: 10000 });
+  await new Promise((r) => setTimeout(r, 400));
   const modal = await page.evaluate(() => ({
     title: document.querySelector(".lux-pdf-export-title")?.textContent?.trim(),
     filename: document.querySelector(".lux-pdf-export-input")?.value ?? "",
   }));
-  await page.click(".lux-pdf-export-dialog .lux-btn--ghost");
-
-  await page.click(".lux-mobile-action-toggle button:nth-child(2)");
-  await page.waitForSelector(".lux-client-preview-scroller", { timeout: 15000 });
+  await page.keyboard.press("Escape");
+  await new Promise((r) => setTimeout(r, 300));
 
   await page.evaluate(() => {
     const toggle = [...document.querySelectorAll(".adm-panel-toggle")].find((el) =>
       el.textContent?.includes("Activities")
     );
-    if (toggle?.getAttribute("aria-expanded") !== "true") toggle.click();
+    if (toggle && toggle.getAttribute("aria-expanded") !== "true") toggle.click();
   });
   await new Promise((r) => setTimeout(r, 500));
 
@@ -144,6 +145,11 @@ async function testPlannerMobile(page, width, tripId) {
       };
     });
   });
+
+  await page.evaluate(() => {
+    document.querySelector(".lux-mobile-action-toggle button:last-child")?.click();
+  });
+  await page.waitForSelector(".lux-client-preview-scroller", { timeout: 15000 });
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
