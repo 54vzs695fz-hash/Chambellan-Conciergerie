@@ -484,16 +484,44 @@
 @media (max-width: 767px) {
   .pay-status-picker {
     max-width: 100%;
+    width: 100%;
   }
 
-  .pay-status-picker-trigger {
+  .pay-status-picker-trigger,
+  .pay-status-picker-trigger.pay-status {
+    min-height: 44px;
+    min-width: 44px;
     max-width: 100%;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .pay-status-menu-item,
+  .pay-status-menu-item.pay-status {
+    min-height: 44px;
+    padding: 0.45rem 0.65rem;
   }
 
   .pay-status-menu {
     left: auto;
     right: 0;
     max-width: min(16rem, calc(100vw - 2rem));
+  }
+
+  .cal-quick-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.56rem;
+  }
+
+  .cal-quick-actions--compact {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0;
+    border-left: none;
+    background: transparent;
   }
 
   .cal-programme-badges,
@@ -503,6 +531,7 @@
     gap: 0.35rem;
     align-items: center;
     max-width: 100%;
+    width: 100%;
   }
 }
 

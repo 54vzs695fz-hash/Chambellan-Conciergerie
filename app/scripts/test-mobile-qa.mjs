@@ -91,6 +91,89 @@ async function testBadgePickers(page, width) {
   }, width);
 }
 
+async function testPlannerMobile(page, width, tripId) {
+  await page.setViewport({ width, height: 844, deviceScaleFactor: 2 });
+  await page.goto(`${baseUrl}/planner/${tripId}`, {
+    waitUntil: "domcontentloaded",
+    timeout: 90000,
+  });
+  await new Promise((r) => setTimeout(r, 1200));
+
+  const exports = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll(".lux-mobile-action-exports .lux-btn")];
+    return btns.map((btn) => {
+      const rect = btn.getBoundingClientRect();
+      return {
+        text: btn.textContent?.trim(),
+        visible:
+          rect.width > 0 &&
+          rect.height >= 40 &&
+          rect.top >= 0 &&
+          rect.bottom <= window.innerHeight + 1 &&
+          rect.right <= window.innerWidth + 1,
+      };
+    });
+  });
+
+  await page.click(".lux-mobile-action-exports .lux-btn--ghost");
+  await page.waitForSelector(".lux-pdf-export-dialog", { timeout: 10000 });
+  const modal = await page.evaluate(() => ({
+    title: document.querySelector(".lux-pdf-export-title")?.textContent?.trim(),
+    filename: document.querySelector(".lux-pdf-export-input")?.value ?? "",
+  }));
+  await page.click(".lux-pdf-export-dialog .lux-btn--ghost");
+
+  await page.click(".lux-mobile-action-toggle button:nth-child(2)");
+  await page.waitForSelector(".lux-client-preview-scroller", { timeout: 15000 });
+
+  await page.evaluate(() => {
+    const toggle = [...document.querySelectorAll(".adm-panel-toggle")].find((el) =>
+      el.textContent?.includes("Activities")
+    );
+    if (toggle?.getAttribute("aria-expanded") !== "true") toggle.click();
+  });
+  await new Promise((r) => setTimeout(r, 500));
+
+  const activities = await page.evaluate(() => {
+    const acts = [...document.querySelectorAll(".adm-activity-actions .adm-icon-btn")].slice(0, 3);
+    return acts.map((btn) => {
+      const rect = btn.getBoundingClientRect();
+      return {
+        label: btn.getAttribute("aria-label"),
+        visible: rect.width >= 40 && rect.height >= 40 && rect.right <= window.innerWidth + 1,
+      };
+    });
+  });
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
+  );
+
+  return { width, exports, modal, activities, overflow };
+}
+
+async function testCalendarTouchTargets(page, width) {
+  await page.setViewport({ width, height: 844, deviceScaleFactor: 2 });
+  await page.goto(`${baseUrl}/calendar`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await new Promise((r) => setTimeout(r, 800));
+  return page.evaluate((viewportWidth) => {
+    const pay = [...document.querySelectorAll(".pay-status-picker-trigger")].slice(0, 2).map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { h: rect.height, ok: rect.height >= 40 };
+    });
+    const quick = [...document.querySelectorAll(".cal-quick-btn")].slice(0, 3).map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { text: el.textContent?.trim(), h: rect.height, ok: rect.height >= 40 };
+    });
+    return {
+      width: viewportWidth,
+      pay,
+      quick,
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    };
+  }, width);
+}
+
 async function testPdfApi() {
   const res = await fetch(`${baseUrl}/api/trips/${tripId}/pdf?mode=client`);
   const buf = Buffer.from(await res.arrayBuffer());
@@ -155,6 +238,35 @@ async function main() {
     } catch (err) {
       exitCode = 1;
       console.log(`FAIL badges — ${err.message}`);
+    }
+
+    try {
+      const t = await testCalendarTouchTargets(page, width);
+      const payOk = t.pay.length === 0 || t.pay.every((p) => p.ok);
+      const quickOk = t.quick.length === 0 || t.quick.every((q) => q.ok);
+      const ok = payOk && quickOk && !t.overflow;
+      if (!ok) exitCode = 1;
+      console.log(
+        `${ok ? "PASS" : "FAIL"} calendar touch targets pay=${payOk} quick=${quickOk} overflow=${t.overflow}`
+      );
+    } catch (err) {
+      exitCode = 1;
+      console.log(`FAIL calendar touch targets — ${err.message}`);
+    }
+
+    try {
+      const p = await testPlannerMobile(page, width, tripId);
+      const exportsOk = p.exports.length === 2 && p.exports.every((b) => b.visible);
+      const modalOk = p.modal.title === "Export PDF" && p.modal.filename.endsWith(".pdf");
+      const actsOk = p.activities.length === 0 || p.activities.every((a) => a.visible);
+      const ok = exportsOk && modalOk && actsOk && !p.overflow;
+      if (!ok) exitCode = 1;
+      console.log(
+        `${ok ? "PASS" : "FAIL"} planner mobile exports=${exportsOk} modal=${modalOk} activities=${actsOk} overflow=${p.overflow}`
+      );
+    } catch (err) {
+      exitCode = 1;
+      console.log(`FAIL planner mobile — ${err.message}`);
     }
   }
 

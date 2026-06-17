@@ -1586,6 +1586,13 @@
 
   .cal-prog-card--mobile {
     flex-direction: column;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  .cal-prog-card--mobile .cal-prog-card-mobile-actions {
+    width: 100%;
+    overflow: visible;
   }
 
   .cal-prog-card--mobile .cal-prog-card-body {
