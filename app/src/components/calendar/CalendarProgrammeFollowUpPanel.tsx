@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
 import {
@@ -85,7 +85,7 @@ function statusDotClass(status: SectionStatus): string {
   return "cal-fu-dot cal-fu-dot--pending";
 }
 
-function FollowUpItemRow({
+const FollowUpItemRow = memo(function FollowUpItemRow({
   item,
   updating,
   onMarkDone,
@@ -186,7 +186,88 @@ function FollowUpItemRow({
       ) : null}
     </li>
   );
-}
+});
+
+const ChecklistCategorySection = memo(function ChecklistCategorySection({
+  category,
+  sectionItems,
+  isOpen,
+  todayStr,
+  arrivalDate,
+  departureDate,
+  updatingId,
+  addingTaskCategory,
+  onToggle,
+  onMarkDone,
+  onPatchItem,
+  onAddTask,
+}: {
+  category: ChecklistCategory;
+  sectionItems: ChecklistItem[];
+  isOpen: boolean;
+  todayStr: string;
+  arrivalDate: string;
+  departureDate: string;
+  updatingId: number | null;
+  addingTaskCategory: ChecklistCategory | null;
+  onToggle: () => void;
+  onMarkDone: (id: number) => void;
+  onPatchItem: (id: number, fields: Partial<ChecklistItem>) => void;
+  onAddTask: () => void;
+}) {
+  const { done, total } = categoryCounts(sectionItems);
+  const status = sectionStatus(
+    sectionItems,
+    todayStr,
+    arrivalDate,
+    departureDate
+  );
+
+  return (
+    <div className={`cal-fu-section${isOpen ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="cal-fu-section-header min-h-[44px]"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+      >
+        <span className={statusDotClass(status)} aria-hidden />
+        <span className="cal-fu-section-title">
+          {CHECKLIST_CATEGORY_LABELS[category]}
+        </span>
+        <span className="cal-fu-section-progress">
+          {done}/{total}
+        </span>
+        <span className="cal-fu-section-chevron" aria-hidden>
+          {isOpen ? "▾" : "▸"}
+        </span>
+      </button>
+      {isOpen ? (
+        <>
+          <ul className="cal-fu-items">
+            {sectionItems.map((item) => (
+              <FollowUpItemRow
+                key={item.id}
+                item={item}
+                updating={updatingId === item.id}
+                onMarkDone={onMarkDone}
+                onPatchItem={onPatchItem}
+              />
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="cal-fu-add-task min-h-[44px]"
+            disabled={addingTaskCategory === category}
+            onClick={onAddTask}
+          >
+            {addingTaskCategory === category ? "Adding…" : "+ Add task"}
+          </button>
+        </>
+      ) : null}
+    </div>
+  );
+});
 
 export function CalendarProgrammeFollowUpPanel({
   programme,
@@ -464,69 +545,23 @@ export function CalendarProgrammeFollowUpPanel({
               </p>
             ) : null}
 
-            {visibleCategories.map((category) => {
-              const sectionItems = grouped.get(category) ?? [];
-              const { done, total } = categoryCounts(sectionItems);
-              const status = sectionStatus(
-                sectionItems,
-                todayStr,
-                programme.arrivalDate,
-                programme.departureDate
-              );
-              const isOpen = expandedSection === category;
-
-              return (
-                <div
-                  key={category}
-                  className={`cal-fu-section${isOpen ? " is-open" : ""}`}
-                >
-                  <button
-                    type="button"
-                    className="cal-fu-section-header min-h-[44px]"
-                    onClick={() => toggleSection(category)}
-                    aria-expanded={isOpen}
-                  >
-                    <span className={statusDotClass(status)} aria-hidden />
-                    <span className="cal-fu-section-title">
-                      {CHECKLIST_CATEGORY_LABELS[category]}
-                    </span>
-                    <span className="cal-fu-section-progress">
-                      {done}/{total}
-                    </span>
-                    <span className="cal-fu-section-chevron" aria-hidden>
-                      {isOpen ? "▾" : "▸"}
-                    </span>
-                  </button>
-                  {isOpen ? (
-                    <>
-                      <ul className="cal-fu-items">
-                        {sectionItems.map((item) => (
-                          <FollowUpItemRow
-                            key={item.id}
-                            item={item}
-                            updating={updatingId === item.id}
-                            onMarkDone={(id) => void handleDone(id)}
-                            onPatchItem={(id, fields) =>
-                              void handlePatch(id, fields)
-                            }
-                          />
-                        ))}
-                      </ul>
-                      <button
-                        type="button"
-                        className="cal-fu-add-task min-h-[44px]"
-                        disabled={addingTaskCategory === category}
-                        onClick={() => void handleAddTask(category)}
-                      >
-                        {addingTaskCategory === category
-                          ? "Adding…"
-                          : "+ Add task"}
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              );
-            })}
+            {visibleCategories.map((category) => (
+              <ChecklistCategorySection
+                key={category}
+                category={category}
+                sectionItems={grouped.get(category) ?? []}
+                isOpen={expandedSection === category}
+                todayStr={todayStr}
+                arrivalDate={programme.arrivalDate}
+                departureDate={programme.departureDate}
+                updatingId={updatingId}
+                addingTaskCategory={addingTaskCategory}
+                onToggle={() => toggleSection(category)}
+                onMarkDone={(id) => void handleDone(id)}
+                onPatchItem={(id, fields) => void handlePatch(id, fields)}
+                onAddTask={() => void handleAddTask(category)}
+              />
+            ))}
           </div>
 
           {addableCategories.length > 0 ? (

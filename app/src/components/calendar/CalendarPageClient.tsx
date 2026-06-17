@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { CalendarFiltersBar, CalendarFiltersDrawer } from "@/components/calendar/CalendarFilters";
 import { CalendarFollowUpPanel } from "@/components/calendar/CalendarFollowUpPanel";
 import { CalendarLegend } from "@/components/calendar/CalendarLegend";
@@ -174,7 +174,7 @@ export function CalendarPageClient({
   }, [programmes, today]);
 
   useEffect(() => {
-    if (!selectedProgramme) {
+    if (!selectedProgramme || isMobile) {
       setSideChecklistSummary(null);
       return;
     }
@@ -204,7 +204,7 @@ export function CalendarPageClient({
       setSideChecklistSummary(summary.label);
     };
     void load();
-  }, [selectedProgramme, today]);
+  }, [selectedProgramme, today, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -237,13 +237,17 @@ export function CalendarPageClient({
 
   const selectProgramme = (programme: CalendarProgramme) => {
     setDayPanel(null);
-    setSelectedProgramme(programme);
+    startTransition(() => {
+      setSelectedProgramme(programme);
+    });
   };
 
   const selectDay = (iso: string, dayProgrammes: CalendarProgramme[]) => {
     const date = new Date(`${iso}T12:00:00`);
-    setSelectedProgramme(null);
-    setDayPanel({ iso, date, programmes: dayProgrammes });
+    startTransition(() => {
+      setSelectedProgramme(null);
+      setDayPanel({ iso, date, programmes: dayProgrammes });
+    });
   };
 
   const closePanel = () => {
@@ -405,19 +409,31 @@ export function CalendarPageClient({
   };
 
   const panelOpen = selectedProgramme !== null || dayPanel !== null;
+  const mobileDetailOpen = isMobile && panelOpen;
   const viewOrder: CalendarView[] = isMobile
     ? ["list", "agenda", "month"]
     : ["agenda", "list", "month"];
 
   return (
-    <div className={`cal-page${panelOpen ? " has-side-panel" : ""}`}>
+    <div
+      className={`cal-page${
+        mobileDetailOpen
+          ? " has-mobile-detail"
+          : panelOpen
+            ? " has-side-panel"
+            : ""
+      }`}
+    >
       {toast ? (
         <p className="est-save-toast" role="status">
           {toast}
         </p>
       ) : null}
 
-      <div className="cal-page-main">
+      <div
+        className="cal-page-main"
+        aria-hidden={mobileDetailOpen || undefined}
+      >
         <div className="cal-header">
           <div
             className="cal-view-tabs"

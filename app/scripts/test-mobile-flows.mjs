@@ -96,6 +96,17 @@ assert("trip persists event fields", tripsDb.includes("event_booking"));
 const pkg = read("package.json");
 assert("version 3.x", /"version": "3\./.test(pkg));
 
+const sidePanel = read("src/components/calendar/CalendarProgrammeSidePanel.tsx");
+assert(
+  "mobile programme detail has no backdrop",
+  !sidePanel.includes("cal-mobile-panel-backdrop")
+);
+assert(
+  "mobile programme detail is full-screen page",
+  sidePanel.includes("cal-side-panel--mobile-full") &&
+    mobileCss.includes("has-mobile-detail")
+);
+
 const failed = checks.filter((c) => !c.ok);
 const passed = checks.filter((c) => c.ok);
 

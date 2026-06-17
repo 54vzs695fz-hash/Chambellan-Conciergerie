@@ -862,23 +862,24 @@
   }
 
   .cal-mobile-panel-backdrop {
-    position: fixed;
-    inset: 0;
-    bottom: var(--mobile-nav-h);
-    z-index: 55;
-    border: none;
-    padding: 0;
-    background: rgba(17, 17, 17, 0.42);
-    cursor: pointer;
+    display: none !important;
   }
 
-  .cal-page.has-side-panel .cal-side-panel.cal-side-panel--mobile-full {
+  .cal-shell:has(.cal-page.has-mobile-detail) > .cal-header {
+    display: none;
+  }
+
+  .cal-page.has-mobile-detail .cal-page-main {
+    display: none;
+  }
+
+  .cal-page.has-mobile-detail .cal-side-panel.cal-side-panel--mobile-full {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: var(--mobile-nav-h);
-    z-index: 56;
+    z-index: 45;
     display: flex;
     flex-direction: column;
     max-height: none;
@@ -890,10 +891,19 @@
     border-radius: 0;
     box-shadow: none;
     background: var(--shell-card-bg, #fff);
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  .cal-shell:has(.cal-page.has-mobile-detail) {
+    padding: 0;
+    padding-bottom: var(--mobile-nav-h);
   }
 
   .cal-side-panel--mobile-full .cal-mobile-panel-topbar {
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -934,11 +944,22 @@
     overflow: hidden;
   }
 
+  .cal-side-panel--mobile-full .cal-mobile-panel-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 0 0.875rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    touch-action: pan-y;
+  }
+
   .cal-side-panel--mobile-full .cal-side-hero {
     flex-shrink: 0;
-    padding: 0.95rem 0.875rem 0.85rem;
+    padding: 0.95rem 0 0.85rem;
     border-bottom: 1px solid var(--shell-card-border, #e5e7eb);
-    background: rgba(250, 247, 242, 0.98);
+    background: transparent;
   }
 
   .cal-side-panel--mobile-full .cal-side-header {
@@ -956,14 +977,6 @@
   .cal-side-panel--mobile-full .cal-side-planner-link {
     width: 100%;
     justify-content: center;
-  }
-
-  .cal-side-panel--mobile-full .cal-mobile-panel-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0.85rem 0.875rem 1rem;
   }
 
   .cal-side-panel--mobile-full .cal-side-header--day {

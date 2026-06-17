@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { memo } from "react";
 import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
 import { PlannerArrivalCountdown } from "@/components/planner/PlannerArrivalCountdown";
@@ -37,35 +37,24 @@ function panelClassName(mobileFullScreen: boolean): string {
     : "cal-side-panel";
 }
 
-function MobilePanelChrome({
+function MobilePanelTopbar({
   title,
   onClose,
-  children,
 }: {
   title: string;
   onClose: () => void;
-  children: ReactNode;
 }) {
   return (
-    <>
+    <div className="cal-mobile-panel-topbar">
+      <p className="cal-mobile-panel-topbar-title">{title}</p>
       <button
         type="button"
-        className="cal-mobile-panel-backdrop"
+        className="cal-mobile-panel-close min-h-[44px]"
         onClick={onClose}
-        aria-label="Close programme details"
-      />
-      <div className="cal-mobile-panel-topbar">
-        <p className="cal-mobile-panel-topbar-title">{title}</p>
-        <button
-          type="button"
-          className="cal-mobile-panel-close min-h-[44px]"
-          onClick={onClose}
-        >
-          Close
-        </button>
-      </div>
-      {children}
-    </>
+      >
+        Close
+      </button>
+    </div>
   );
 }
 
@@ -134,6 +123,121 @@ function ProgrammeHero({
   );
 }
 
+const MobileProgrammeDetail = memo(function MobileProgrammeDetail({
+  programme,
+  today,
+  checklistSummary,
+  updatingId,
+  updatingPaymentId,
+  paymentError,
+  checklistUpdatingId,
+  onClose,
+  onStatusChange,
+  onPaymentStatusChange,
+  onMarkDone,
+  onPatchItem,
+}: {
+  programme: CalendarProgramme;
+  today: Date;
+  checklistSummary: string | null;
+  updatingId: number | null;
+  updatingPaymentId: number | null;
+  paymentError: string | null;
+  checklistUpdatingId: number | null;
+  onClose: () => void;
+  onStatusChange: (id: number, status: TripFollowUpStatus) => void;
+  onPaymentStatusChange: (status: TripPaymentStatus) => void;
+  onMarkDone: (id: number) => Promise<void>;
+  onPatchItem: (id: number, fields: Partial<ChecklistItem>) => Promise<void>;
+}) {
+  return (
+    <aside
+      className={panelClassName(true)}
+      aria-label="Programme details"
+    >
+      <MobilePanelTopbar title="Programme details" onClose={onClose} />
+      <div className="cal-mobile-panel-scroll">
+        <ProgrammeHero
+          programme={programme}
+          mobileFullScreen
+          onClose={onClose}
+          updatingPaymentId={updatingPaymentId}
+          paymentError={paymentError}
+          onPaymentStatusChange={onPaymentStatusChange}
+        />
+
+        <div className="cal-side-section">
+          <p className="cal-side-label">Update status</p>
+          <CalendarQuickActions
+            programme={programme}
+            updating={updatingId === programme.id}
+            onStatusChange={onStatusChange}
+          />
+        </div>
+
+        {checklistSummary ? (
+          <p className="cal-side-checklist-summary">{checklistSummary}</p>
+        ) : null}
+
+        <CalendarProgrammeFollowUpPanel
+          programme={programme}
+          today={today}
+          updatingId={checklistUpdatingId}
+          updatingPaymentId={updatingPaymentId}
+          paymentError={paymentError}
+          onClose={onClose}
+          onMarkDone={onMarkDone}
+          onPatchItem={onPatchItem}
+          onPaymentStatusChange={onPaymentStatusChange}
+          variant="embedded"
+        />
+      </div>
+    </aside>
+  );
+});
+
+function MobileDayProgrammesPanel({
+  dayDate,
+  dayProgrammes,
+  onClose,
+  onSelectProgramme,
+}: {
+  dayDate: Date;
+  dayProgrammes: CalendarProgramme[];
+  onClose: () => void;
+  onSelectProgramme: (programme: CalendarProgramme) => void;
+}) {
+  return (
+    <aside className={panelClassName(true)} aria-label="Programmes for day">
+      <MobilePanelTopbar title="Programmes" onClose={onClose} />
+      <div className="cal-mobile-panel-scroll">
+        <div className="cal-side-header cal-side-header--day">
+          <div>
+            <p className="cal-side-kicker">Selected day</p>
+            <h2 className="cal-side-title">
+              {formatDayShort(dayDate)} {formatDayNum(dayDate)}
+            </h2>
+            <p className="cal-side-meta">
+              {dayProgrammes.length} programme
+              {dayProgrammes.length === 1 ? "" : "s"}
+            </p>
+          </div>
+        </div>
+        <ul className="cal-side-day-list">
+          {dayProgrammes.map((p) => (
+            <li key={p.id}>
+              <CalendarProgrammeChip
+                programme={p}
+                onClick={() => onSelectProgramme(p)}
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </aside>
+  );
+}
+
 export function CalendarProgrammeSidePanel({
   programme,
   dayProgrammes,
@@ -157,83 +261,73 @@ export function CalendarProgrammeSidePanel({
   if (!open) return null;
 
   if (!programme && dayProgrammes && dayDate) {
-    const dayPanel = (
-      <aside
-        className={panelClassName(mobileFullScreen)}
-        aria-label="Programmes for day"
-        role={mobileFullScreen ? "dialog" : undefined}
-        aria-modal={mobileFullScreen ? true : undefined}
-      >
-        {mobileFullScreen ? (
-          <MobilePanelChrome title="Programmes" onClose={onClose}>
-            <div className="cal-mobile-panel-body">
-              <div className="cal-mobile-panel-scroll">
-                <div className="cal-side-header cal-side-header--day">
-                  <div>
-                    <p className="cal-side-kicker">Selected day</p>
-                    <h2 className="cal-side-title">
-                      {formatDayShort(dayDate)} {formatDayNum(dayDate)}
-                    </h2>
-                    <p className="cal-side-meta">
-                      {dayProgrammes.length} programme
-                      {dayProgrammes.length === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                </div>
-                <ul className="cal-side-day-list">
-                  {dayProgrammes.map((p) => (
-                    <li key={p.id}>
-                      <CalendarProgrammeChip
-                        programme={p}
-                        onClick={() => onSelectProgramme(p)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </MobilePanelChrome>
-        ) : (
-          <>
-            <div className="cal-side-header">
-              <div>
-                <p className="cal-side-kicker">Programmes</p>
-                <h2 className="cal-side-title">
-                  {formatDayShort(dayDate)} {formatDayNum(dayDate)}
-                </h2>
-                <p className="cal-side-meta">
-                  {dayProgrammes.length} programme
-                  {dayProgrammes.length === 1 ? "" : "s"}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="cal-side-close min-h-[44px] min-w-[44px]"
-                onClick={onClose}
-                aria-label="Close panel"
-              >
-                ×
-              </button>
-            </div>
-            <ul className="cal-side-day-list">
-              {dayProgrammes.map((p) => (
-                <li key={p.id}>
-                  <CalendarProgrammeChip
-                    programme={p}
-                    onClick={() => onSelectProgramme(p)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+    if (mobileFullScreen) {
+      return (
+        <MobileDayProgrammesPanel
+          dayDate={dayDate}
+          dayProgrammes={dayProgrammes}
+          onClose={onClose}
+          onSelectProgramme={onSelectProgramme}
+        />
+      );
+    }
+
+    return (
+      <aside className={panelClassName(false)} aria-label="Programmes for day">
+        <div className="cal-side-header">
+          <div>
+            <p className="cal-side-kicker">Programmes</p>
+            <h2 className="cal-side-title">
+              {formatDayShort(dayDate)} {formatDayNum(dayDate)}
+            </h2>
+            <p className="cal-side-meta">
+              {dayProgrammes.length} programme
+              {dayProgrammes.length === 1 ? "" : "s"}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="cal-side-close min-h-[44px] min-w-[44px]"
+            onClick={onClose}
+            aria-label="Close panel"
+          >
+            ×
+          </button>
+        </div>
+        <ul className="cal-side-day-list">
+          {dayProgrammes.map((p) => (
+            <li key={p.id}>
+              <CalendarProgrammeChip
+                programme={p}
+                onClick={() => onSelectProgramme(p)}
+              />
+            </li>
+          ))}
+        </ul>
       </aside>
     );
-
-    return dayPanel;
   }
 
   if (!programme) return null;
+
+  if (mobileFullScreen) {
+    return (
+      <MobileProgrammeDetail
+        programme={programme}
+        today={today}
+        checklistSummary={checklistSummary}
+        updatingId={updatingId}
+        updatingPaymentId={updatingPaymentId}
+        paymentError={paymentError}
+        checklistUpdatingId={checklistUpdatingId}
+        onClose={onClose}
+        onStatusChange={onStatusChange}
+        onPaymentStatusChange={onPaymentStatusChange}
+        onMarkDone={onMarkDone}
+        onPatchItem={onPatchItem}
+      />
+    );
+  }
 
   const followUpPanel = (
     <CalendarProgrammeFollowUpPanel
@@ -249,46 +343,6 @@ export function CalendarProgrammeSidePanel({
       variant="embedded"
     />
   );
-
-  if (mobileFullScreen) {
-    return (
-      <aside
-        className={panelClassName(true)}
-        aria-label="Programme details"
-        role="dialog"
-        aria-modal
-      >
-        <MobilePanelChrome title="Programme details" onClose={onClose}>
-          <div className="cal-mobile-panel-body">
-            <ProgrammeHero
-              programme={programme}
-              mobileFullScreen
-              onClose={onClose}
-              updatingPaymentId={updatingPaymentId}
-              paymentError={paymentError}
-              onPaymentStatusChange={onPaymentStatusChange}
-            />
-            <div className="cal-mobile-panel-scroll">
-              <div className="cal-side-section">
-                <p className="cal-side-label">Update status</p>
-                <CalendarQuickActions
-                  programme={programme}
-                  updating={updatingId === programme.id}
-                  onStatusChange={onStatusChange}
-                />
-              </div>
-
-              {checklistSummary ? (
-                <p className="cal-side-checklist-summary">{checklistSummary}</p>
-              ) : null}
-
-              {followUpPanel}
-            </div>
-          </div>
-        </MobilePanelChrome>
-      </aside>
-    );
-  }
 
   return (
     <aside className={panelClassName(false)} aria-label="Programme details">
