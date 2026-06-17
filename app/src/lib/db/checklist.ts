@@ -263,6 +263,92 @@ export async function listOpenChecklistItems(): Promise<ChecklistItem[]> {
   return rows.map(mapChecklistItem);
 }
 
+async function getTripProgrammeContext(tripId: number): Promise<TripProgrammeContext> {
+  const rows = await prisma.activity.findMany({
+    where: { trip_day: { trip_id: tripId } },
+    select: { activity_type: true },
+  });
+
+  const context: TripProgrammeContext = {
+    activityTypes: new Set<ActivityType>(),
+    transferCount: 0,
+  };
+
+  for (const row of rows) {
+    const activityType = row.activity_type as ActivityType;
+    context.activityTypes.add(activityType);
+    if (activityType === "transfer") {
+      context.transferCount += 1;
+    }
+  }
+
+  return context;
+}
+
+export async function getChecklistPanelData(tripId: number) {
+  const { listTrips } = await import("@/lib/db/trips");
+  const trips = await listTrips();
+  const trip = trips.find((entry) => entry.id === tripId);
+  if (!trip) return null;
+
+  await ensureChecklistSeeded(tripId);
+  const [items, context] = await Promise.all([
+    listChecklistItems(tripId),
+    getTripProgrammeContext(tripId),
+  ]);
+
+  return {
+    items,
+    trip,
+    context: {
+      activityTypes: [...context.activityTypes],
+      transferCount: context.transferCount,
+    },
+  };
+}
+
+export async function activateChecklistCategory(
+  tripId: number,
+  category: ChecklistCategory
+): Promise<ChecklistItem[]> {
+  const items = await listChecklistItems(tripId);
+  const inCategory = items.filter((item) => item.category === category);
+
+  if (inCategory.length === 0) {
+    const defaults = DEFAULT_CHECKLIST_ITEMS[category] ?? ["New item"];
+    await prisma.tripChecklistItem.createMany({
+      data: defaults.map((title, index) => ({
+        trip_id: tripId,
+        category,
+        title,
+        sort_order: index,
+      })),
+    });
+  }
+
+  const panel = await getChecklistPanelData(tripId);
+  if (!panel) return listChecklistItems(tripId);
+
+  const { isTrackedProgrammeChecklistItem } = await import(
+    "@/lib/dashboard/checklist-follow-up-eligibility"
+  );
+  const context: TripProgrammeContext = {
+    activityTypes: new Set(panel.context.activityTypes as ActivityType[]),
+    transferCount: panel.context.transferCount,
+  };
+
+  const refreshed = panel.items.filter((item) => item.category === category);
+  const hasTracked = refreshed.some((item) =>
+    isTrackedProgrammeChecklistItem(item, panel.trip, context)
+  );
+
+  if (!hasTracked) {
+    await addChecklistItem(tripId, category, "New item");
+  }
+
+  return listChecklistItems(tripId);
+}
+
 async function listTripProgrammeContextByTripId(): Promise<
   Map<number, TripProgrammeContext>
 > {

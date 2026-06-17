@@ -5,10 +5,15 @@ import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
 import {
   CHECKLIST_CATEGORY_LABELS,
-  CHECKLIST_CATEGORY_ORDER,
   CHECKLIST_STATUS_LABELS,
   CHECKLIST_STATUS_OPTIONS,
 } from "@/lib/planner/checklist-defaults";
+import {
+  getAddableChecklistCategories,
+  getVisibleChecklistCategories,
+  groupVisibleChecklistItems,
+} from "@/lib/planner/checklist-display";
+import type { TripProgrammeContext } from "@/lib/dashboard/checklist-follow-up-eligibility";
 import {
   categoryCounts,
   sectionStatus,
@@ -19,11 +24,22 @@ import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { PaymentStatusPicker } from "@/components/status/PaymentStatusPicker";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
 import type {
+  ActivityType,
   ChecklistCategory,
   ChecklistItem,
   ChecklistItemStatus,
+  Trip,
   TripPaymentStatus,
 } from "@/lib/types";
+
+interface ChecklistPanelData {
+  items: ChecklistItem[];
+  trip: Trip;
+  context: {
+    activityTypes: ActivityType[];
+    transferCount: number;
+  };
+}
 
 interface Props {
   programme: CalendarProgramme;
@@ -38,21 +54,6 @@ interface Props {
   variant?: "full" | "embedded";
 }
 
-function groupItems(items: ChecklistItem[]) {
-  const map = new Map<ChecklistCategory, ChecklistItem[]>();
-  for (const category of CHECKLIST_CATEGORY_ORDER) {
-    map.set(category, []);
-  }
-  for (const item of items) {
-    const list = map.get(item.category);
-    if (list) list.push(item);
-  }
-  for (const [category, list] of map) {
-    map.set(category, sortSectionItems(list));
-  }
-  return map;
-}
-
 function sortSectionItems(items: ChecklistItem[]): ChecklistItem[] {
   const open = items
     .filter((item) => item.status !== "done")
@@ -61,6 +62,15 @@ function sortSectionItems(items: ChecklistItem[]): ChecklistItem[] {
     .filter((item) => item.status === "done")
     .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
   return [...open, ...done];
+}
+
+function toProgrammeContext(
+  context: ChecklistPanelData["context"]
+): TripProgrammeContext {
+  return {
+    activityTypes: new Set(context.activityTypes),
+    transferCount: context.transferCount,
+  };
 }
 
 function statusDotClass(status: SectionStatus): string {
@@ -184,22 +194,26 @@ export function CalendarProgrammeFollowUpPanel({
   onPaymentStatusChange,
   variant = "full",
 }: Props) {
-  const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [panelData, setPanelData] = useState<ChecklistPanelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState<ChecklistCategory | null>(
     null
   );
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [addingTaskCategory, setAddingTaskCategory] =
+    useState<ChecklistCategory | null>(null);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const todayStr = useMemo(() => todayIsoDate(today), [today]);
 
   const loadChecklist = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/trips/${programme.id}/checklist`);
+      const res = await fetch(`/api/trips/${programme.id}/checklist?format=panel`);
       if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setItems(data as ChecklistItem[]);
+      const data = (await res.json()) as ChecklistPanelData;
+      if (data?.items && data.trip) {
+        setPanelData(data);
       }
     } finally {
       setLoading(false);
@@ -208,33 +222,108 @@ export function CalendarProgrammeFollowUpPanel({
 
   useEffect(() => {
     setExpandedSection(null);
+    setShowCategoryPicker(false);
     void loadChecklist();
   }, [loadChecklist, programme.id]);
 
-  const grouped = useMemo(() => groupItems(items), [items]);
+  const programmeContext = useMemo(
+    () => (panelData ? toProgrammeContext(panelData.context) : null),
+    [panelData]
+  );
+
+  const visibleCategories = useMemo(() => {
+    if (!panelData || !programmeContext) return [];
+    return getVisibleChecklistCategories(
+      panelData.items,
+      panelData.trip,
+      programmeContext,
+      today
+    );
+  }, [panelData, programmeContext, today]);
+
+  const addableCategories = useMemo(() => {
+    if (!panelData || !programmeContext) return [];
+    return getAddableChecklistCategories(
+      panelData.items,
+      panelData.trip,
+      programmeContext,
+      today
+    );
+  }, [panelData, programmeContext, today]);
+
+  const grouped = useMemo(() => {
+    if (!panelData || !programmeContext) {
+      return new Map<ChecklistCategory, ChecklistItem[]>();
+    }
+    const map = groupVisibleChecklistItems(
+      panelData.items,
+      panelData.trip,
+      programmeContext,
+      today
+    );
+    for (const [category, list] of map) {
+      map.set(category, sortSectionItems(list));
+    }
+    return map;
+  }, [panelData, programmeContext, today]);
 
   const handlePatch = async (id: number, fields: Partial<ChecklistItem>) => {
-    setItems((prev) => {
-      const next = prev.map((item) =>
+    setPanelData((current) => {
+      if (!current) return current;
+      const items = current.items.map((item) =>
         item.id === id ? { ...item, ...fields } : item
       );
-      return CHECKLIST_CATEGORY_ORDER.flatMap(
-        (category) => sortSectionItems(next.filter((item) => item.category === category))
-      );
+      return { ...current, items };
     });
     await onPatchItem(id, fields);
   };
 
   const handleDone = async (id: number) => {
-    setItems((prev) => {
-      const next = prev.map((item) =>
+    setPanelData((current) => {
+      if (!current) return current;
+      const items = current.items.map((item) =>
         item.id === id ? { ...item, status: "done" as const } : item
       );
-      return CHECKLIST_CATEGORY_ORDER.flatMap(
-        (category) => sortSectionItems(next.filter((item) => item.category === category))
-      );
+      return { ...current, items };
     });
     await onMarkDone(id);
+  };
+
+  const handleAddCategory = async (category: ChecklistCategory) => {
+    setAddingCategory(true);
+    setShowCategoryPicker(false);
+    try {
+      const res = await fetch(`/api/trips/${programme.id}/checklist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "activate_category", category }),
+      });
+      if (!res.ok) return;
+      const items = (await res.json()) as ChecklistItem[];
+      setPanelData((current) => (current ? { ...current, items } : current));
+      setExpandedSection(category);
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const handleAddTask = async (category: ChecklistCategory) => {
+    setAddingTaskCategory(category);
+    try {
+      const res = await fetch(`/api/trips/${programme.id}/checklist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, title: "New item" }),
+      });
+      if (!res.ok) return;
+      const item = (await res.json()) as ChecklistItem;
+      setPanelData((current) =>
+        current ? { ...current, items: [...current.items, item] } : current
+      );
+      setExpandedSection(category);
+    } finally {
+      setAddingTaskCategory(null);
+    }
   };
 
   const toggleSection = (category: ChecklistCategory) => {
@@ -295,57 +384,119 @@ export function CalendarProgrammeFollowUpPanel({
       {loading ? (
         <p className="cal-fu-loading">Loading checklist…</p>
       ) : (
-        <div className="cal-fu-sections">
-          {CHECKLIST_CATEGORY_ORDER.map((category) => {
-            const sectionItems = grouped.get(category) ?? [];
-            const { done, total } = categoryCounts(sectionItems);
-            const status = sectionStatus(
-              sectionItems,
-              todayStr,
-              programme.arrivalDate,
-              programme.departureDate
-            );
-            const isOpen = expandedSection === category;
+        <>
+          <div className="cal-fu-sections">
+            {visibleCategories.length === 0 ? (
+              <p className="cal-fu-empty">
+                No checklist sections yet. Add a category to start tracking
+                tasks for this programme.
+              </p>
+            ) : null}
 
-            return (
-              <div
-                key={category}
-                className={`cal-fu-section${isOpen ? " is-open" : ""}`}
-              >
+            {visibleCategories.map((category) => {
+              const sectionItems = grouped.get(category) ?? [];
+              const { done, total } = categoryCounts(sectionItems);
+              const status = sectionStatus(
+                sectionItems,
+                todayStr,
+                programme.arrivalDate,
+                programme.departureDate
+              );
+              const isOpen = expandedSection === category;
+
+              return (
+                <div
+                  key={category}
+                  className={`cal-fu-section${isOpen ? " is-open" : ""}`}
+                >
+                  <button
+                    type="button"
+                    className="cal-fu-section-header min-h-[44px]"
+                    onClick={() => toggleSection(category)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className={statusDotClass(status)} aria-hidden />
+                    <span className="cal-fu-section-title">
+                      {CHECKLIST_CATEGORY_LABELS[category]}
+                    </span>
+                    <span className="cal-fu-section-progress">
+                      {done}/{total}
+                    </span>
+                    <span className="cal-fu-section-chevron" aria-hidden>
+                      {isOpen ? "▾" : "▸"}
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <>
+                      <ul className="cal-fu-items">
+                        {sectionItems.map((item) => (
+                          <FollowUpItemRow
+                            key={item.id}
+                            item={item}
+                            updating={updatingId === item.id}
+                            onMarkDone={(id) => void handleDone(id)}
+                            onPatchItem={(id, fields) =>
+                              void handlePatch(id, fields)
+                            }
+                          />
+                        ))}
+                      </ul>
+                      <button
+                        type="button"
+                        className="cal-fu-add-task min-h-[44px]"
+                        disabled={addingTaskCategory === category}
+                        onClick={() => void handleAddTask(category)}
+                      >
+                        {addingTaskCategory === category
+                          ? "Adding…"
+                          : "+ Add task"}
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          {addableCategories.length > 0 ? (
+            <div className="cal-fu-add-category">
+              {showCategoryPicker ? (
+                <div className="cal-fu-add-category-picker">
+                  <p className="cal-fu-add-category-label">Choose a category</p>
+                  <div className="cal-fu-add-category-options">
+                    {addableCategories.map((category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        className="cal-fu-add-category-option min-h-[44px]"
+                        disabled={addingCategory}
+                        onClick={() => void handleAddCategory(category)}
+                      >
+                        {CHECKLIST_CATEGORY_LABELS[category]}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="cal-fu-add-category-cancel min-h-[44px]"
+                    onClick={() => setShowCategoryPicker(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  className="cal-fu-section-header min-h-[44px]"
-                  onClick={() => toggleSection(category)}
-                  aria-expanded={isOpen}
+                  className="cal-fu-add-category-btn min-h-[44px]"
+                  disabled={addingCategory}
+                  onClick={() => setShowCategoryPicker(true)}
                 >
-                  <span className={statusDotClass(status)} aria-hidden />
-                  <span className="cal-fu-section-title">
-                    {CHECKLIST_CATEGORY_LABELS[category]}
-                  </span>
-                  <span className="cal-fu-section-progress">
-                    {done}/{total}
-                  </span>
-                  <span className="cal-fu-section-chevron" aria-hidden>
-                    {isOpen ? "▾" : "▸"}
-                  </span>
+                  {addingCategory ? "Adding…" : "+ Add category"}
                 </button>
-                {isOpen ? (
-                  <ul className="cal-fu-items">
-                    {sectionItems.map((item) => (
-                      <FollowUpItemRow
-                        key={item.id}
-                        item={item}
-                        updating={updatingId === item.id}
-                        onMarkDone={(id) => void handleDone(id)}
-                        onPatchItem={(id, fields) => void handlePatch(id, fields)}
-                      />
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          ) : null}
+        </>
       )}
     </section>
   );

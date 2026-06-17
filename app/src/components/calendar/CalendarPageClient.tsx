@@ -9,6 +9,8 @@ import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
 import { CalendarProgrammeSidePanel } from "@/components/calendar/CalendarProgrammeSidePanel";
 import { CalendarWeekAgendaView } from "@/components/calendar/CalendarWeekAgendaView";
 import { buildProgrammeChecklistSummary } from "@/lib/calendar/checklist-summary";
+import { getVisibleChecklistItems } from "@/lib/planner/checklist-display";
+import type { TripProgrammeContext } from "@/lib/dashboard/checklist-follow-up-eligibility";
 import {
   addDays,
   buildWeekDays,
@@ -27,6 +29,7 @@ import {
 } from "@/lib/calendar/programmes";
 import { PLANNER_AUTOSAVE_MS } from "@/components/planner/use-planner-save";
 import type {
+  ActivityType,
   ChecklistItem,
   PendingChecklistItem,
   Trip,
@@ -176,12 +179,24 @@ export function CalendarPageClient({
       return;
     }
     const load = async () => {
-      const res = await fetch(`/api/trips/${selectedProgramme.id}/checklist`);
+      const res = await fetch(
+        `/api/trips/${selectedProgramme.id}/checklist?format=panel`
+      );
       if (!res.ok) return;
       const data = await res.json();
-      if (!Array.isArray(data)) return;
+      if (!data?.items || !data.trip) return;
+      const context: TripProgrammeContext = {
+        activityTypes: new Set(data.context.activityTypes as ActivityType[]),
+        transferCount: data.context.transferCount,
+      };
+      const visibleItems = getVisibleChecklistItems(
+        data.items as ChecklistItem[],
+        data.trip as Trip,
+        context,
+        today
+      );
       const summary = buildProgrammeChecklistSummary(
-        data as ChecklistItem[],
+        visibleItems,
         selectedProgramme.arrivalDate,
         selectedProgramme.departureDate,
         today
