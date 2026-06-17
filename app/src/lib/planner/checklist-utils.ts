@@ -1,4 +1,4 @@
-import type { ChecklistCategory, ChecklistItem } from "@/lib/types";
+import type { ChecklistCategory, ChecklistItem, ChecklistItemStatus } from "@/lib/types";
 
 function addDaysIso(iso: string, days: number): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -16,6 +16,45 @@ export function isActiveProgramme(
 ): boolean {
   if (departureDate && departureDate < todayStr) return false;
   return true;
+}
+
+export function isOpenChecklistStatus(
+  status: ChecklistItemStatus | string
+): boolean {
+  const normalized = String(status).trim().toLowerCase();
+  if (
+    normalized === "done" ||
+    normalized === "completed" ||
+    normalized === "closed"
+  ) {
+    return false;
+  }
+  return normalized === "todo" || normalized === "in_progress";
+}
+
+/** Whether a checklist row needs attention on the dashboard action feed. */
+export function isActionRequiredChecklistItem(
+  item: ChecklistItem,
+  todayStr: string,
+  arrivalDate: string,
+  departureDate: string
+): boolean {
+  if (!isOpenChecklistStatus(item.status)) return false;
+  if (!isActiveProgramme(arrivalDate, departureDate, todayStr)) return false;
+
+  if (item.status === "in_progress") return true;
+
+  if (item.reminder_date && item.reminder_date <= todayStr) return true;
+
+  if (item.due_date) {
+    return item.due_date <= addDaysIso(todayStr, 7);
+  }
+
+  if (arrivalDate && arrivalDate <= addDaysIso(todayStr, 14)) {
+    return true;
+  }
+
+  return false;
 }
 
 export function isImportantChecklistItem(

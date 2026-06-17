@@ -1,4 +1,5 @@
 import { DEFAULT_CHECKLIST_ITEMS } from "@/lib/planner/checklist-defaults";
+import { isOpenChecklistStatus } from "@/lib/planner/checklist-utils";
 import { toIsoDate, startOfDay } from "@/lib/calendar/programmes";
 import type { ActivityType, ChecklistItem, Trip } from "@/lib/types";
 
@@ -171,7 +172,7 @@ export function isFollowUpEligibleChecklistItem(
   context: TripProgrammeContext,
   today = startOfDay(new Date())
 ): boolean {
-  if (item.status === "done") return false;
+  if (!isOpenChecklistStatus(item.status)) return false;
 
   if (!isPristineDefaultChecklistItem(item)) {
     return true;

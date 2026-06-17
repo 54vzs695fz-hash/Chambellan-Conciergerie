@@ -1,5 +1,4 @@
 import {
-  daysUntilArrival,
   startOfDay,
   toIsoDate,
 } from "@/lib/calendar/programmes";
@@ -9,7 +8,11 @@ import {
   type TripProgrammeContext,
 } from "@/lib/dashboard/checklist-follow-up-eligibility";
 import { getArrivalCountdown } from "@/lib/planner/arrival-countdown";
-import { isImportantChecklistItem } from "@/lib/planner/checklist-utils";
+import {
+  isActionRequiredChecklistItem,
+  isImportantChecklistItem,
+  isOpenChecklistStatus,
+} from "@/lib/planner/checklist-utils";
 import type {
   ChecklistItem,
   DashboardFollowUpItem,
@@ -86,7 +89,7 @@ function isActiveTrip(trip: TripContext, todayStr: string): boolean {
 function classifyChecklistItem(
   item: ChecklistItem
 ): DashboardFollowUpKind | null {
-  if (item.status === "done") return null;
+  if (!isOpenChecklistStatus(item.status)) return null;
   if (isItineraryItem(item.title)) return "itinerary";
   if (item.category === "payments") return "payment";
   if (item.category === "reservations") return "booking";
@@ -94,13 +97,10 @@ function classifyChecklistItem(
   return null;
 }
 
-function isUpcomingChecklistItem(
-  item: ChecklistItem,
-  todayStr: string
-): boolean {
-  if (item.due_date && item.due_date > todayStr) return true;
-  if (item.reminder_date && item.reminder_date > todayStr) return true;
-  return false;
+function isOperationalTrip(trip: Trip, todayStr: string): boolean {
+  if (!isActiveTrip(trip, todayStr)) return false;
+  if (trip.follow_up_status === "completed") return false;
+  return true;
 }
 
 function toFollowUpItem(
@@ -127,6 +127,10 @@ function resolveKind(
   arrivalDate: string,
   departureDate: string
 ): DashboardFollowUpKind | null {
+  if (!isActionRequiredChecklistItem(item, todayStr, arrivalDate, departureDate)) {
+    return null;
+  }
+
   const classified = classifyChecklistItem(item);
   if (classified) return classified;
 
@@ -141,15 +145,11 @@ function resolveKind(
     return "urgent";
   }
 
-  if (isUpcomingChecklistItem(item, todayStr)) {
-    return "arrival";
-  }
-
   if (item.status === "in_progress") {
     return "urgent";
   }
 
-  return null;
+  return "arrival";
 }
 
 export function buildDashboardFollowUpSummary(
@@ -169,15 +169,26 @@ export function buildDashboardFollowUpSummary(
   }
 
   for (const item of checklistItems) {
-    if (item.status === "done") continue;
+    if (!isOpenChecklistStatus(item.status)) continue;
 
     const trip = tripById.get(item.trip_id);
-    if (!trip || !isActiveTrip(trip, todayStr)) continue;
+    if (!trip || !isOperationalTrip(trip, todayStr)) continue;
 
     const context =
       programmeContextByTripId.get(trip.id) ?? buildEmptyProgrammeContext();
 
     if (!isFollowUpEligibleChecklistItem(item, trip, context, today)) {
+      continue;
+    }
+
+    if (
+      !isActionRequiredChecklistItem(
+        item,
+        todayStr,
+        trip.arrival_date,
+        trip.departure_date
+      )
+    ) {
       continue;
     }
 

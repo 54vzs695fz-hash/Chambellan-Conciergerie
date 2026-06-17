@@ -250,7 +250,7 @@ export async function listPendingChecklistItems(
 
 export async function listOpenChecklistItems(): Promise<ChecklistItem[]> {
   const rows = await prisma.tripChecklistItem.findMany({
-    where: { status: { not: "done" } },
+    where: { status: { in: ["todo", "in_progress"] } },
     orderBy: [{ trip_id: "asc" }, { sort_order: "asc" }, { id: "asc" }],
   });
   return rows.map(mapChecklistItem);

@@ -85,6 +85,9 @@ async function runUnitTests() {
   const { buildDashboardFollowUpSummary } = await loadModule(
     "src/lib/dashboard/follow-up-summary.ts"
   );
+  const { isActionRequiredChecklistItem } = await loadModule(
+    "src/lib/planner/checklist-utils.ts"
+  );
 
   const today = new Date("2026-06-01T12:00:00");
   const context = buildEmptyProgrammeContext();
@@ -142,6 +145,91 @@ async function runUnitTests() {
   assert(
     !summary.some((entry) => entry.checklistItemId === null),
     "dashboard must not include synthetic non-database cards"
+  );
+
+  const farTrip = makeTrip({
+    arrival_date: "2026-12-01",
+    departure_date: "2026-12-08",
+  });
+  const backlogSummary = buildDashboardFollowUpSummary(
+    [farTrip],
+    [
+      makeItem({
+        id: 20,
+        trip_id: farTrip.id,
+        category: "payments",
+        title: "Deposit requested",
+      }),
+    ],
+    new Map([[farTrip.id, context]]),
+    today
+  );
+  assert(
+    backlogSummary.length === 0,
+    "backlog tasks far from arrival must stay hidden"
+  );
+
+  const doneSummary = buildDashboardFollowUpSummary(
+    [trip],
+    [
+      makeItem({
+        id: 21,
+        status: "done",
+        category: "programme",
+        title: "Programme confirmation",
+      }),
+    ],
+    new Map([[trip.id, context]]),
+    today
+  );
+  assert(
+    doneSummary.length === 0,
+    "done tasks must never appear on dashboard follow-up"
+  );
+
+  const futureDueSummary = buildDashboardFollowUpSummary(
+    [trip],
+    [
+      makeItem({
+        id: 22,
+        category: "programme",
+        title: "Programme confirmation",
+        due_date: "2026-08-01",
+      }),
+    ],
+    new Map([[trip.id, context]]),
+    today
+  );
+  assert(
+    futureDueSummary.length === 0,
+    "future due dates must not appear until action is required"
+  );
+
+  assert(
+    isActionRequiredChecklistItem(
+      makeItem({ status: "in_progress" }),
+      "2026-06-01",
+      "2026-12-01",
+      "2026-12-08"
+    ),
+    "in-progress tasks always require action"
+  );
+
+  const completedProgrammeSummary = buildDashboardFollowUpSummary(
+    [makeTrip({ follow_up_status: "completed" })],
+    [
+      makeItem({
+        id: 23,
+        category: "programme",
+        title: "Programme confirmation",
+      }),
+    ],
+    new Map([[10, context]]),
+    today
+  );
+  assert(
+    completedProgrammeSummary.length === 0,
+    "completed programmes must not surface follow-up tasks"
   );
 
   console.log("Unit checks passed.");
@@ -204,6 +292,16 @@ async function runDatabaseVerification() {
 
   for (const item of items) {
     assert(item.checklistItemId !== null, "follow-up item must map to checklist row");
+    const checklistRow = await prisma.tripChecklistItem.findUnique({
+      where: { id: item.checklistItemId },
+      select: { status: true },
+    });
+    assert(
+      checklistRow &&
+        (checklistRow.status === "todo" ||
+          checklistRow.status === "in_progress"),
+      `follow-up item must be open: ${item.task}`
+    );
     if (item.task.toLowerCase() === "yacht confirmed") {
       const trip = tripById.get(item.tripId);
       assert(
