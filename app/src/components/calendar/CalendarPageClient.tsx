@@ -542,6 +542,7 @@ export function CalendarPageClient({
             : null
         }
         checklistUpdatingId={checklistUpdatingId}
+        mobileFullScreen={isMobile}
         onClose={closePanel}
         onSelectProgramme={selectProgramme}
         onStatusChange={handleStatusChange}
