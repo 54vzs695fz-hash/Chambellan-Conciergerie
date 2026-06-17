@@ -1719,3 +1719,107 @@
     z-index: 20;
   }
 }
+
+/* Reservations Status (internal booking follow-up) */
+.rs-panel {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 0.5px solid rgba(221, 212, 200, 0.75);
+  border-radius: 8px;
+}
+
+.rs-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.65rem;
+}
+
+.rs-title {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a746c;
+}
+
+.rs-summary {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #5f755f;
+  line-height: 1.4;
+}
+
+.rs-loading,
+.rs-empty {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #9a948c;
+  line-height: 1.45;
+}
+
+.rs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.rs-item {
+  border: 0.5px solid rgba(221, 212, 200, 0.55);
+  border-radius: 6px;
+  background: rgba(250, 247, 242, 0.65);
+}
+
+.rs-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem 0.5rem;
+}
+
+.rs-status {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.72rem;
+  color: #4a4540;
+  background: rgba(255, 255, 255, 0.92);
+  border: 0.5px solid rgba(221, 212, 200, 0.75);
+  border-radius: 4px;
+}
+
+.rs-item-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.rs-venue {
+  font-size: 0.78rem;
+  color: #3d3833;
+  font-weight: 500;
+}
+
+.rs-meta {
+  font-size: 0.68rem;
+  color: #9a948c;
+  line-height: 1.35;
+}
+
+@media (min-width: 640px) {
+  .rs-item-main {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .rs-status {
+    width: auto;
+    min-width: 9.5rem;
+    flex-shrink: 0;
+  }
+}

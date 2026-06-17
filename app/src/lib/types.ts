@@ -17,6 +17,14 @@ export interface DaySection {
 
 export type ActivityStatus = "confirmed" | "awaiting";
 
+export type BookingStatus =
+  | "to_request"
+  | "request_sent"
+  | "waiting_confirmation"
+  | "confirmed"
+  | "rejected"
+  | "cancelled";
+
 export type TripFollowUpStatus =
   | "follow_up"
   | "contacted"
@@ -176,6 +184,7 @@ export interface Activity {
   title: string;
   details: string;
   status: ActivityStatus;
+  booking_status: BookingStatus;
   sort_order: number;
 }
 

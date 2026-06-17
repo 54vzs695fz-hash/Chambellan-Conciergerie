@@ -20,6 +20,12 @@ import {
   formatGridDayName,
   sortActivitiesForSection,
 } from "@/lib/planner-utils";
+import {
+  BOOKING_STATUS_LABELS,
+  BOOKING_STATUS_OPTIONS,
+  isReservationActivityType,
+  normalizeBookingStatus,
+} from "@/lib/reservations/reservation-status";
 
 function reorderItems<T>(items: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= items.length) return items;
@@ -78,21 +84,32 @@ const ActivityEditRow = memo(function ActivityEditRow({
   const [title, setTitle] = useState(activity.title);
   const [details, setDetails] = useState(activity.details);
   const [activityType, setActivityType] = useState(activity.activity_type);
+  const [bookingStatus, setBookingStatus] = useState(
+    normalizeBookingStatus(activity.booking_status)
+  );
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const draftRef = useRef({ time, title, details, activity_type: activityType });
+  const draftRef = useRef({
+    time,
+    title,
+    details,
+    activity_type: activityType,
+    booking_status: bookingStatus,
+  });
 
   useEffect(() => {
     setTime(activity.time);
     setTitle(activity.title);
     setDetails(activity.details);
     setActivityType(activity.activity_type);
+    setBookingStatus(normalizeBookingStatus(activity.booking_status));
     draftRef.current = {
       time: activity.time,
       title: activity.title,
       details: activity.details,
       activity_type: activity.activity_type,
+      booking_status: normalizeBookingStatus(activity.booking_status),
     };
-  }, [activity.id]);
+  }, [activity.id, activity.time, activity.title, activity.details, activity.activity_type, activity.booking_status]);
 
   useEffect(() => {
     return () => {
@@ -114,6 +131,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
           title: payload.title,
           details: payload.details,
           activity_type: payload.activity_type,
+          booking_status: payload.booking_status,
         },
         { immediate }
       );
@@ -127,7 +145,12 @@ const ActivityEditRow = memo(function ActivityEditRow({
   }, [flush]);
 
   const updateDraft = (
-    patch: Partial<Pick<Activity, "time" | "title" | "details" | "activity_type">>,
+    patch: Partial<
+      Pick<
+        Activity,
+        "time" | "title" | "details" | "activity_type" | "booking_status"
+      >
+    >,
     immediate = false
   ) => {
     draftRef.current = { ...draftRef.current, ...patch };
@@ -277,6 +300,27 @@ const ActivityEditRow = memo(function ActivityEditRow({
         onBlur={() => flush(true)}
         className="adm-input adm-input--detail"
       />
+      {isReservationActivityType(activityType) ? (
+        <label className="adm-booking-status">
+          <span className="adm-booking-status-label">Booking status</span>
+          <select
+            className="adm-input adm-input--booking-status"
+            value={bookingStatus}
+            onChange={(e) => {
+              const next = normalizeBookingStatus(e.target.value);
+              setBookingStatus(next);
+              updateDraft({ booking_status: next }, true);
+            }}
+            aria-label={`Booking status for ${title || "activity"}`}
+          >
+            {BOOKING_STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {BOOKING_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
     </div>
   );
 });

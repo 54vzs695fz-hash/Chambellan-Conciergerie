@@ -25,12 +25,18 @@ import { PaymentStatusPicker } from "@/components/status/PaymentStatusPicker";
 import type { CalendarProgramme } from "@/lib/calendar/programmes";
 import type {
   ActivityType,
+  BookingStatus,
   ChecklistCategory,
   ChecklistItem,
   ChecklistItemStatus,
   Trip,
   TripPaymentStatus,
 } from "@/lib/types";
+import { ReservationsStatusPanel } from "@/components/reservations/ReservationsStatusPanel";
+import {
+  formatBookingStatusSummary,
+  type ReservationStatusItem,
+} from "@/lib/reservations/reservation-status";
 
 interface ChecklistPanelData {
   items: ChecklistItem[];
@@ -203,6 +209,14 @@ export function CalendarProgrammeFollowUpPanel({
   const [addingTaskCategory, setAddingTaskCategory] =
     useState<ChecklistCategory | null>(null);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [reservationItems, setReservationItems] = useState<
+    ReservationStatusItem[]
+  >([]);
+  const [reservationSummary, setReservationSummary] = useState("");
+  const [reservationsLoading, setReservationsLoading] = useState(true);
+  const [updatingReservationId, setUpdatingReservationId] = useState<
+    number | null
+  >(null);
 
   const todayStr = useMemo(() => todayIsoDate(today), [today]);
 
@@ -220,11 +234,30 @@ export function CalendarProgrammeFollowUpPanel({
     }
   }, [programme.id]);
 
+  const loadReservations = useCallback(async () => {
+    setReservationsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/trips/${programme.id}/reservations-status`
+      );
+      if (!res.ok) return;
+      const data = (await res.json()) as {
+        items: ReservationStatusItem[];
+        summary: string;
+      };
+      setReservationItems(data.items ?? []);
+      setReservationSummary(data.summary ?? "");
+    } finally {
+      setReservationsLoading(false);
+    }
+  }, [programme.id]);
+
   useEffect(() => {
     setExpandedSection(null);
     setShowCategoryPicker(false);
     void loadChecklist();
-  }, [loadChecklist, programme.id]);
+    void loadReservations();
+  }, [loadChecklist, loadReservations, programme.id]);
 
   const programmeContext = useMemo(
     () => (panelData ? toProgrammeContext(panelData.context) : null),
@@ -330,6 +363,35 @@ export function CalendarProgrammeFollowUpPanel({
     setExpandedSection((current) => (current === category ? null : category));
   };
 
+  const handlePatchBookingStatus = async (
+    activityId: number,
+    booking_status: BookingStatus
+  ) => {
+    setUpdatingReservationId(activityId);
+    setReservationItems((current) =>
+      current.map((item) =>
+        item.activityId === activityId ? { ...item, booking_status } : item
+      )
+    );
+    try {
+      const res = await fetch(`/api/activities/${activityId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ booking_status }),
+      });
+      if (!res.ok) return;
+      setReservationItems((current) => {
+        const next = current.map((item) =>
+          item.activityId === activityId ? { ...item, booking_status } : item
+        );
+        setReservationSummary(formatBookingStatusSummary(next));
+        return next;
+      });
+    } finally {
+      setUpdatingReservationId(null);
+    }
+  };
+
   return (
     <section
       className={`cal-fu-panel${variant === "embedded" ? " cal-fu-panel--embedded" : ""}`}
@@ -385,6 +447,15 @@ export function CalendarProgrammeFollowUpPanel({
         <p className="cal-fu-loading">Loading checklist…</p>
       ) : (
         <>
+          <ReservationsStatusPanel
+            items={reservationItems}
+            summary={reservationSummary}
+            loading={reservationsLoading}
+            updatingId={updatingReservationId}
+            onPatchBookingStatus={handlePatchBookingStatus}
+            variant="calendar"
+          />
+
           <div className="cal-fu-sections">
             {visibleCategories.length === 0 ? (
               <p className="cal-fu-empty">

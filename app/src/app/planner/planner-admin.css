@@ -1224,3 +1224,28 @@ body.lux-pdf-export-open {
     grid-template-columns: 1fr;
   }
 }
+
+.adm-booking-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+}
+
+.adm-booking-status-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9a948c;
+}
+
+.adm-input--booking-status {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .adm-input--booking-status {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

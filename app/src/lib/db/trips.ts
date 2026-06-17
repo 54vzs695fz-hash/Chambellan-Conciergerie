@@ -61,6 +61,7 @@ function mapActivity(row: PrismaActivity): Activity {
     title: row.title,
     details: row.details,
     status: row.status as Activity["status"],
+    booking_status: (row.booking_status ?? "to_request") as Activity["booking_status"],
     sort_order: row.sort_order,
   };
 }
@@ -309,6 +310,7 @@ export async function updateActivity(
       | "title"
       | "details"
       | "status"
+      | "booking_status"
       | "sort_order"
     >
   >

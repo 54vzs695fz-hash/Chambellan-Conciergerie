@@ -98,16 +98,17 @@ model TripDay {
 }
 
 model Activity {
-  id            Int     @id @default(autoincrement())
-  trip_day_id   Int
-  period        String
-  activity_type String  @default("activity")
-  time          String  @default("")
-  title         String  @default("")
-  details       String  @default("")
-  status        String  @default("confirmed")
-  sort_order    Int     @default(0)
-  trip_day      TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
+  id             Int     @id @default(autoincrement())
+  trip_day_id    Int
+  period         String
+  activity_type  String  @default("activity")
+  time           String  @default("")
+  title          String  @default("")
+  details        String  @default("")
+  status         String  @default("confirmed")
+  booking_status String  @default("to_request")
+  sort_order     Int     @default(0)
+  trip_day       TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
 
   @@index([trip_day_id], map: "idx_activities_day")
   @@map("activities")

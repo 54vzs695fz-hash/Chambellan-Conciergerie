@@ -42,6 +42,7 @@ import { teamAutofillFromEstablishment } from "@/lib/establishments/autofill";
 import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
 import { PlannerCollapsibleSection } from "./PlannerCollapsibleSection";
+import { ReservationsStatusPanel } from "@/components/reservations/ReservationsStatusPanel";
 
 interface DashboardProps {
   trip: TripWithDays;
@@ -383,6 +384,16 @@ export function PlannerConciergeDashboard({
             onRemoveActivity={onRemoveActivity}
             onUpdateSections={onUpdateSections}
             onReorderActivities={onReorderActivities}
+          />
+        </PlannerCollapsibleSection>
+
+        <PlannerCollapsibleSection title="Reservations Status" defaultOpen>
+          <ReservationsStatusPanel
+            days={trip.days}
+            onPatchBookingStatus={(activityId, booking_status) =>
+              onPatchActivity(activityId, { booking_status }, { immediate: true })
+            }
+            variant="planner"
           />
         </PlannerCollapsibleSection>
 
