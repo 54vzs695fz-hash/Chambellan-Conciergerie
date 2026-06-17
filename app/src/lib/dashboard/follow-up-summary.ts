@@ -3,6 +3,11 @@ import {
   startOfDay,
   toIsoDate,
 } from "@/lib/calendar/programmes";
+import {
+  buildEmptyProgrammeContext,
+  isFollowUpEligibleChecklistItem,
+  type TripProgrammeContext,
+} from "@/lib/dashboard/checklist-follow-up-eligibility";
 import { getArrivalCountdown } from "@/lib/planner/arrival-countdown";
 import { isImportantChecklistItem } from "@/lib/planner/checklist-utils";
 import type {
@@ -85,7 +90,17 @@ function classifyChecklistItem(
   if (isItineraryItem(item.title)) return "itinerary";
   if (item.category === "payments") return "payment";
   if (item.category === "reservations") return "booking";
+  if (item.category === "arrival") return "arrival";
   return null;
+}
+
+function isUpcomingChecklistItem(
+  item: ChecklistItem,
+  todayStr: string
+): boolean {
+  if (item.due_date && item.due_date > todayStr) return true;
+  if (item.reminder_date && item.reminder_date > todayStr) return true;
+  return false;
 }
 
 function toFollowUpItem(
@@ -106,23 +121,46 @@ function toFollowUpItem(
   };
 }
 
+function resolveKind(
+  item: ChecklistItem,
+  todayStr: string,
+  arrivalDate: string,
+  departureDate: string
+): DashboardFollowUpKind | null {
+  const classified = classifyChecklistItem(item);
+  if (classified) return classified;
+
+  if (
+    isImportantChecklistItem(
+      item,
+      todayStr,
+      arrivalDate,
+      departureDate
+    )
+  ) {
+    return "urgent";
+  }
+
+  if (isUpcomingChecklistItem(item, todayStr)) {
+    return "arrival";
+  }
+
+  if (item.status === "in_progress") {
+    return "urgent";
+  }
+
+  return null;
+}
+
 export function buildDashboardFollowUpSummary(
   trips: Trip[],
   checklistItems: ChecklistItem[],
+  programmeContextByTripId: Map<number, TripProgrammeContext> = new Map(),
   today = startOfDay(new Date())
 ): DashboardFollowUpItem[] {
   const todayStr = toIsoDate(today);
-  const tripById = new Map<number, TripContext>(
-    trips.map((trip) => [
-      trip.id,
-      {
-        id: trip.id,
-        client_name: trip.client_name,
-        destination: trip.destination,
-        arrival_date: trip.arrival_date,
-        departure_date: trip.departure_date,
-      },
-    ])
+  const tripById = new Map<number, Trip>(
+    trips.map((trip) => [trip.id, trip])
   );
 
   const itemsByKind = new Map<DashboardFollowUpKind, DashboardFollowUpItem[]>();
@@ -130,67 +168,32 @@ export function buildDashboardFollowUpSummary(
     itemsByKind.set(kind, []);
   }
 
-  const usedChecklistIds = new Set<number>();
-  const usedArrivalTrips = new Set<number>();
-
   for (const item of checklistItems) {
     if (item.status === "done") continue;
+
     const trip = tripById.get(item.trip_id);
     if (!trip || !isActiveTrip(trip, todayStr)) continue;
 
-    const classified = classifyChecklistItem(item);
-    if (classified) {
-      const bucket = itemsByKind.get(classified)!;
-      const limit = MAX_PER_KIND[classified] ?? 2;
-      if (bucket.length < limit) {
-        bucket.push(toFollowUpItem(item, trip, classified, today));
-        usedChecklistIds.add(item.id);
-      }
+    const context =
+      programmeContextByTripId.get(trip.id) ?? buildEmptyProgrammeContext();
+
+    if (!isFollowUpEligibleChecklistItem(item, trip, context, today)) {
       continue;
     }
 
-    if (
-      isImportantChecklistItem(
-        item,
-        todayStr,
-        trip.arrival_date,
-        trip.departure_date
-      )
-    ) {
-      const bucket = itemsByKind.get("urgent")!;
-      if (bucket.length < (MAX_PER_KIND.urgent ?? 3)) {
-        bucket.push(toFollowUpItem(item, trip, "urgent", today));
-        usedChecklistIds.add(item.id);
-      }
-    }
-  }
-
-  for (const trip of tripById.values()) {
-    if (!isActiveTrip(trip, todayStr)) continue;
-    if (!trip.arrival_date) continue;
-    const days = daysUntilArrival(trip.arrival_date, today);
-    if (days === null || days < 0 || days > 7) continue;
-
-    const bucket = itemsByKind.get("arrival")!;
-    if (bucket.length >= (MAX_PER_KIND.arrival ?? 2)) break;
-    if (usedArrivalTrips.has(trip.id)) continue;
-
-    const countdown = getArrivalCountdown(
+    const kind = resolveKind(
+      item,
+      todayStr,
       trip.arrival_date,
-      trip.departure_date,
-      today
+      trip.departure_date
     );
-    bucket.push({
-      key: `arrival-${trip.id}`,
-      checklistItemId: null,
-      tripId: trip.id,
-      kind: "arrival",
-      task: "Upcoming arrival",
-      client_name: trip.client_name || "Client",
-      destination: trip.destination || "Programme",
-      timing: countdown?.label ?? `Arrival in ${days} days`,
-    });
-    usedArrivalTrips.add(trip.id);
+    if (!kind) continue;
+
+    const bucket = itemsByKind.get(kind)!;
+    const limit = MAX_PER_KIND[kind] ?? 2;
+    if (bucket.length >= limit) continue;
+
+    bucket.push(toFollowUpItem(item, trip, kind, today));
   }
 
   const result: DashboardFollowUpItem[] = [];

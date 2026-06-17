@@ -11,6 +11,8 @@ import type {
 } from "@/lib/types";
 import type { TripChecklistItem as PrismaChecklistItem } from "@/generated/prisma/client";
 import { toIsoDate, startOfDay } from "@/lib/calendar/programmes";
+import type { ActivityType } from "@/lib/types";
+import type { TripProgrammeContext } from "@/lib/dashboard/checklist-follow-up-eligibility";
 
 function mapChecklistItem(row: PrismaChecklistItem): ChecklistItem {
   return {
@@ -254,14 +256,48 @@ export async function listOpenChecklistItems(): Promise<ChecklistItem[]> {
   return rows.map(mapChecklistItem);
 }
 
+async function listTripProgrammeContextByTripId(): Promise<
+  Map<number, TripProgrammeContext>
+> {
+  const rows = await prisma.activity.findMany({
+    select: {
+      activity_type: true,
+      trip_day: { select: { trip_id: true } },
+    },
+  });
+
+  const map = new Map<number, TripProgrammeContext>();
+
+  for (const row of rows) {
+    const tripId = row.trip_day.trip_id;
+    let context = map.get(tripId);
+    if (!context) {
+      context = { activityTypes: new Set<ActivityType>(), transferCount: 0 };
+      map.set(tripId, context);
+    }
+    const activityType = row.activity_type as ActivityType;
+    context.activityTypes.add(activityType);
+    if (activityType === "transfer") {
+      context.transferCount += 1;
+    }
+  }
+
+  return map;
+}
+
 export async function listDashboardFollowUpItems() {
   const { buildDashboardFollowUpSummary } = await import(
     "@/lib/dashboard/follow-up-summary"
   );
   const { listTrips } = await import("@/lib/db/trips");
-  const [trips, checklistItems] = await Promise.all([
+  const [trips, checklistItems, programmeContextByTripId] = await Promise.all([
     listTrips(),
     listOpenChecklistItems(),
+    listTripProgrammeContextByTripId(),
   ]);
-  return buildDashboardFollowUpSummary(trips, checklistItems);
+  return buildDashboardFollowUpSummary(
+    trips,
+    checklistItems,
+    programmeContextByTripId
+  );
 }
