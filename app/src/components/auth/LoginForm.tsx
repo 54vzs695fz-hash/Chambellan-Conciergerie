@@ -20,6 +20,7 @@ export function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberDevice, setRememberDevice] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [passkeyReady, setPasskeyReady] = useState(false);
@@ -37,7 +38,7 @@ export function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberDevice }),
       });
       const data = (await res.json()) as { error?: string };
 
@@ -76,7 +77,7 @@ export function LoginForm() {
       const verifyRes = await fetch("/api/auth/webauthn/authenticate/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authResponse),
+        body: JSON.stringify({ ...authResponse, rememberDevice }),
       });
       const verifyData = (await verifyRes.json()) as { error?: string };
 
@@ -123,7 +124,7 @@ export function LoginForm() {
             className="login-input"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@chambellan.fr"
+            placeholder="name@chambellan-conciergerie.fr"
             required
           />
         </label>
@@ -139,6 +140,15 @@ export function LoginForm() {
             placeholder="••••••••"
             required
           />
+        </label>
+
+        <label className="login-remember">
+          <input
+            type="checkbox"
+            checked={rememberDevice}
+            onChange={(event) => setRememberDevice(event.target.checked)}
+          />
+          <span>Remember this device for 30 days</span>
         </label>
 
         {error ? <p className="login-error">{error}</p> : null}

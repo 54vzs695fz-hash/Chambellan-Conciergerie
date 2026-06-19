@@ -1,17 +1,41 @@
 export const SESSION_COOKIE = "chambellan_session";
+/** Persistent “remember this device” sessions */
 export const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30;
+/** Shorter session when “remember” is unchecked */
+export const SESSION_BROWSER_AGE_SEC = 60 * 60 * 12;
 
-export const AUTH_USER_SEEDS = [
+export type AuthRole = "admin";
+
+export interface AuthorizedAccount {
+  name: string;
+  email: string;
+  role: AuthRole;
+  passwordEnv: string;
+}
+
+/** The only two accounts allowed to access the app. */
+export const AUTHORIZED_ACCOUNTS: AuthorizedAccount[] = [
   {
-    name: "Matthieu",
-    emailEnv: "AUTH_MATTHIEU_EMAIL",
+    name: "Matthieu Dubourg",
+    email: "matthieu@chambellan-conciergerie.fr",
+    role: "admin",
     passwordEnv: "AUTH_MATTHIEU_PASSWORD",
-    defaultEmail: "matthieu@chambellan.fr",
   },
   {
-    name: "Yanis",
-    emailEnv: "AUTH_YANIS_EMAIL",
+    name: "Yanis Mousli",
+    email: "yanis@chambellan-conciergerie.fr",
+    role: "admin",
     passwordEnv: "AUTH_YANIS_PASSWORD",
-    defaultEmail: "yanis@chambellan.fr",
   },
-] as const;
+];
+
+export const AUTHORIZED_EMAILS = new Set(
+  AUTHORIZED_ACCOUNTS.map((account) => account.email)
+);
+
+export function isAuthorizedEmail(email: string): boolean {
+  return AUTHORIZED_EMAILS.has(email.toLowerCase().trim());
+}
+
+/** @deprecated use AUTHORIZED_ACCOUNTS */
+export const AUTH_USER_SEEDS = AUTHORIZED_ACCOUNTS;

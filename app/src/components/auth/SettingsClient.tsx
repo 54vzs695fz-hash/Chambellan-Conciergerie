@@ -6,6 +6,7 @@ import { logout, registerPasskey } from "@/components/auth/LoginForm";
 interface SessionUser {
   email: string;
   name: string;
+  role: string;
   passkeyCount: number;
 }
 
@@ -63,6 +64,7 @@ export function SettingsClient() {
         <p className="settings-eyebrow">Signed in as</p>
         <h2 className="settings-name">{user.name}</h2>
         <p className="settings-email">{user.email}</p>
+        <p className="settings-muted settings-role">{user.role}</p>
         {user.passkeyCount > 0 ? (
           <p className="settings-muted">
             {user.passkeyCount} passkey{user.passkeyCount === 1 ? "" : "s"} registered

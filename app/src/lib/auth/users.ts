@@ -1,43 +1,67 @@
 import { prisma } from "@/lib/prisma";
-import { AUTH_USER_SEEDS } from "./constants";
+import { AUTHORIZED_ACCOUNTS, isAuthorizedEmail } from "./constants";
 import { hashPassword } from "./password";
 
-export async function ensureAuthUsers(): Promise<void> {
-  const count = await prisma.appUser.count();
-  if (count > 0) return;
+/** Sync the two internal accounts (metadata only; passwords via seed script). */
+export async function syncAuthorizedUsers(): Promise<void> {
+  for (const account of AUTHORIZED_ACCOUNTS) {
+    const password = process.env[account.passwordEnv];
+    const existing = await prisma.appUser.findUnique({
+      where: { email: account.email },
+    });
 
-  for (const seed of AUTH_USER_SEEDS) {
-    const email = (
-      process.env[seed.emailEnv] ?? seed.defaultEmail
-    ).toLowerCase();
-    const password = process.env[seed.passwordEnv];
+    if (existing) {
+      await prisma.appUser.update({
+        where: { email: account.email },
+        data: { name: account.name, role: account.role },
+      });
+      continue;
+    }
+
     if (!password) {
       console.warn(
-        `[auth] Skipping ${seed.name}: set ${seed.passwordEnv} to create account`
+        `[auth] Account missing for ${account.name}: set ${account.passwordEnv} and run npm run seed:auth`
       );
       continue;
     }
 
     await prisma.appUser.create({
       data: {
-        email,
-        name: seed.name,
+        email: account.email,
+        name: account.name,
+        role: account.role,
         password_hash: hashPassword(password),
       },
     });
   }
 }
 
+/** @deprecated use syncAuthorizedUsers */
+export async function ensureAuthUsers(): Promise<void> {
+  await syncAuthorizedUsers();
+}
+
 export async function findUserByEmail(email: string) {
+  const normalized = email.toLowerCase().trim();
+  if (!isAuthorizedEmail(normalized)) {
+    return null;
+  }
+
   return prisma.appUser.findUnique({
-    where: { email: email.toLowerCase().trim() },
+    where: { email: normalized },
     include: { credentials: true },
   });
 }
 
 export async function findUserById(id: number) {
-  return prisma.appUser.findUnique({
+  const user = await prisma.appUser.findUnique({
     where: { id },
     include: { credentials: true },
   });
+
+  if (!user || !isAuthorizedEmail(user.email)) {
+    return null;
+  }
+
+  return user;
 }

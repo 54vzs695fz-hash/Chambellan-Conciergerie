@@ -13,18 +13,19 @@ function hashPassword(password) {
   return `${salt}:${hash}`;
 }
 
-const seeds = [
+/** Fixed internal accounts — no public registration. */
+const accounts = [
   {
-    name: "Matthieu",
-    emailEnv: "AUTH_MATTHIEU_EMAIL",
+    name: "Matthieu Dubourg",
+    email: "matthieu@chambellan-conciergerie.fr",
+    role: "admin",
     passwordEnv: "AUTH_MATTHIEU_PASSWORD",
-    defaultEmail: "matthieu@chambellan.fr",
   },
   {
-    name: "Yanis",
-    emailEnv: "AUTH_YANIS_EMAIL",
+    name: "Yanis Mousli",
+    email: "yanis@chambellan-conciergerie.fr",
+    role: "admin",
     passwordEnv: "AUTH_YANIS_PASSWORD",
-    defaultEmail: "yanis@chambellan.fr",
   },
 ];
 
@@ -32,24 +33,46 @@ const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 async function main() {
-  for (const seed of seeds) {
-    const email = (process.env[seed.emailEnv] ?? seed.defaultEmail).toLowerCase();
-    const password = process.env[seed.passwordEnv];
+  let updated = 0;
+
+  for (const account of accounts) {
+    const password = process.env[account.passwordEnv];
     if (!password) {
-      console.warn(`Skip ${seed.name}: set ${seed.passwordEnv}`);
+      console.warn(`Skip ${account.name}: set ${account.passwordEnv}`);
       continue;
     }
 
     await prisma.appUser.upsert({
-      where: { email },
-      update: { password_hash: hashPassword(password), name: seed.name },
+      where: { email: account.email },
+      update: {
+        name: account.name,
+        role: account.role,
+        password_hash: hashPassword(password),
+      },
       create: {
-        email,
-        name: seed.name,
+        email: account.email,
+        name: account.name,
+        role: account.role,
         password_hash: hashPassword(password),
       },
     });
-    console.log(`Upserted ${seed.name} (${email})`);
+    console.log(`Password set for ${account.name} (${account.email})`);
+    updated += 1;
+  }
+
+  if (updated === 0) {
+    console.error(
+      "No passwords updated. Set AUTH_MATTHIEU_PASSWORD and AUTH_YANIS_PASSWORD in .env"
+    );
+    process.exit(1);
+  }
+
+  const allowedEmails = accounts.map((a) => a.email);
+  const removed = await prisma.appUser.deleteMany({
+    where: { email: { notIn: allowedEmails } },
+  });
+  if (removed.count > 0) {
+    console.log(`Removed ${removed.count} unauthorized account(s)`);
   }
 }
 

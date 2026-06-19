@@ -9,6 +9,7 @@ import type {
   RegistrationResponseJSON,
 } from "@simplewebauthn/server";
 import { prisma } from "@/lib/prisma";
+import { isAuthorizedEmail } from "./constants";
 import {
   getWebAuthnOrigin,
   getWebAuthnRpId,
@@ -118,6 +119,10 @@ export async function verifyAuthentication(
 
   if (!credential) {
     throw new Error("Passkey not recognized");
+  }
+
+  if (!isAuthorizedEmail(credential.user.email)) {
+    throw new Error("Account not authorized");
   }
 
   const verification = await verifyAuthenticationResponse({

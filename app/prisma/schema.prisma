@@ -192,6 +192,7 @@ model AppUser {
   id            Int                  @id @default(autoincrement())
   email         String               @unique
   name          String
+  role          String               @default("admin")
   password_hash String
   created_at    DateTime             @default(now())
   updated_at    DateTime             @updatedAt

@@ -82,6 +82,11 @@
   color: var(--shell-accent);
 }
 
+.settings-role {
+  margin-top: 0.35rem;
+  text-transform: capitalize;
+}
+
 .settings-logout {
   width: 100%;
   min-height: 44px;

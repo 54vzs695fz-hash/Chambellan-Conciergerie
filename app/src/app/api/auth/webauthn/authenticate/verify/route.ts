@@ -21,20 +21,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = (await req.json()) as AuthenticationResponseJSON;
-    const user = await verifyAuthentication(body, stored.challenge);
+    const body = (await req.json()) as AuthenticationResponseJSON & {
+      rememberDevice?: boolean;
+    };
+    const rememberDevice = body.rememberDevice !== false;
+    const { rememberDevice: _omit, ...authResponse } = body as AuthenticationResponseJSON & {
+      rememberDevice?: boolean;
+    };
+    const user = await verifyAuthentication(authResponse, stored.challenge);
 
-    const token = await createSessionToken({
-      userId: user.id,
-      email: user.email,
-      name: user.name,
-    });
+    const token = await createSessionToken(
+      {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      rememberDevice
+    );
 
     const response = NextResponse.json({
       ok: true,
-      user: { email: user.email, name: user.name },
+      user: { email: user.email, name: user.name, role: user.role },
     });
-    response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
+    response.cookies.set(
+      SESSION_COOKIE,
+      token,
+      sessionCookieOptions(rememberDevice)
+    );
     return response;
   } catch (err) {
     console.error("POST /api/auth/webauthn/authenticate/verify failed:", err);

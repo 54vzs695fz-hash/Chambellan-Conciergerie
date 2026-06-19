@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
-import { prisma } from "@/lib/prisma";
+import { findUserById } from "@/lib/auth/users";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,11 +12,7 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    const user = await prisma.appUser.findUnique({
-      where: { id: Number(session.sub) },
-      include: { credentials: { select: { id: true, created_at: true } } },
-    });
-
+    const user = await findUserById(Number(session.sub));
     if (!user) {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
@@ -26,6 +22,7 @@ export async function GET() {
       user: {
         email: user.email,
         name: user.name,
+        role: user.role,
         passkeyCount: user.credentials.length,
       },
     });

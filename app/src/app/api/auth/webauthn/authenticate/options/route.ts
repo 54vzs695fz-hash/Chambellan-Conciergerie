@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { storeWebAuthnChallenge } from "@/lib/auth/challenge";
-import { ensureAuthUsers } from "@/lib/auth/users";
+import { syncAuthorizedUsers } from "@/lib/auth/users";
 import { buildAuthenticationOptions } from "@/lib/auth/webauthn";
 
 export const runtime = "nodejs";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    await ensureAuthUsers();
+    await syncAuthorizedUsers();
 
     const body = (await req.json()) as { email?: string };
     const email = body.email?.trim().toLowerCase();

@@ -1,7 +1,11 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { SESSION_COOKIE, SESSION_MAX_AGE_SEC } from "./constants";
+import {
+  SESSION_BROWSER_AGE_SEC,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE_SEC,
+} from "./constants";
 
 export { SESSION_COOKIE };
 
@@ -9,6 +13,7 @@ export interface SessionPayload {
   sub: string;
   email: string;
   name: string;
+  role: string;
 }
 
 function getAuthSecret(): Uint8Array {
@@ -20,13 +25,22 @@ function getAuthSecret(): Uint8Array {
 }
 
 export async function createSessionToken(
-  payload: Omit<SessionPayload, "sub"> & { userId: number }
+  payload: Omit<SessionPayload, "sub"> & { userId: number },
+  rememberDevice = true
 ): Promise<string> {
-  return new SignJWT({ email: payload.email, name: payload.name })
+  const maxAgeSec = rememberDevice
+    ? SESSION_MAX_AGE_SEC
+    : SESSION_BROWSER_AGE_SEC;
+
+  return new SignJWT({
+    email: payload.email,
+    name: payload.name,
+    role: payload.role,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(payload.userId))
     .setIssuedAt()
-    .setExpirationTime(`${SESSION_MAX_AGE_SEC}s`)
+    .setExpirationTime(`${maxAgeSec}s`)
     .sign(getAuthSecret());
 }
 
@@ -46,6 +60,7 @@ export async function verifySessionToken(
       sub: payload.sub,
       email: payload.email,
       name: payload.name,
+      role: typeof payload.role === "string" ? payload.role : "admin",
     };
   } catch {
     return null;
@@ -67,12 +82,17 @@ export async function getSessionFromRequest(
   return verifySessionToken(token);
 }
 
-export function sessionCookieOptions(maxAge = SESSION_MAX_AGE_SEC) {
-  return {
+export function sessionCookieOptions(rememberDevice = true) {
+  const base = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    maxAge,
   };
+
+  if (rememberDevice) {
+    return { ...base, maxAge: SESSION_MAX_AGE_SEC };
+  }
+
+  return base;
 }
