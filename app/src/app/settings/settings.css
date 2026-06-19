@@ -72,6 +72,32 @@
   font-weight: 500;
 }
 
+.settings-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-top: 0.875rem;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.settings-field-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted);
+}
+
+.settings-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #9b4f5c;
+}
+
 .settings-btn {
   margin-top: 0.875rem;
 }

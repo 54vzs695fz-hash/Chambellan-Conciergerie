@@ -4,6 +4,9 @@ export const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30;
 /** Shorter session when “remember” is unchecked */
 export const SESSION_BROWSER_AGE_SEC = 60 * 60 * 12;
 
+/** Bump to invalidate all existing sessions immediately. */
+export const AUTH_VERSION = 2;
+
 export type AuthRole = "admin";
 
 export interface AuthorizedAccount {

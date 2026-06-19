@@ -1,6 +1,9 @@
+#!/usr/bin/env node
+/**
+ * Create or reset the two internal admin accounts (hashed passwords only).
+ * Run: AUTH_MATTHIEU_PASSWORD=... AUTH_YANIS_PASSWORD=... npm run seed:auth
+ */
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client.js";
-import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import { randomBytes, scryptSync } from "crypto";
 
@@ -13,7 +16,6 @@ function hashPassword(password) {
   return `${salt}:${hash}`;
 }
 
-/** Fixed internal accounts — no public registration. */
 const accounts = [
   {
     name: "Matthieu Dubourg",
@@ -29,10 +31,16 @@ const accounts = [
   },
 ];
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL is required");
+  process.exit(1);
+}
+
+const client = new pg.Client({ connectionString: DATABASE_URL });
 
 async function main() {
+  await client.connect();
   let updated = 0;
 
   for (const account of accounts) {
@@ -42,37 +50,36 @@ async function main() {
       continue;
     }
 
-    await prisma.appUser.upsert({
-      where: { email: account.email },
-      update: {
-        name: account.name,
-        role: account.role,
-        password_hash: hashPassword(password),
-      },
-      create: {
-        email: account.email,
-        name: account.name,
-        role: account.role,
-        password_hash: hashPassword(password),
-      },
-    });
-    console.log(`Password set for ${account.name} (${account.email})`);
+    const passwordHash = hashPassword(password);
+    const result = await client.query(
+      `INSERT INTO app_users (email, name, role, password_hash, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, NOW(), NOW())
+       ON CONFLICT (email) DO UPDATE SET
+         name = EXCLUDED.name,
+         role = EXCLUDED.role,
+         password_hash = EXCLUDED.password_hash,
+         updated_at = NOW()
+       RETURNING id`,
+      [account.email, account.name, account.role, passwordHash]
+    );
+    console.log(`Password set for ${account.name} (${account.email}) [id=${result.rows[0].id}]`);
     updated += 1;
   }
 
   if (updated === 0) {
     console.error(
-      "No passwords updated. Set AUTH_MATTHIEU_PASSWORD and AUTH_YANIS_PASSWORD in .env"
+      "No passwords updated. Set AUTH_MATTHIEU_PASSWORD and AUTH_YANIS_PASSWORD"
     );
     process.exit(1);
   }
 
   const allowedEmails = accounts.map((a) => a.email);
-  const removed = await prisma.appUser.deleteMany({
-    where: { email: { notIn: allowedEmails } },
-  });
-  if (removed.count > 0) {
-    console.log(`Removed ${removed.count} unauthorized account(s)`);
+  const removed = await client.query(
+    `DELETE FROM app_users WHERE email <> ALL($1::text[])`,
+    [allowedEmails]
+  );
+  if (removed.rowCount > 0) {
+    console.log(`Removed ${removed.rowCount} unauthorized account(s)`);
   }
 }
 
@@ -82,6 +89,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
+    await client.end().catch(() => {});
   });

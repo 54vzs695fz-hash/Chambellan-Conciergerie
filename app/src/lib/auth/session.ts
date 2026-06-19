@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
+import { getAuthVersion, isSessionVersionValid } from "./auth-version";
 import {
   SESSION_BROWSER_AGE_SEC,
   SESSION_COOKIE,
@@ -14,6 +15,7 @@ export interface SessionPayload {
   email: string;
   name: string;
   role: string;
+  v: number;
 }
 
 function getAuthSecret(): Uint8Array {
@@ -25,7 +27,7 @@ function getAuthSecret(): Uint8Array {
 }
 
 export async function createSessionToken(
-  payload: Omit<SessionPayload, "sub"> & { userId: number },
+  payload: Omit<SessionPayload, "sub" | "v"> & { userId: number },
   rememberDevice = true
 ): Promise<string> {
   const maxAgeSec = rememberDevice
@@ -36,6 +38,7 @@ export async function createSessionToken(
     email: payload.email,
     name: payload.name,
     role: payload.role,
+    v: getAuthVersion(),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(String(payload.userId))
@@ -52,7 +55,8 @@ export async function verifySessionToken(
     if (
       !payload.sub ||
       typeof payload.email !== "string" ||
-      typeof payload.name !== "string"
+      typeof payload.name !== "string" ||
+      !isSessionVersionValid(payload.v)
     ) {
       return null;
     }
@@ -61,6 +65,7 @@ export async function verifySessionToken(
       email: payload.email,
       name: payload.name,
       role: typeof payload.role === "string" ? payload.role : "admin",
+      v: Number(payload.v),
     };
   } catch {
     return null;

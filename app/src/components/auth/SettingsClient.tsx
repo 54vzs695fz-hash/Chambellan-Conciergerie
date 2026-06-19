@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { logout, registerPasskey } from "@/components/auth/LoginForm";
 
 interface SessionUser {
@@ -14,8 +14,13 @@ export function SettingsClient() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passwordBusy, setPasswordBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [passkeySupported, setPasskeySupported] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     setPasskeySupported(
@@ -50,6 +55,41 @@ export function SettingsClient() {
     }
   }
 
+  async function handleChangePassword(event: FormEvent) {
+    event.preventDefault();
+    setPasswordError("");
+    setMessage("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    setPasswordBusy(true);
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = (await res.json()) as { error?: string };
+
+      if (!res.ok) {
+        setPasswordError(data.error ?? "Could not change password");
+        return;
+      }
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setMessage("Password updated successfully.");
+    } catch {
+      setPasswordError("Could not reach the server");
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
+
   if (loading) {
     return <p className="settings-muted">Loading account…</p>;
   }
@@ -70,6 +110,58 @@ export function SettingsClient() {
             {user.passkeyCount} passkey{user.passkeyCount === 1 ? "" : "s"} registered
           </p>
         ) : null}
+      </section>
+
+      <section className="settings-section dash-card">
+        <h3 className="settings-section-title">Change password</h3>
+        <p className="settings-muted">
+          Update your private login password. Use at least 12 characters.
+        </p>
+        <form className="settings-password-form" onSubmit={handleChangePassword}>
+          <label className="settings-field">
+            <span className="settings-field-label">Current password</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              className="field-input"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              required
+            />
+          </label>
+          <label className="settings-field">
+            <span className="settings-field-label">New password</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              className="field-input"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              minLength={12}
+              required
+            />
+          </label>
+          <label className="settings-field">
+            <span className="settings-field-label">Confirm new password</span>
+            <input
+              type="password"
+              autoComplete="new-password"
+              className="field-input"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              minLength={12}
+              required
+            />
+          </label>
+          {passwordError ? <p className="settings-error">{passwordError}</p> : null}
+          <button
+            type="submit"
+            className="btn-primary settings-btn"
+            disabled={passwordBusy}
+          >
+            {passwordBusy ? "Updating…" : "Update password"}
+          </button>
+        </form>
       </section>
 
       {passkeySupported ? (

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import { isSessionVersionValid } from "@/lib/auth/auth-version";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
 
 const PUBLIC_PATHS = new Set(["/login"]);
@@ -38,11 +39,25 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
   if (!secret || secret.length < 32) return false;
 
   try {
-    await jwtVerify(token, new TextEncoder().encode(secret));
-    return true;
+    const { payload } = await jwtVerify(
+      token,
+      new TextEncoder().encode(secret)
+    );
+    return isSessionVersionValid(payload.v);
   } catch {
     return false;
   }
+}
+
+function clearSessionCookie(response: NextResponse): NextResponse {
+  response.cookies.set(SESSION_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+  return response;
 }
 
 export async function middleware(request: NextRequest) {
@@ -52,21 +67,27 @@ export async function middleware(request: NextRequest) {
     if (pathname === "/login" && (await hasValidSession(request))) {
       return NextResponse.redirect(new URL("/", request.url));
     }
+    if (pathname === "/login") {
+      const token = request.cookies.get(SESSION_COOKIE)?.value;
+      if (token) {
+        return clearSessionCookie(NextResponse.next());
+      }
+    }
     return NextResponse.next();
   }
 
   const authed = await hasValidSession(request);
   if (!authed) {
     if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return clearSessionCookie(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
     const loginUrl = new URL("/login", request.url);
     if (pathname !== "/") {
       loginUrl.searchParams.set("next", pathname);
     }
-    const response = NextResponse.redirect(loginUrl);
-    response.cookies.delete(SESSION_COOKIE);
-    return response;
+    return clearSessionCookie(NextResponse.redirect(loginUrl));
   }
 
   return NextResponse.next();
