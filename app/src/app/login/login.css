@@ -1,0 +1,208 @@
+.login-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem calc(2rem + env(safe-area-inset-bottom));
+  background: #0a0a0a;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(184, 155, 106, 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(184, 155, 106, 0.08), transparent 50%);
+  pointer-events: none;
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 420px);
+  padding: 2rem 1.75rem 1.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(184, 155, 106, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(26, 24, 20, 0.96) 0%,
+    rgba(17, 17, 17, 0.98) 100%
+  );
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.login-card--loading {
+  color: rgba(245, 245, 245, 0.6);
+  text-align: center;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 1.75rem;
+}
+
+.login-logo {
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.login-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #b89b6a;
+}
+
+.login-title {
+  margin: 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #f5f5f5;
+}
+
+.login-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: rgba(245, 245, 245, 0.55);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.5);
+}
+
+.login-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 0.875rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f5f5f5;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-input::placeholder {
+  color: rgba(245, 245, 245, 0.28);
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: rgba(184, 155, 106, 0.55);
+  box-shadow: 0 0 0 3px rgba(184, 155, 106, 0.12);
+}
+
+.login-error {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: #f5c6cb;
+  background: rgba(155, 79, 92, 0.18);
+  border: 1px solid rgba(155, 79, 92, 0.35);
+}
+
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.login-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.login-btn--primary {
+  background: #b89b6a;
+  color: #111111;
+  font-weight: 500;
+}
+
+.login-btn--primary:hover:not(:disabled) {
+  background: #c4a876;
+}
+
+.login-passkey {
+  margin-top: 1.25rem;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: rgba(245, 245, 245, 0.35);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.login-btn--passkey {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f5f5f5;
+  border: 1px solid rgba(184, 155, 106, 0.35);
+}
+
+.login-btn--passkey:hover:not(:disabled) {
+  background: rgba(184, 155, 106, 0.12);
+}
+
+.login-passkey-note {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(245, 245, 245, 0.4);
+}
+
+.login-foot {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: rgba(245, 245, 245, 0.32);
+}

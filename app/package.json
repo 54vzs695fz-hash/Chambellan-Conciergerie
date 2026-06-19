@@ -20,15 +20,19 @@
     "test:website-import": "node scripts/test-website-import.mjs",
     "test:guest-name": "node scripts/test-format-guest-name.mjs",
     "test:activity-time-sort": "node scripts/test-activity-time-sort.mjs",
-    "seed:library-v3": "node scripts/seed-library-v3.mjs"
+    "seed:library-v3": "node scripts/seed-library-v3.mjs",
+    "seed:auth": "node scripts/seed-auth-users.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "@react-pdf/renderer": "^4.3.0",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.1",
     "@sparticuz/chromium": "^147.0.0",
     "dotenv": "^16.5.0",
+    "jose": "^6.2.3",
     "next": "^15.3.3",
     "pg": "^8.16.0",
     "puppeteer-core": "^25.1.0",
@@ -37,13 +41,13 @@
     "sharp": "^0.34.5"
   },
   "devDependencies": {
-    "better-sqlite3": "^11.8.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.15.21",
     "@types/pg": "^8.15.2",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "autoprefixer": "^10.4.21",
+    "better-sqlite3": "^11.8.1",
     "eslint-config-next": "^15.3.3",
     "postcss": "^8.5.3",
     "prisma": "^7.8.0",

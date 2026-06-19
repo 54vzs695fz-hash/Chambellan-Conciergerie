@@ -79,6 +79,7 @@ export const MAIN_NAV: NavItem[] = [
 
 /** Secondary routes reachable from desktop UI but not in the bottom bar. */
 export const MOBILE_MORE_LINKS: MobileMoreLink[] = [
+  { href: "/settings", label: "Settings", section: "settings" },
   { href: "/events", label: "Events", section: "library" },
   { href: "/event-venues", label: "Event Venues", section: "library" },
   { href: "/establishments/import", label: "Import establishments", section: "library" },
@@ -99,6 +100,7 @@ export function resolveSectionFromPath(pathname: string): AdminSection {
   ) {
     return "library";
   }
+  if (pathname.startsWith("/settings")) return "settings";
   return "dashboard";
 }
 

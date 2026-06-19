@@ -10,6 +10,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const section = resolveSectionFromPath(pathname);
   const isPrint = pathname.includes("/print");
   const isPlanner = pathname.startsWith("/planner");
+  const isLogin = pathname === "/login";
+
+  if (isLogin) {
+    return <>{children}</>;
+  }
 
   if (isPrint) {
     return <>{children}</>;

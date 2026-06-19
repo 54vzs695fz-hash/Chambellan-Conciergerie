@@ -187,3 +187,31 @@ model EventVenue {
   @@index([name], map: "idx_event_venues_name")
   @@map("event_venues")
 }
+
+model AppUser {
+  id            Int                  @id @default(autoincrement())
+  email         String               @unique
+  name          String
+  password_hash String
+  created_at    DateTime             @default(now())
+  updated_at    DateTime             @updatedAt
+  credentials   WebAuthnCredential[]
+
+  @@map("app_users")
+}
+
+model WebAuthnCredential {
+  id              Int      @id @default(autoincrement())
+  user_id         Int
+  credential_id   String   @unique
+  public_key      Bytes
+  counter         BigInt   @default(0)
+  device_type     String   @default("")
+  backed_up       Boolean  @default(false)
+  transports      String   @default("")
+  created_at      DateTime @default(now())
+  user            AppUser  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "idx_webauthn_user")
+  @@map("webauthn_credentials")
+}
