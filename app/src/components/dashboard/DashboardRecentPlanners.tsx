@@ -14,6 +14,7 @@ import type { Trip } from "@/lib/types";
 
 interface Props {
   trips: Trip[];
+  embedded?: boolean;
 }
 
 const SECTION_CARD_CLASS: Record<RecentPlannerPhase, string> = {
@@ -98,8 +99,54 @@ function RecentPlannerSection({
   );
 }
 
-export function DashboardRecentPlanners({ trips }: Props) {
+export function DashboardRecentPlanners({
+  trips,
+  embedded = false,
+}: Props) {
   const groups = groupRecentPlanners(trips);
+
+  const body = !hasRecentPlanners(groups) ? (
+    <p className="dash-accordion-empty text-sm text-muted">No planners yet.</p>
+  ) : (
+    <div className="dash-recent-groups">
+      <RecentPlannerSection
+        title="Currently in stay"
+        trips={groups.inStay}
+        phase="in_stay"
+      />
+      <RecentPlannerSection
+        title="Upcoming planners"
+        trips={groups.upcoming}
+        phase="upcoming"
+      />
+      {groups.past.length > 0 ? (
+        <details className="dash-recent-past">
+          <summary className="dash-recent-past-summary min-h-[44px]">
+            <span className="dash-recent-section-title">Past planners</span>
+            <span className="dash-recent-past-count">{groups.past.length}</span>
+          </summary>
+          <ul className="dash-recent-list space-y-2">
+            {groups.past.map((trip) => (
+              <RecentPlannerCard key={trip.id} trip={trip} phase="past" />
+            ))}
+          </ul>
+        </details>
+      ) : null}
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="dash-embedded-section dash-recent-planners-embedded">
+        <div className="dash-embedded-head">
+          <Link href="/planner" className="btn-ghost">
+            View all
+          </Link>
+        </div>
+        {body}
+      </div>
+    );
+  }
 
   return (
     <section className="mb-10 dash-recent-planners" data-section="planner">
@@ -109,38 +156,7 @@ export function DashboardRecentPlanners({ trips }: Props) {
           View all
         </Link>
       </div>
-
-      {!hasRecentPlanners(groups) ? (
-        <p className="text-sm text-muted">No planners yet.</p>
-      ) : (
-        <div className="dash-recent-groups">
-          <RecentPlannerSection
-            title="Currently in stay"
-            trips={groups.inStay}
-            phase="in_stay"
-          />
-          <RecentPlannerSection
-            title="Upcoming planners"
-            trips={groups.upcoming}
-            phase="upcoming"
-          />
-          {groups.past.length > 0 ? (
-            <details className="dash-recent-past">
-              <summary className="dash-recent-past-summary min-h-[44px]">
-                <span className="dash-recent-section-title">
-                  Past planners
-                </span>
-                <span className="dash-recent-past-count">{groups.past.length}</span>
-              </summary>
-              <ul className="dash-recent-list space-y-2">
-                {groups.past.map((trip) => (
-                  <RecentPlannerCard key={trip.id} trip={trip} phase="past" />
-                ))}
-              </ul>
-            </details>
-          ) : null}
-        </div>
-      )}
+      {body}
     </section>
   );
 }

@@ -18,6 +18,7 @@ import { formatGridDayDate, formatGridDayName } from "@/lib/planner-utils";
 
 interface Props {
   initialPlanners: BookingProgressPlanner[];
+  embedded?: boolean;
 }
 
 function formatItemDate(date: string): string {
@@ -39,7 +40,10 @@ function bookingProgressStatusClass(
   return "bp-status--todo";
 }
 
-export function DashboardBookingProgress({ initialPlanners }: Props) {
+export function DashboardBookingProgress({
+  initialPlanners,
+  embedded = false,
+}: Props) {
   const [planners, setPlanners] = useState(initialPlanners);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
@@ -83,23 +87,14 @@ export function DashboardBookingProgress({ initialPlanners }: Props) {
     []
   );
 
-  if (planners.length === 0) return null;
+  if (!embedded && planners.length === 0) return null;
 
-  return (
-    <section className="mb-10 dash-booking-progress" data-section="planner">
-      <div className="dash-booking-progress-head">
-        <div>
-          <h2 className="section-title">Booking Progress</h2>
-          <p className="dash-booking-progress-lead">
-            Internal follow-up after client programme confirmation — assign and
-            track each reservation until fully booked.
-          </p>
-        </div>
-        <Link href="/calendar" className="btn-ghost">
-          Calendar
-        </Link>
-      </div>
-
+  const content =
+    planners.length === 0 ? (
+      <p className="dash-accordion-empty text-sm text-muted">
+        No active planners with bookings to complete.
+      </p>
+    ) : (
       <ul className="dash-booking-progress-list">
         {planners.map((planner) => (
           <li key={planner.tripId}>
@@ -230,6 +225,35 @@ export function DashboardBookingProgress({ initialPlanners }: Props) {
           </li>
         ))}
       </ul>
+    );
+
+  if (embedded) {
+    return (
+      <div className="dash-embedded-section dash-booking-progress-embedded">
+        <p className="dash-booking-progress-lead dash-booking-progress-lead--embedded">
+          Internal follow-up after client programme confirmation — assign and track
+          each reservation until fully booked.
+        </p>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <section className="mb-10 dash-booking-progress" data-section="planner">
+      <div className="dash-booking-progress-head">
+        <div>
+          <h2 className="section-title">Booking Progress</h2>
+          <p className="dash-booking-progress-lead">
+            Internal follow-up after client programme confirmation — assign and
+            track each reservation until fully booked.
+          </p>
+        </div>
+        <Link href="/calendar" className="btn-ghost">
+          Calendar
+        </Link>
+      </div>
+      {content}
     </section>
   );
 }

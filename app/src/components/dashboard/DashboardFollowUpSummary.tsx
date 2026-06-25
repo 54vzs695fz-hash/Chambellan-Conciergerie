@@ -8,6 +8,7 @@ import type { DashboardProgrammeFollowUpCard } from "@/lib/types";
 
 interface Props {
   initialProgrammes: DashboardProgrammeFollowUpCard[];
+  embedded?: boolean;
 }
 
 const TONE_CARD_CLASS: Record<
@@ -25,7 +26,10 @@ function progressPercent(completed: number, total: number): number {
   return Math.round((completed / total) * 100);
 }
 
-export function DashboardFollowUpSummary({ initialProgrammes }: Props) {
+export function DashboardFollowUpSummary({
+  initialProgrammes,
+  embedded = false,
+}: Props) {
   const [programmes, setProgrammes] =
     useState<DashboardProgrammeFollowUpCard[]>(initialProgrammes);
 
@@ -43,16 +47,14 @@ export function DashboardFollowUpSummary({ initialProgrammes }: Props) {
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  if (programmes.length === 0) return null;
+  if (!embedded && programmes.length === 0) return null;
 
-  return (
-    <section className="dash-follow-up mb-10" data-section="planner">
-      <div className="dash-follow-up-head">
-        <h2 className="section-title">Follow-up</h2>
-        <Link href="/calendar" className="btn-ghost">
-          Calendar
-        </Link>
-      </div>
+  const listContent =
+    programmes.length === 0 ? (
+      <p className="dash-accordion-empty text-sm text-muted">
+        No clients require follow-up right now.
+      </p>
+    ) : (
       <ul className="dash-follow-up-list">
         {programmes.map((programme) => {
           const percent = progressPercent(
@@ -143,6 +145,30 @@ export function DashboardFollowUpSummary({ initialProgrammes }: Props) {
           );
         })}
       </ul>
+    );
+
+  if (embedded) {
+    return (
+      <div className="dash-embedded-section dash-follow-up-embedded">
+        <div className="dash-embedded-head">
+          <Link href="/calendar" className="btn-ghost">
+            Calendar
+          </Link>
+        </div>
+        {listContent}
+      </div>
+    );
+  }
+
+  return (
+    <section className="dash-follow-up mb-10" data-section="planner">
+      <div className="dash-follow-up-head">
+        <h2 className="section-title">Follow-up</h2>
+        <Link href="/calendar" className="btn-ghost">
+          Calendar
+        </Link>
+      </div>
+      {listContent}
     </section>
   );
 }

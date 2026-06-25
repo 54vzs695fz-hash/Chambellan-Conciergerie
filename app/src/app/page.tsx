@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { DashboardCalendarWidget } from "@/components/calendar/DashboardCalendarWidget";
-import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
-import { DashboardFollowUpSummary } from "@/components/dashboard/DashboardFollowUpSummary";
-import { DashboardPaymentSummary } from "@/components/dashboard/DashboardPaymentSummary";
-import { DashboardRecentPlanners } from "@/components/dashboard/DashboardRecentPlanners";
+import { DashboardHomeAccordion } from "@/components/dashboard/DashboardHomeAccordion";
+import { computeHomeSectionCounts } from "@/lib/dashboard/home-sections";
 import { listBookingProgressPlanners } from "@/lib/dashboard/booking-progress";
 import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
@@ -16,10 +13,17 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const allTrips = await listTrips();
-  const clients = (await listClients()).slice(0, 5);
+  const allClients = await listClients();
+  const clients = allClients.slice(0, 5);
   const pendingFollowUp = await listDashboardFollowUpItems();
   const confirmedTrips = await listConfirmedTripsWithDays();
   const bookingProgress = listBookingProgressPlanners(confirmedTrips);
+  const counts = computeHomeSectionCounts({
+    trips: allTrips,
+    confirmedTrips,
+    followUpProgrammes: pendingFollowUp,
+    clientCount: clients.length,
+  });
 
   return (
     <div className="page-shell max-w-4xl">
@@ -45,43 +49,13 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <DashboardCalendarWidget trips={allTrips} />
-
-      <DashboardPaymentSummary trips={allTrips} />
-
-      <DashboardFollowUpSummary initialProgrammes={pendingFollowUp} />
-
-      <DashboardBookingProgress initialPlanners={bookingProgress} />
-
-      <DashboardRecentPlanners trips={allTrips} />
-
-      <section data-section="clients">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="section-title">Clients</h2>
-          <Link href="/clients" className="btn-ghost">
-            View all
-          </Link>
-        </div>
-        {clients.length === 0 ? (
-          <p className="text-sm text-muted">No clients yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {clients.map((c) => (
-              <li key={c.id}>
-                <Link
-                  href={`/clients/${c.id}`}
-                  className="dash-card dash-card--confirmed dash-list-link text-sm"
-                >
-                  {c.full_name}
-                  {c.nationality ? (
-                    <span className="text-muted ml-2">· {c.nationality}</span>
-                  ) : null}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <DashboardHomeAccordion
+        trips={allTrips}
+        counts={counts}
+        bookingProgress={bookingProgress}
+        followUpProgrammes={pendingFollowUp}
+        clients={clients}
+      />
     </div>
   );
 }
