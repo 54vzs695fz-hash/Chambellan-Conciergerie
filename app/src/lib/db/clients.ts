@@ -27,6 +27,8 @@ function mapClient(row: PrismaClientModel): Client {
   };
 }
 
+export { mapClient as mapClientRecord };
+
 export async function listClients(search?: string): Promise<Client[]> {
   if (search?.trim()) {
     const q = search.trim();

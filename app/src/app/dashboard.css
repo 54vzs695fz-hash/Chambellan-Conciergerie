@@ -1162,6 +1162,102 @@
   color: var(--shell-text, #111);
 }
 
+.dash-bp-planner-guests {
+  font-size: 0.72rem;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.dash-bp-planner-card-top {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  padding-right: 0.45rem;
+}
+
+.dash-bp-planner-card-top .dash-bp-planner-trigger {
+  flex: 1;
+  min-width: 0;
+  padding-right: 0.5rem;
+}
+
+.dash-bp-client-file-btn {
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 0.35rem;
+  min-height: 34px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--shell-text, #111);
+  background: color-mix(in srgb, var(--shell-accent, #b89b6a) 7%, #fff);
+  border: 1px solid color-mix(in srgb, var(--shell-accent, #b89b6a) 20%, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.dash-bp-client-file-btn:hover,
+.dash-bp-client-file-btn.is-active {
+  background: color-mix(in srgb, var(--shell-accent, #b89b6a) 12%, #fff);
+  border-color: color-mix(in srgb, var(--shell-accent, #b89b6a) 30%, transparent);
+}
+
+.dash-bp-client-file-panel {
+  margin: 0 0.95rem 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--shell-card-border, #e5e7eb) 24%, #fff);
+  border: 1px solid color-mix(in srgb, var(--shell-card-border, #e5e7eb) 80%, transparent);
+}
+
+.dash-bp-client-file-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dash-bp-client-file-row {
+  display: grid;
+  grid-template-columns: 5.25rem 1fr;
+  gap: 0.5rem;
+  align-items: start;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.dash-bp-client-file-row dt {
+  margin: 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.dash-bp-client-file-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.dash-bp-client-file-row dd.is-missing {
+  color: var(--shell-text-muted, #6b7280);
+  font-style: italic;
+}
+
+.dash-bp-client-file-row--notes dd {
+  white-space: pre-wrap;
+}
+
+.dash-bp-client-file-link {
+  display: inline-flex;
+  margin-top: 0.65rem;
+  font-size: 0.72rem;
+}
+
 .dash-bp-planner-section.bp-list-tone--urgent .dash-bp-planner-remaining {
   color: #9b4f5c;
 }

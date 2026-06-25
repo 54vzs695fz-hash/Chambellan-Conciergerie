@@ -183,17 +183,63 @@ function BookingProgressItemRow({
   );
 }
 
+function ClientFilePanel({
+  planner,
+}: {
+  planner: BookingProgressPlanner;
+}) {
+  const { client_file: file } = planner;
+  const emailMissing = file.email === "Missing email";
+  const phoneMissing = file.phone === "Missing phone";
+
+  return (
+    <div className="dash-bp-client-file-panel">
+      <dl className="dash-bp-client-file-list">
+        <div className="dash-bp-client-file-row">
+          <dt>Email</dt>
+          <dd className={emailMissing ? "is-missing" : undefined}>{file.email}</dd>
+        </div>
+        <div className="dash-bp-client-file-row">
+          <dt>Phone</dt>
+          <dd className={phoneMissing ? "is-missing" : undefined}>{file.phone}</dd>
+        </div>
+        {file.nationality ? (
+          <div className="dash-bp-client-file-row">
+            <dt>Nationality</dt>
+            <dd>{file.nationality}</dd>
+          </div>
+        ) : null}
+        {file.notes ? (
+          <div className="dash-bp-client-file-row dash-bp-client-file-row--notes">
+            <dt>Notes</dt>
+            <dd>{file.notes}</dd>
+          </div>
+        ) : null}
+      </dl>
+      {file.profile_href ? (
+        <Link href={file.profile_href} className="dash-bp-client-file-link btn-ghost">
+          Open client profile
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
 function BookingProgressPlannerCard({
   planner,
   isOpen,
+  isClientFileOpen,
   onToggle,
+  onToggleClientFile,
   updatingId,
   onPatch,
   onNotesChange,
 }: {
   planner: BookingProgressPlanner;
   isOpen: boolean;
+  isClientFileOpen: boolean;
   onToggle: () => void;
+  onToggleClientFile: () => void;
   updatingId: number | null;
   onPatch: (
     tripId: number,
@@ -214,29 +260,48 @@ function BookingProgressPlannerCard({
     <li
       className={`dash-bp-planner-section bp-list-tone--${listTone}${
         isOpen ? " is-open" : ""
-      }`}
+      }${isClientFileOpen ? " is-client-file-open" : ""}`}
     >
-      <button
-        type="button"
-        className="dash-bp-planner-trigger"
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        onClick={onToggle}
-      >
-        <span className="dash-bp-planner-trigger-main">
-          <ChevronIcon open={isOpen} />
-          <span className="dash-bp-planner-trigger-copy">
-            <span className="dash-booking-progress-client">
-              {planner.client_name}
-              <span className="dash-booking-progress-sep">·</span>
-              {planner.destination}
+      <div className="dash-bp-planner-card-top">
+        <button
+          type="button"
+          className="dash-bp-planner-trigger"
+          aria-expanded={isOpen}
+          aria-controls={panelId}
+          onClick={onToggle}
+        >
+          <span className="dash-bp-planner-trigger-main">
+            <ChevronIcon open={isOpen} />
+            <span className="dash-bp-planner-trigger-copy">
+              <span className="dash-booking-progress-client">
+                {planner.client_name}
+                <span className="dash-booking-progress-sep">·</span>
+                {planner.destination}
+              </span>
+              <span className="dash-booking-progress-dates">{planner.dates}</span>
+              {planner.guest_count ? (
+                <span className="dash-bp-planner-guests">{planner.guest_count}</span>
+              ) : null}
+              <span className="dash-bp-planner-remaining">{remainingLabel}</span>
             </span>
-            <span className="dash-booking-progress-dates">{planner.dates}</span>
-            <span className="dash-bp-planner-remaining">{remainingLabel}</span>
           </span>
-        </span>
-        <PlannerPriorityBadge priority={planner.summary.priority} />
-      </button>
+          <PlannerPriorityBadge priority={planner.summary.priority} />
+        </button>
+
+        <button
+          type="button"
+          className={`dash-bp-client-file-btn${isClientFileOpen ? " is-active" : ""}`}
+          aria-expanded={isClientFileOpen}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleClientFile();
+          }}
+        >
+          Client file
+        </button>
+      </div>
+
+      {isClientFileOpen ? <ClientFilePanel planner={planner} /> : null}
 
       <div
         id={panelId}
@@ -280,6 +345,7 @@ export function DashboardBookingProgress({
 }: Props) {
   const [planners, setPlanners] = useState(initialPlanners);
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
+  const [clientFileTripId, setClientFileTripId] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const applyPlannerUpdate = useCallback(
@@ -300,11 +366,14 @@ export function DashboardBookingProgress({
         if (expandedTripId !== null && !next.some((p) => p.tripId === expandedTripId)) {
           setExpandedTripId(null);
         }
+        if (clientFileTripId !== null && !next.some((p) => p.tripId === clientFileTripId)) {
+          setClientFileTripId(null);
+        }
 
         return next;
       });
     },
-    [expandedTripId]
+    [expandedTripId, clientFileTripId]
   );
 
   const handleNotesChange = useCallback(
@@ -362,6 +431,10 @@ export function DashboardBookingProgress({
     setExpandedTripId((current) => (current === tripId ? null : tripId));
   }, []);
 
+  const toggleClientFile = useCallback((tripId: number) => {
+    setClientFileTripId((current) => (current === tripId ? null : tripId));
+  }, []);
+
   if (!embedded && planners.length === 0) return null;
 
   const content =
@@ -376,7 +449,9 @@ export function DashboardBookingProgress({
             key={planner.tripId}
             planner={planner}
             isOpen={expandedTripId === planner.tripId}
+            isClientFileOpen={clientFileTripId === planner.tripId}
             onToggle={() => togglePlanner(planner.tripId)}
+            onToggleClientFile={() => toggleClientFile(planner.tripId)}
             updatingId={updatingId}
             onPatch={(tripId, activityId, patch) => {
               void patchItem(tripId, activityId, patch);

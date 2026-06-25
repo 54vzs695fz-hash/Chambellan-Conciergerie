@@ -1,4 +1,4 @@
-import { getClient } from "./clients";
+import { mapClientRecord } from "./clients";
 import {
   ensureChecklistSeeded,
   listChecklistItems,
@@ -96,10 +96,17 @@ export async function getTrip(id: number): Promise<TripWithDays | undefined> {
   const row = await prisma.trip.findUnique({ where: { id } });
   if (!row) return undefined;
   const trip = mapTrip(row);
-  const client = trip.client_id ? await getClient(trip.client_id) : null;
+  const client = trip.client_id
+    ? await prisma.client.findUnique({ where: { id: trip.client_id } })
+    : null;
   await ensureChecklistSeeded(id);
   const checklist = await listChecklistItems(id);
-  return { ...trip, days: await loadDays(id), client: client ?? null, checklist };
+  return {
+    ...trip,
+    days: await loadDays(id),
+    client: client ? mapClientRecord(client) : null,
+    checklist,
+  };
 }
 
 export async function listTrips(): Promise<Trip[]> {
@@ -112,6 +119,7 @@ export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
     where: { follow_up_status: "confirmed" },
     orderBy: [{ arrival_date: "asc" }, { updated_at: "desc" }],
     include: {
+      client: true,
       days: {
         orderBy: { date: "asc" },
         include: {
@@ -128,7 +136,12 @@ export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
     const days = row.days.map((day) =>
       mapDay(day, day.activities.map(mapActivity))
     );
-    return { ...trip, days, client: null, checklist: [] };
+    return {
+      ...trip,
+      days,
+      client: row.client ? mapClientRecord(row.client) : null,
+      checklist: [],
+    };
   });
 }
 
