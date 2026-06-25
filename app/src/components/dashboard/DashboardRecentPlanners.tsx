@@ -37,35 +37,38 @@ function RecentPlannerCard({
         href={`/planner/${trip.id}`}
         className={`${SECTION_CARD_CLASS[phase]} dash-list-link dash-recent-card`}
       >
-        <div className="dash-recent-card-main">
-          <p className="dash-recent-card-title">
-            <span className="font-serif text-gold tracking-wide">
-              {trip.destination.trim() || "Untitled"}
-            </span>
-            <span className="dash-recent-card-sep">·</span>
-            <span className="dash-recent-card-client">
+        <div className="dash-home-programme dash-home-programme--card">
+          <div className="dash-home-programme__content">
+            <p className="dash-home-programme__client">
               {trip.client_name.trim() || "Client"}
-            </span>
-          </p>
-          <p className="dash-recent-card-dates">
-            {formatDateRange(trip.arrival_date, trip.departure_date)}
-          </p>
-          <PlannerArrivalCountdown
-            arrivalDate={trip.arrival_date}
-            departureDate={trip.departure_date}
-          />
-        </div>
-        <div className="dash-recent-card-badges">
-          <ProgrammeStatusBadge
-            status={trip.follow_up_status ?? "follow_up"}
-            showDot
-            arrivalDate={trip.arrival_date}
-          />
-          <PaymentStatusBadge
-            status={paymentStatus}
-            arrivalDate={trip.arrival_date}
-            detail={paymentRemainingBadgeLabel(trip)}
-          />
+            </p>
+            <p className="dash-home-programme__destination">
+              {trip.destination.trim() || "Untitled"}
+            </p>
+            <p className="dash-home-programme__dates">
+              {formatDateRange(trip.arrival_date, trip.departure_date)}
+            </p>
+            <PlannerArrivalCountdown
+              arrivalDate={trip.arrival_date}
+              departureDate={trip.departure_date}
+            />
+          </div>
+          <div className="dash-home-programme__badges">
+            <div className="dash-home-programme__status">
+              <ProgrammeStatusBadge
+                status={trip.follow_up_status ?? "follow_up"}
+                showDot
+                arrivalDate={trip.arrival_date}
+              />
+            </div>
+            <div className="dash-home-programme__payment">
+              <PaymentStatusBadge
+                status={paymentStatus}
+                arrivalDate={trip.arrival_date}
+                detail={paymentRemainingBadgeLabel(trip)}
+              />
+            </div>
+          </div>
         </div>
       </Link>
     </li>

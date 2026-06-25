@@ -118,6 +118,165 @@
   font-size: 0.72rem;
 }
 
+/* Home programme cards — vertical layout (mobile-first) */
+
+.dash-home-programme {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.28rem;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.dash-home-programme__client {
+  margin: 0;
+  width: 100%;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--shell-text, #111);
+}
+
+.dash-home-programme__destination {
+  margin: 0;
+  width: 100%;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.98rem;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  color: var(--shell-accent, #b89b6a);
+}
+
+.dash-home-programme__dates {
+  margin: 0;
+  width: 100%;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--shell-text-muted, #6b7280);
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.dash-home-programme__status,
+.dash-home-programme__payment {
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+.dash-home-programme__status {
+  margin-top: 0.5rem;
+  padding-top: 0.55rem;
+  border-top: 0.5px solid color-mix(in srgb, var(--shell-card-border, #e5e7eb) 75%, transparent);
+}
+
+.dash-home-programme__payment {
+  margin-top: 0.35rem;
+}
+
+.dash-home-programme__status .prog-status,
+.dash-home-programme__payment .pay-status-badge-wrap {
+  position: static;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.dash-home-programme__content .planner-list-arrival {
+  margin-top: 0.2rem;
+}
+
+.dash-home-programme--card {
+  gap: 0;
+}
+
+.dash-home-programme__content {
+  width: 100%;
+  min-width: 0;
+}
+
+.dash-home-programme__badges {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .dash-recent-planners .dash-recent-card {
+    display: block;
+  }
+
+  .dash-recent-planners .dash-home-programme--card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dash-recent-planners .dash-home-programme__badges {
+    width: 100%;
+    max-width: none;
+  }
+
+  .dash-follow-up-programme .dash-follow-up-badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+
+  .dash-follow-up-programme .dash-follow-up-badges .prog-status,
+  .dash-follow-up-programme .dash-follow-up-badges .pay-status-badge-wrap {
+    position: static;
+    max-width: 100%;
+  }
+
+  .dash-follow-up-programme .dash-follow-up-programme-title {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dash-follow-up-programme .dash-follow-up-client {
+    display: block;
+    width: 100%;
+    overflow-wrap: normal;
+    word-break: normal;
+    white-space: normal;
+  }
+}
+
+@media (min-width: 768px) {
+  .dash-recent-planners .dash-home-programme--card {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .dash-recent-planners .dash-home-programme__content {
+    flex: 1 1 auto;
+  }
+
+  .dash-recent-planners .dash-home-programme__badges {
+    flex-shrink: 0;
+    width: auto;
+    max-width: 14rem;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .dash-recent-planners .dash-home-programme__status {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
 /* Follow-up programme cards */
 
 .dash-follow-up-programme.dash-card {
@@ -384,74 +543,9 @@
 }
 
 .dash-recent-card {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.65rem;
+  display: block;
   overflow: visible;
   height: auto;
-  min-height: 0;
-}
-
-.dash-recent-card-main {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.dash-recent-card-title {
-  margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.dash-recent-card-sep {
-  margin: 0 0.35rem;
-  color: var(--shell-text-muted, #6b7280);
-}
-
-.dash-recent-card-client {
-  font-size: 0.86rem;
-  color: var(--shell-text, #111);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.dash-recent-card-dates {
-  margin: 0.25rem 0 0;
-  font-size: 0.72rem;
-  line-height: 1.4;
-  color: var(--shell-text-muted, #6b7280);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.dash-recent-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  align-content: flex-start;
-  gap: 0.45rem;
-  width: 100%;
-  flex: 0 0 auto;
-}
-
-.dash-recent-card-badges .prog-status {
-  max-width: 100%;
-  white-space: normal;
-  text-align: left;
-}
-
-.dash-recent-card-badges .pay-status-badge-wrap {
-  max-width: 100%;
-  align-items: flex-start;
-}
-
-.dash-recent-card-badges .pay-status-badge-copy {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .dash-recent-past {
@@ -481,44 +575,6 @@
 
 .dash-recent-past[open] .dash-recent-past-summary {
   margin-bottom: 0.55rem;
-}
-
-@media (max-width: 639px) {
-  .dash-recent-planners .dash-recent-card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-
-  .dash-recent-planners .dash-recent-card-badges {
-    margin-top: 0.15rem;
-    padding-top: 0.55rem;
-    border-top: 0.5px solid color-mix(in srgb, var(--shell-card-border, #e5e7eb) 75%, transparent);
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .dash-recent-planners .dash-recent-card-badges .prog-status,
-  .dash-recent-planners .dash-recent-card-badges .pay-status-badge-wrap {
-    flex: 0 1 auto;
-    max-width: 100%;
-  }
-}
-
-@media (min-width: 640px) {
-  .dash-recent-card {
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .dash-recent-card-badges {
-    flex-shrink: 0;
-    justify-content: flex-end;
-    max-width: 14rem;
-  }
 }
 
 /* Booking Progress — internal post-confirmation reservation tracking */

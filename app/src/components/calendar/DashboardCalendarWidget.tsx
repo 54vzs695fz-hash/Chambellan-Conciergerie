@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDateRange } from "@/lib/planner-utils";
-import { CalendarProgrammeBadges } from "@/components/calendar/CalendarProgrammeBadges";
+import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
+import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import {
   countClientsToFollowUp,
   countProgrammesThisMonth,
@@ -58,14 +59,29 @@ export function DashboardCalendarWidget({ trips }: Props) {
               href={p.plannerHref}
               className="cal-dash-followup-link"
             >
-              <span className="dash-planner-row">
-                <span className="dash-planner-meta">
-                  {p.clientName} · {p.destination}
-                  <br />
-                  <span>{formatDateRange(p.arrivalDate, p.departureDate)}</span>
-                </span>
-                <CalendarProgrammeBadges programme={p} showFollowUpDot />
-              </span>
+              <div className="dash-home-programme">
+                <p className="dash-home-programme__client">{p.clientName}</p>
+                <p className="dash-home-programme__destination">
+                  {p.destination}
+                </p>
+                <p className="dash-home-programme__dates">
+                  {formatDateRange(p.arrivalDate, p.departureDate)}
+                </p>
+                <div className="dash-home-programme__status">
+                  <ProgrammeStatusBadge
+                    status={p.followUpStatus}
+                    showDot
+                    arrivalDate={p.arrivalDate}
+                  />
+                </div>
+                <div className="dash-home-programme__payment">
+                  <PaymentStatusBadge
+                    status={p.paymentStatus}
+                    arrivalDate={p.arrivalDate}
+                    detail={p.paymentDetail}
+                  />
+                </div>
+              </div>
             </Link>
           ))}
         </div>
