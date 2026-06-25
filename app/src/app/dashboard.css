@@ -1003,9 +1003,11 @@
 
 .dash-accordion-title {
   font-family: var(--font-cormorant), serif;
-  font-size: 1.12rem;
+  font-size: 1.22rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1.2;
+  color: var(--shell-text, #111);
 }
 
 .dash-accordion-count {
