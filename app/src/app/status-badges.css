@@ -1,47 +1,47 @@
 /* Status color tokens — Chambellan luxury palette */
 
 :root {
-  /* Programme status */
-  --prog-follow-up-bg: #f5e8c7;
-  --prog-follow-up-text: #8a641e;
-  --prog-follow-up-dot: #c79a35;
-  --prog-follow-up-border: #e0cda0;
+  /* Programme status — deep premium tones */
+  --prog-follow-up-bg: #f2dfa8;
+  --prog-follow-up-text: #5c4208;
+  --prog-follow-up-dot: #b8860b;
+  --prog-follow-up-border: #d4b45a;
 
-  --prog-contacted-bg: #e4ebf3;
-  --prog-contacted-text: #385875;
-  --prog-contacted-dot: #6f8fae;
-  --prog-contacted-border: #c5d4e4;
+  --prog-contacted-bg: #cddded;
+  --prog-contacted-text: #1e4466;
+  --prog-contacted-dot: #3d6f9e;
+  --prog-contacted-border: #9eb8d4;
 
-  --prog-confirmed-bg: #e3efe6;
-  --prog-confirmed-text: #356143;
-  --prog-confirmed-dot: #6fa47a;
-  --prog-confirmed-border: #c5dac9;
+  --prog-confirmed-bg: #c8e4ce;
+  --prog-confirmed-text: #1a4d2e;
+  --prog-confirmed-dot: #2f7a45;
+  --prog-confirmed-border: #8fc49a;
 
-  --prog-completed-bg: #e8e6e2;
-  --prog-completed-text: #5f5b55;
-  --prog-completed-dot: #9a948c;
-  --prog-completed-border: #d5d2cb;
+  --prog-completed-bg: #d8d4cc;
+  --prog-completed-text: #35312c;
+  --prog-completed-dot: #5c564f;
+  --prog-completed-border: #b8b2a8;
 
   /* Payment status */
-  --pay-pending-bg: #f6e1c7;
-  --pay-pending-text: #8a551f;
-  --pay-pending-dot: #c9822b;
-  --pay-pending-border: #e8ceb0;
+  --pay-pending-bg: #f3d0a8;
+  --pay-pending-text: #6b3a08;
+  --pay-pending-dot: #d97706;
+  --pay-pending-border: #e0a86a;
 
-  --pay-deposit-bg: #ddece9;
-  --pay-deposit-text: #2f625a;
-  --pay-deposit-dot: #5f9a8c;
-  --pay-deposit-border: #c8ddd8;
+  --pay-deposit-bg: #bfe0d8;
+  --pay-deposit-text: #145a50;
+  --pay-deposit-dot: #1f8a78;
+  --pay-deposit-border: #7ec4b8;
 
-  --pay-full-bg: #dde9dd;
-  --pay-full-text: #2f5b38;
-  --pay-full-dot: #527b55;
-  --pay-full-border: #c8d8c8;
+  --pay-full-bg: #c2dcc4;
+  --pay-full-text: #164a24;
+  --pay-full-dot: #2a7a3a;
+  --pay-full-border: #84b88c;
 
-  --pay-cancelled-bg: #eee2df;
-  --pay-cancelled-text: #7a3f3a;
-  --pay-cancelled-dot: #a9655e;
-  --pay-cancelled-border: #dfcfcc;
+  --pay-cancelled-bg: #e4ccc8;
+  --pay-cancelled-text: #6b2822;
+  --pay-cancelled-dot: #a83d32;
+  --pay-cancelled-border: #d4a8a2;
 }
 
 /* Shared status dots (badges, chips, legend) */
@@ -96,11 +96,11 @@
 .pay-status {
   display: inline-flex;
   align-items: center;
-  gap: 0.32rem;
-  min-height: 1.35rem;
-  padding: 0.14rem 0.52rem 0.14rem 0.42rem;
-  font-size: 0.56rem;
-  font-weight: 600;
+  gap: 0.35rem;
+  min-height: 1.45rem;
+  padding: 0.18rem 0.58rem 0.18rem 0.46rem;
+  font-size: 0.6rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border-radius: 999px;
@@ -145,7 +145,7 @@
 }
 
 .prog-urgency--within-3 {
-  background: #b8864a;
+  background: #c4620a;
 }
 
 .prog-urgency--tomorrow {
@@ -315,9 +315,10 @@
   align-items: center;
   gap: 0.4rem;
   margin-top: 0.3rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
-  color: #9a948c;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #3f3a35;
 }
 
 .client-list-status {
@@ -381,10 +382,10 @@
 }
 
 .pay-status-badge-detail {
-  font-size: 0.58rem;
+  font-size: 0.62rem;
   letter-spacing: 0.03em;
-  opacity: 0.88;
-  font-weight: 500;
+  font-weight: 600;
+  opacity: 1;
 }
 
 .pay-status--fully-paid .pay-status-badge-detail {
@@ -511,6 +512,13 @@
 }
 
 @media (max-width: 767px) {
+  .prog-status,
+  .pay-status {
+    min-height: 1.55rem;
+    padding: 0.22rem 0.62rem 0.22rem 0.5rem;
+    font-size: 0.62rem;
+  }
+
   .pay-status-picker {
     max-width: 100%;
     width: 100%;

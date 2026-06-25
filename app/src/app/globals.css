@@ -16,13 +16,17 @@
   --shell-card-border: #e5e7eb;
   --shell-card-shadow: 0 1px 2px rgba(17, 17, 17, 0.04),
     0 4px 12px rgba(17, 17, 17, 0.05);
-  --shell-text-muted: #6b7280;
+  --shell-text-muted: #4b5563;
+  --shell-text-secondary: #374151;
   --shell-text: #111111;
+
+  /* Accent (content highlights) */
+  --shell-accent: #a67c3d;
 
   /* Buttons */
   --shell-btn-primary-bg: #111111;
   --shell-btn-primary-text: #ffffff;
-  --shell-btn-accent-bg: #b89b6a;
+  --shell-btn-accent-bg: #a67c3d;
   --shell-btn-accent-text: #ffffff;
 
   /* Inputs */
@@ -30,9 +34,6 @@
   --shell-input-border: #e5e7eb;
   --shell-input-radius: 10px;
   --shell-input-height: 42px;
-
-  /* Accent (content highlights) */
-  --shell-accent: #b89b6a;
 
   /* Legacy aliases */
   --cream: var(--shell-app-bg);
@@ -120,7 +121,8 @@ body {
   }
 
   .section-title {
-    @apply text-[10px] uppercase tracking-[0.25em] font-medium;
+    @apply text-[10px] uppercase tracking-[0.25em] font-semibold;
+    color: var(--shell-text-secondary);
   }
 
   .dash-follow-up-head {
@@ -139,26 +141,29 @@ body {
   .dash-follow-up-client {
     margin: 0;
     font-family: var(--font-cormorant), serif;
-    font-size: 1.05rem;
+    font-size: 1.08rem;
+    font-weight: 600;
     letter-spacing: 0.02em;
-    color: var(--shell-accent);
+    color: var(--shell-text);
   }
 
   .dash-follow-up-sep {
     margin: 0 0.35rem;
-    color: #b5aea4;
+    color: var(--shell-text-muted);
   }
 
   .dash-follow-up-task {
     margin: 0.2rem 0 0;
-    font-size: 0.78rem;
-    color: #5c5650;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--shell-text-secondary);
   }
 
   .dash-follow-up-timing {
     margin: 0.15rem 0 0;
-    font-size: 0.68rem;
-    color: #9a948c;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--shell-text-muted);
   }
 
   .dash-follow-up-done,
@@ -220,7 +225,8 @@ body {
   .dash-pay-value {
     margin: 0;
     font-family: var(--font-cormorant), serif;
-    font-size: 1.65rem;
+    font-size: 1.75rem;
+    font-weight: 700;
     line-height: 1.1;
     color: var(--shell-text);
   }

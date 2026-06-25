@@ -4,49 +4,49 @@
   --dash-accent: var(--shell-accent, #b89b6a);
   background: color-mix(in srgb, var(--dash-accent) 5.5%, var(--shell-card-bg, #fff));
   border: 1px solid var(--shell-card-border, #e5e7eb);
-  border-left: 3px solid color-mix(in srgb, var(--dash-accent) 70%, #fff);
+  border-left: 3px solid color-mix(in srgb, var(--dash-accent) 88%, #fff);
   border-radius: 12px;
   box-shadow: var(--shell-card-shadow);
 }
 
 .dash-card--arrivals {
-  --dash-accent: #3e6fa8;
+  --dash-accent: #2d5f94;
 }
 
 .dash-card--follow-up {
-  --dash-accent: #b89b6a;
+  --dash-accent: #a67c3d;
 }
 
 .dash-card--payments {
-  --dash-accent: #c9822b;
+  --dash-accent: #b86a18;
 }
 
 .dash-card--confirmed {
-  --dash-accent: #4f8a63;
+  --dash-accent: #3a7350;
 }
 
 .dash-card--urgent {
-  --dash-accent: #9b4f5c;
+  --dash-accent: #8a3340;
 }
 
 .dash-card--prog-urgent {
-  --dash-accent: #9b4f5c;
+  --dash-accent: #8a3340;
 }
 
 .dash-card--prog-payment {
-  --dash-accent: #c9822b;
+  --dash-accent: #b86a18;
 }
 
 .dash-card--prog-arrival {
-  --dash-accent: #3e6fa8;
+  --dash-accent: #2d5f94;
 }
 
 .dash-card--prog-complete {
-  --dash-accent: #4f8a63;
+  --dash-accent: #3a7350;
 }
 
 .dash-card--library {
-  --dash-accent: #7556a8;
+  --dash-accent: #5e3f8f;
 }
 
 .dash-card .cal-dash-stat-value {
@@ -85,7 +85,8 @@
 .cal-dash-stat-value {
   margin: 0;
   font-family: var(--font-cormorant), serif;
-  font-size: 1.65rem;
+  font-size: 1.75rem;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -133,7 +134,8 @@
 .dash-home-programme__client {
   margin: 0;
   width: 100%;
-  font-size: 0.86rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   line-height: 1.4;
   color: var(--shell-text, #111);
 }
@@ -142,18 +144,20 @@
   margin: 0;
   width: 100%;
   font-family: var(--font-cormorant), Georgia, serif;
-  font-size: 0.98rem;
+  font-size: 1.02rem;
+  font-weight: 600;
   letter-spacing: 0.03em;
   line-height: 1.35;
-  color: var(--shell-accent, #b89b6a);
+  color: color-mix(in srgb, var(--shell-accent, #a67c3d) 88%, #111);
 }
 
 .dash-home-programme__dates {
   margin: 0;
   width: 100%;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
+  font-weight: 500;
   line-height: 1.35;
-  color: var(--shell-text-muted, #6b7280);
+  color: var(--shell-text-secondary, #374151);
   white-space: normal;
   word-break: normal;
   overflow-wrap: normal;
@@ -307,10 +311,11 @@
 
 .dash-follow-up-countdown {
   margin: 0.2rem 0 0;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--dash-accent) 58%, var(--shell-text-muted, #6b7280));
+  color: color-mix(in srgb, var(--dash-accent) 75%, #1a1a1a);
 }
 
 .dash-follow-up-programme-chevron {
@@ -349,8 +354,9 @@
 }
 
 .dash-follow-up-progress-count {
-  font-size: 0.72rem;
-  color: color-mix(in srgb, var(--dash-accent) 70%, var(--shell-text, #111));
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--dash-accent) 82%, var(--shell-text, #111));
 }
 
 .dash-follow-up-progress-bar {
@@ -388,8 +394,9 @@
 .dash-follow-up-outstanding-list li {
   position: relative;
   padding-left: 0.85rem;
-  font-size: 0.78rem;
-  color: #5c5650;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--shell-text-secondary, #374151);
 }
 
 .dash-follow-up-outstanding-list li::before {
@@ -485,34 +492,46 @@
 }
 
 .dash-action--follow-up:hover {
-  background: color-mix(in srgb, #b89b6a 18%, #111);
+  background: color-mix(in srgb, #a67c3d 18%, #111);
 }
 
 .dash-action--confirmed {
   color: var(--shell-text, #111);
-  background: color-mix(in srgb, #4f8a63 7%, white);
-  border: 1px solid color-mix(in srgb, #4f8a63 22%, var(--shell-card-border));
-  border-left: 3px solid color-mix(in srgb, #4f8a63 70%, #fff);
+  background: color-mix(in srgb, #3a7350 9%, white);
+  border: 1px solid color-mix(in srgb, #3a7350 28%, var(--shell-card-border));
+  border-left: 3px solid color-mix(in srgb, #3a7350 88%, #fff);
 }
 
 .dash-action--confirmed:hover {
-  background: color-mix(in srgb, #4f8a63 12%, white);
+  background: color-mix(in srgb, #3a7350 14%, white);
 }
 
 .dash-action--library {
   color: var(--shell-text, #111);
-  background: color-mix(in srgb, #7556a8 7%, white);
-  border: 1px solid color-mix(in srgb, #7556a8 22%, var(--shell-card-border));
-  border-left: 3px solid color-mix(in srgb, #7556a8 70%, #fff);
+  background: color-mix(in srgb, #5e3f8f 9%, white);
+  border: 1px solid color-mix(in srgb, #5e3f8f 28%, var(--shell-card-border));
+  border-left: 3px solid color-mix(in srgb, #5e3f8f 88%, #fff);
 }
 
 .dash-action--library:hover {
-  background: color-mix(in srgb, #7556a8 12%, white);
+  background: color-mix(in srgb, #5e3f8f 14%, white);
 }
 
 @media (max-width: 639px) {
   .cal-dash-stat-value {
-    font-size: 1.5rem;
+    font-size: 1.85rem;
+  }
+
+  .dash-pay-value {
+    font-size: 1.9rem;
+  }
+
+  .dash-bp-planner-remaining {
+    font-size: 0.82rem;
+  }
+
+  .planner-list-arrival {
+    font-size: 0.78rem;
   }
 
   .dash-list-link {
@@ -530,10 +549,11 @@
 
 .dash-recent-section-title {
   margin: 0 0 0.55rem;
-  font-size: 0.62rem;
+  font-size: 0.64rem;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--shell-text-muted, #6b7280) 88%, #111);
+  color: var(--shell-text-secondary, #374151);
 }
 
 .dash-recent-list {
@@ -805,6 +825,7 @@
 .dash-booking-progress-client {
   margin: 0;
   font-size: 0.95rem;
+  font-weight: 600;
   line-height: 1.4;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -817,8 +838,9 @@
 
 .dash-booking-progress-dates {
   margin: 0.25rem 0 0;
-  font-size: 0.72rem;
-  color: var(--shell-text-muted, #6b7280);
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--shell-text-secondary, #374151);
 }
 
 .dash-booking-progress-card-badges {
@@ -1003,8 +1025,8 @@
 
 .dash-accordion-title {
   font-family: var(--font-cormorant), serif;
-  font-size: 1.22rem;
-  font-weight: 600;
+  font-size: 1.24rem;
+  font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.2;
   color: var(--shell-text, #111);
@@ -1014,13 +1036,13 @@
   flex-shrink: 0;
   min-width: 1.65rem;
   padding: 0.18rem 0.5rem;
-  font-size: 0.68rem;
-  font-weight: 500;
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-align: center;
-  color: color-mix(in srgb, var(--shell-accent, #b89b6a) 72%, var(--shell-text, #111));
-  background: color-mix(in srgb, var(--shell-accent, #b89b6a) 10%, #fff);
-  border: 1px solid color-mix(in srgb, var(--shell-accent, #b89b6a) 22%, transparent);
+  color: color-mix(in srgb, var(--shell-accent, #a67c3d) 82%, var(--shell-text, #111));
+  background: color-mix(in srgb, var(--shell-accent, #a67c3d) 12%, #fff);
+  border: 1px solid color-mix(in srgb, var(--shell-accent, #a67c3d) 28%, transparent);
   border-radius: 999px;
 }
 
@@ -1157,14 +1179,15 @@
 
 .dash-bp-planner-remaining {
   margin-top: 0.15rem;
-  font-size: 0.74rem;
-  font-weight: 500;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--shell-text, #111);
 }
 
 .dash-bp-planner-guests {
-  font-size: 0.72rem;
-  color: var(--shell-text-muted, #6b7280);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--shell-text-secondary, #374151);
 }
 
 .dash-bp-planner-card-top {

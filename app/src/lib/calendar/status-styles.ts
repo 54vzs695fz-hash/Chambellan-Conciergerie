@@ -9,10 +9,10 @@ export const FOLLOW_UP_STATUS_LABELS: Record<TripFollowUpStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<TripFollowUpStatus, string> = {
-  follow_up: "#C79A35",
-  contacted: "#6F8FAE",
-  confirmed: "#6FA47A",
-  completed: "#9A948C",
+  follow_up: "#B8860B",
+  contacted: "#3D6F9E",
+  confirmed: "#2F7A45",
+  completed: "#5C564F",
 };
 
 export function statusBadgeClass(status: TripFollowUpStatus): string {
