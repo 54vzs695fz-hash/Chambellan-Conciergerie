@@ -42,7 +42,7 @@ export function DashboardHomeAccordion({
     <div className="dash-accordion">
       <DashboardAccordionSection
         id="booking-progress"
-        title="Booking Progress"
+        title="Bookings Progress"
         count={counts.bookingProgress}
         isOpen={isOpen("booking-progress")}
         onToggle={() => toggle("booking-progress")}

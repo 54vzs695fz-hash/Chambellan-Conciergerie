@@ -606,13 +606,196 @@
 
 .dash-booking-progress-card {
   padding: 1rem 1.05rem;
+  border-left-width: 3px;
+}
+
+.dash-booking-progress-card.bp-tone--urgent {
+  border-left-color: color-mix(in srgb, #9b4f5c 72%, #fff);
+}
+
+.dash-booking-progress-card.bp-tone--pending {
+  border-left-color: color-mix(in srgb, #c9822b 72%, #fff);
+}
+
+.dash-booking-progress-card.bp-tone--paid {
+  border-left-color: color-mix(in srgb, #c79a35 72%, #fff);
+}
+
+.dash-booking-progress-card.bp-tone--confirmed {
+  border-left-color: color-mix(in srgb, #4f8a63 72%, #fff);
 }
 
 .dash-booking-progress-card-head {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.85rem;
   margin-bottom: 0.9rem;
+}
+
+.dash-booking-progress-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dash-booking-progress-card-identity {
+  min-width: 0;
+}
+
+.dash-booking-progress-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.dash-booking-progress-priority-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.bp-priority--high {
+  color: #9b4f5c;
+  background: color-mix(in srgb, #9b4f5c 8%, #fff);
+  border-color: color-mix(in srgb, #9b4f5c 22%, transparent);
+}
+
+.bp-priority--medium {
+  color: #c9822b;
+  background: color-mix(in srgb, #c9822b 8%, #fff);
+  border-color: color-mix(in srgb, #c9822b 22%, transparent);
+}
+
+.dash-booking-progress-summary {
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--shell-card-border, #e5e7eb) 28%, #fff);
+}
+
+.dash-booking-progress-summary-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.dash-booking-progress-summary-title {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.dash-booking-progress-summary-percent {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.dash-booking-progress-summary-bar {
+  height: 0.38rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--shell-card-border, #e5e7eb) 55%, #fff);
+}
+
+.dash-booking-progress-summary-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dash-booking-progress-summary.bp-tone--urgent .dash-booking-progress-summary-percent,
+.dash-booking-progress-summary.bp-tone--urgent .dash-booking-progress-summary-fill {
+  color: #9b4f5c;
+  background: #9b4f5c;
+}
+
+.dash-booking-progress-summary.bp-tone--pending .dash-booking-progress-summary-percent,
+.dash-booking-progress-summary.bp-tone--pending .dash-booking-progress-summary-fill {
+  color: #c9822b;
+  background: #c9822b;
+}
+
+.dash-booking-progress-summary.bp-tone--paid .dash-booking-progress-summary-percent,
+.dash-booking-progress-summary.bp-tone--paid .dash-booking-progress-summary-fill {
+  color: #c79a35;
+  background: #c79a35;
+}
+
+.dash-booking-progress-summary.bp-tone--confirmed .dash-booking-progress-summary-percent,
+.dash-booking-progress-summary.bp-tone--confirmed .dash-booking-progress-summary-fill {
+  color: #4f8a63;
+  background: #4f8a63;
+}
+
+.dash-booking-progress-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.dash-booking-progress-summary-remaining {
+  color: var(--shell-text, #111);
+  font-weight: 500;
+}
+
+.dash-booking-progress-remaining-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--shell-text, #111);
+  background: color-mix(in srgb, var(--shell-accent, #b89b6a) 8%, #fff);
+  border: 1px solid color-mix(in srgb, var(--shell-accent, #b89b6a) 18%, transparent);
+  border-radius: 999px;
+}
+
+.dash-booking-progress-status-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  vertical-align: 0.08em;
+  background: currentColor;
+}
+
+.dash-booking-progress-item.bp-tone--urgent .dash-booking-progress-status-dot {
+  color: #9b4f5c;
+}
+
+.dash-booking-progress-item.bp-tone--pending .dash-booking-progress-status-dot {
+  color: #c9822b;
+}
+
+.dash-booking-progress-item.bp-tone--paid .dash-booking-progress-status-dot {
+  color: #c79a35;
+}
+
+.dash-booking-progress-item.bp-tone--confirmed .dash-booking-progress-status-dot {
+  color: #4f8a63;
+}
+
+.dash-booking-progress-item.bp-tone--cancelled .dash-booking-progress-status-dot {
+  color: #9ca3af;
 }
 
 .dash-booking-progress-card-meta {
@@ -716,24 +899,30 @@
   color: var(--shell-text, #111);
 }
 
-.dash-booking-progress-select.bp-status--todo {
+.dash-booking-progress-select.bp-tone--urgent {
+  border-color: color-mix(in srgb, #9b4f5c 35%, var(--shell-input-border));
+  background: color-mix(in srgb, #9b4f5c 6%, #fff);
+}
+
+.dash-booking-progress-select.bp-tone--pending {
+  border-color: color-mix(in srgb, #c9822b 35%, var(--shell-input-border));
+  background: color-mix(in srgb, #c9822b 6%, #fff);
+}
+
+.dash-booking-progress-select.bp-tone--paid {
   border-color: color-mix(in srgb, #c79a35 35%, var(--shell-input-border));
   background: color-mix(in srgb, #c79a35 6%, #fff);
 }
 
-.dash-booking-progress-select.bp-status--pending {
-  border-color: color-mix(in srgb, #3e6fa8 35%, var(--shell-input-border));
-  background: color-mix(in srgb, #3e6fa8 6%, #fff);
-}
-
-.dash-booking-progress-select.bp-status--done {
+.dash-booking-progress-select.bp-tone--confirmed {
   border-color: color-mix(in srgb, #4f8a63 35%, var(--shell-input-border));
   background: color-mix(in srgb, #4f8a63 6%, #fff);
 }
 
-.dash-booking-progress-select.bp-status--cancelled {
-  border-color: color-mix(in srgb, #9b4f5c 30%, var(--shell-input-border));
-  background: color-mix(in srgb, #9b4f5c 5%, #fff);
+.dash-booking-progress-select.bp-tone--cancelled {
+  border-color: color-mix(in srgb, #9ca3af 35%, var(--shell-input-border));
+  background: color-mix(in srgb, #9ca3af 8%, #fff);
+  color: color-mix(in srgb, #6b7280 80%, var(--shell-text));
 }
 
 @media (min-width: 640px) {
@@ -741,6 +930,11 @@
     flex-direction: row;
     align-items: flex-start;
     justify-content: space-between;
+  }
+
+  .dash-booking-progress-card-meta {
+    flex: 1;
+    min-width: 0;
   }
 
   .dash-booking-progress-item-controls {

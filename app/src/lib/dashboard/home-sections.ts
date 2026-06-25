@@ -4,7 +4,7 @@ import {
   programmesArrivingWithinDays,
   tripsToCalendarProgrammes,
 } from "@/lib/calendar/programmes";
-import { listBookingProgressPlanners } from "@/lib/dashboard/booking-progress";
+import { listBookingProgressPlanners, countBookingsRequiringAction } from "@/lib/dashboard/booking-progress";
 import { countPaymentStatuses } from "@/lib/planner/payment-status";
 import type { DashboardProgrammeFollowUpCard } from "@/lib/types";
 import type { Trip } from "@/lib/types";
@@ -50,7 +50,9 @@ export function computeHomeSectionCounts({
   const paymentCounts = countPaymentStatuses(trips);
 
   return {
-    bookingProgress: listBookingProgressPlanners(confirmedTrips).length,
+    bookingProgress: countBookingsRequiringAction(
+      listBookingProgressPlanners(confirmedTrips)
+    ),
     calendarOverview: upcoming.length + followUpCalendar,
     upcomingArrivals: upcoming.length,
     clientsToFollowUp: followUpProgrammes.length,

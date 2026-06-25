@@ -5,11 +5,18 @@ import { useCallback, useState } from "react";
 import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import {
+  reconcileBookingProgressPlanner,
+  sortBookingProgressPlanners,
+} from "@/lib/dashboard/booking-progress";
+import {
   BOOKING_ASSIGNEE_LABELS,
   BOOKING_ASSIGNEE_OPTIONS,
   BOOKING_PROGRESS_STATUS_LABELS,
   BOOKING_PROGRESS_STATUS_OPTIONS,
-  isBookingProgressComplete,
+  PLANNER_BOOKING_PRIORITY_LABELS,
+  bookingProgressStatusClass,
+  bookingProgressToneClass,
+  sortBookingProgressItems,
   toBookingProgressStatus,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
@@ -31,13 +38,64 @@ function formatItemTime(time: string): string {
   return time.slice(0, 5);
 }
 
-function bookingProgressStatusClass(
-  status: ReturnType<typeof toBookingProgressStatus>
-): string {
-  if (status === "confirmed" || status === "paid") return "bp-status--done";
-  if (status === "request_sent") return "bp-status--pending";
-  if (status === "cancelled") return "bp-status--cancelled";
-  return "bp-status--todo";
+function PlannerProgressSummary({
+  planner,
+}: {
+  planner: BookingProgressPlanner;
+}) {
+  const { summary } = planner;
+
+  return (
+    <div
+      className={`dash-booking-progress-summary ${bookingProgressToneClass(summary.progressTone)}`}
+    >
+      <div className="dash-booking-progress-summary-head">
+        <span className="dash-booking-progress-summary-title">
+          Bookings Progress
+        </span>
+        <span className="dash-booking-progress-summary-percent">
+          {summary.percent}%
+        </span>
+      </div>
+      <div
+        className="dash-booking-progress-summary-bar"
+        role="progressbar"
+        aria-valuenow={summary.percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`${summary.confirmed} of ${summary.total} bookings confirmed`}
+      >
+        <span
+          className="dash-booking-progress-summary-fill"
+          style={{ width: `${summary.percent}%` }}
+        />
+      </div>
+      <p className="dash-booking-progress-summary-meta">
+        <span>
+          {summary.confirmed} / {summary.total} confirmed
+        </span>
+        {summary.remaining > 0 ? (
+          <span className="dash-booking-progress-summary-remaining">
+            {summary.remaining} booking{summary.remaining === 1 ? "" : "s"}{" "}
+            remaining
+          </span>
+        ) : null}
+      </p>
+    </div>
+  );
+}
+
+function PlannerPriorityBadge({
+  priority,
+}: {
+  priority: BookingProgressPlanner["summary"]["priority"];
+}) {
+  return (
+    <span className={`dash-booking-progress-priority bp-priority--${priority}`}>
+      <span className="dash-booking-progress-priority-dot" aria-hidden />
+      {PLANNER_BOOKING_PRIORITY_LABELS[priority]}
+    </span>
+  );
 }
 
 export function DashboardBookingProgress({
@@ -46,6 +104,25 @@ export function DashboardBookingProgress({
 }: Props) {
   const [planners, setPlanners] = useState(initialPlanners);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+  const applyPlannerUpdate = useCallback(
+    (tripId: number, updater: (items: ReservationStatusItem[]) => ReservationStatusItem[]) => {
+      setPlanners((current) =>
+        sortBookingProgressPlanners(
+          current
+            .map((planner) => {
+              if (planner.tripId !== tripId) return planner;
+              return reconcileBookingProgressPlanner({
+                ...planner,
+                items: sortBookingProgressItems(updater(planner.items)),
+              });
+            })
+            .filter((planner): planner is BookingProgressPlanner => planner !== null)
+        )
+      );
+    },
+    []
+  );
 
   const patchItem = useCallback(
     async (
@@ -64,27 +141,16 @@ export function DashboardBookingProgress({
         });
         if (!res.ok) return;
 
-        setPlanners((current) => {
-          const next = current
-            .map((planner) => {
-              if (planner.tripId !== tripId) return planner;
-              const items = planner.items.map((item) =>
-                item.activityId === activityId ? { ...item, ...patch } : item
-              );
-              return { ...planner, items };
-            })
-            .filter((planner) =>
-              planner.items.some(
-                (item) => !isBookingProgressComplete(item.booking_status)
-              )
-            );
-          return next;
-        });
+        applyPlannerUpdate(tripId, (items) =>
+          items.map((item) =>
+            item.activityId === activityId ? { ...item, ...patch } : item
+          )
+        );
       } finally {
         setUpdatingId(null);
       }
     },
-    []
+    [applyPlannerUpdate]
   );
 
   if (!embedded && planners.length === 0) return null;
@@ -98,23 +164,41 @@ export function DashboardBookingProgress({
       <ul className="dash-booking-progress-list">
         {planners.map((planner) => (
           <li key={planner.tripId}>
-            <article className="dash-card dash-card--follow-up dash-booking-progress-card">
+            <article
+              className={`dash-card dash-card--follow-up dash-booking-progress-card ${bookingProgressToneClass(planner.summary.progressTone)}`}
+            >
               <div className="dash-booking-progress-card-head">
                 <div className="dash-booking-progress-card-meta">
-                  <p className="dash-booking-progress-client">
-                    {planner.client_name}
-                    <span className="dash-booking-progress-sep">·</span>
-                    {planner.destination}
-                  </p>
-                  <p className="dash-booking-progress-dates">{planner.dates}</p>
+                  <div className="dash-booking-progress-card-title-row">
+                    <div className="dash-booking-progress-card-identity">
+                      <p className="dash-booking-progress-client">
+                        {planner.client_name}
+                        <span className="dash-booking-progress-sep">·</span>
+                        {planner.destination}
+                      </p>
+                      <p className="dash-booking-progress-dates">
+                        {planner.dates}
+                      </p>
+                    </div>
+                    <PlannerPriorityBadge priority={planner.summary.priority} />
+                  </div>
+
+                  <PlannerProgressSummary planner={planner} />
                 </div>
+
                 <div className="dash-booking-progress-card-badges">
+                  <span className="dash-booking-progress-remaining-badge">
+                    Remaining bookings: {planner.summary.remaining}
+                  </span>
                   <PaymentStatusBadge
                     status={planner.payment_status}
                     arrivalDate={planner.arrival_date}
                     detail={planner.payment_detail}
                   />
-                  <Link href={planner.href} className="btn-ghost dash-booking-progress-open">
+                  <Link
+                    href={planner.href}
+                    className="btn-ghost dash-booking-progress-open"
+                  >
                     Open planner
                   </Link>
                 </div>
@@ -125,11 +209,23 @@ export function DashboardBookingProgress({
                   const progressStatus = toBookingProgressStatus(
                     item.booking_status
                   );
+                  const statusClass = bookingProgressStatusClass(
+                    item.booking_status
+                  );
 
                   return (
-                    <li key={item.activityId} className="dash-booking-progress-item">
+                    <li
+                      key={item.activityId}
+                      className={`dash-booking-progress-item ${statusClass}`}
+                    >
                       <div className="dash-booking-progress-item-main">
-                        <p className="dash-booking-progress-venue">{item.venue}</p>
+                        <p className="dash-booking-progress-venue">
+                          <span
+                            className="dash-booking-progress-status-dot"
+                            aria-hidden
+                          />
+                          {item.venue}
+                        </p>
                         <p className="dash-booking-progress-item-meta">
                           {formatItemDate(item.date)}
                           {" · "}
@@ -141,9 +237,11 @@ export function DashboardBookingProgress({
 
                       <div className="dash-booking-progress-item-controls">
                         <label className="dash-booking-progress-field">
-                          <span className="dash-booking-progress-label">Status</span>
+                          <span className="dash-booking-progress-label">
+                            Status
+                          </span>
                           <select
-                            className={`dash-booking-progress-select ${bookingProgressStatusClass(progressStatus)}`}
+                            className={`dash-booking-progress-select ${statusClass}`}
                             value={progressStatus}
                             disabled={updatingId === item.activityId}
                             onChange={(event) => {
@@ -163,7 +261,9 @@ export function DashboardBookingProgress({
                         </label>
 
                         <label className="dash-booking-progress-field">
-                          <span className="dash-booking-progress-label">Assigned</span>
+                          <span className="dash-booking-progress-label">
+                            Assigned
+                          </span>
                           <select
                             className="dash-booking-progress-select"
                             value={item.assigned_to}
@@ -183,7 +283,9 @@ export function DashboardBookingProgress({
                         </label>
 
                         <label className="dash-booking-progress-field dash-booking-progress-field--notes">
-                          <span className="dash-booking-progress-label">Notes</span>
+                          <span className="dash-booking-progress-label">
+                            Notes
+                          </span>
                           <input
                             type="text"
                             className="dash-booking-progress-notes"
@@ -198,10 +300,12 @@ export function DashboardBookingProgress({
                                     ? p
                                     : {
                                         ...p,
-                                        items: p.items.map((row) =>
-                                          row.activityId === item.activityId
-                                            ? { ...row, booking_notes: value }
-                                            : row
+                                        items: sortBookingProgressItems(
+                                          p.items.map((row) =>
+                                            row.activityId === item.activityId
+                                              ? { ...row, booking_notes: value }
+                                              : row
+                                          )
                                         ),
                                       }
                                 )
@@ -231,8 +335,8 @@ export function DashboardBookingProgress({
     return (
       <div className="dash-embedded-section dash-booking-progress-embedded">
         <p className="dash-booking-progress-lead dash-booking-progress-lead--embedded">
-          Internal follow-up after client programme confirmation — assign and track
-          each reservation until fully booked.
+          Internal follow-up after client programme confirmation — assign and
+          track each reservation until fully booked.
         </p>
         {content}
       </div>
@@ -243,7 +347,7 @@ export function DashboardBookingProgress({
     <section className="mb-10 dash-booking-progress" data-section="planner">
       <div className="dash-booking-progress-head">
         <div>
-          <h2 className="section-title">Booking Progress</h2>
+          <h2 className="section-title">Bookings Progress</h2>
           <p className="dash-booking-progress-lead">
             Internal follow-up after client programme confirmation — assign and
             track each reservation until fully booked.

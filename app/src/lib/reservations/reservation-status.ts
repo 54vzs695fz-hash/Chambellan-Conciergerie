@@ -27,8 +27,9 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
 export const BOOKING_PROGRESS_STATUS_OPTIONS = [
   "to_request",
   "request_sent",
-  "confirmed",
+  "waiting_confirmation",
   "paid",
+  "confirmed",
   "cancelled",
 ] as const satisfies readonly BookingStatus[];
 
@@ -38,10 +39,31 @@ export const BOOKING_PROGRESS_STATUS_LABELS: Record<
 > = {
   to_request: "To book",
   request_sent: "Requested",
-  confirmed: "Confirmed",
+  waiting_confirmation: "Pending confirmation",
   paid: "Paid",
+  confirmed: "Confirmed",
   cancelled: "Cancelled",
 };
+
+/** Actionable-first order inside each planner card. */
+export const BOOKING_PROGRESS_SORT_ORDER: BookingStatus[] = [
+  "to_request",
+  "request_sent",
+  "waiting_confirmation",
+  "paid",
+  "confirmed",
+  "rejected",
+  "cancelled",
+];
+
+export type BookingProgressTone =
+  | "urgent"
+  | "pending"
+  | "paid"
+  | "confirmed"
+  | "cancelled";
+
+export type PlannerBookingPriority = "high" | "medium";
 
 export const BOOKING_ASSIGNEE_OPTIONS = [
   "",
@@ -102,9 +124,8 @@ export function normalizeBookingAssignee(value: unknown): string {
 export function toBookingProgressStatus(
   status: BookingStatus
 ): (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number] {
-  if (status === "waiting_confirmation" || status === "rejected") {
-    return "request_sent";
-  }
+  if (status === "rejected") return "cancelled";
+  if (status === "waiting_confirmation") return "waiting_confirmation";
   if (
     BOOKING_PROGRESS_STATUS_OPTIONS.includes(
       status as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number]
@@ -119,10 +140,130 @@ export function toBookingProgressStatus(
 export function isBookingProgressComplete(status: BookingStatus): boolean {
   return (
     status === "confirmed" ||
-    status === "paid" ||
     status === "cancelled" ||
     status === "rejected"
   );
+}
+
+export function isBookingRequiringAction(status: BookingStatus): boolean {
+  return !isBookingProgressComplete(status);
+}
+
+export function bookingProgressSortRank(status: BookingStatus): number {
+  const index = BOOKING_PROGRESS_SORT_ORDER.indexOf(status);
+  return index === -1 ? 0 : index;
+}
+
+export function sortBookingProgressItems(
+  items: ReservationStatusItem[]
+): ReservationStatusItem[] {
+  return [...items].sort((a, b) => {
+    const statusCmp =
+      bookingProgressSortRank(a.booking_status) -
+      bookingProgressSortRank(b.booking_status);
+    if (statusCmp !== 0) return statusCmp;
+    const dateCmp = a.date.localeCompare(b.date);
+    if (dateCmp !== 0) return dateCmp;
+    const timeCmp = a.time.localeCompare(b.time);
+    if (timeCmp !== 0) return timeCmp;
+    return a.venue.localeCompare(b.venue);
+  });
+}
+
+export function bookingProgressTone(status: BookingStatus): BookingProgressTone {
+  switch (toBookingProgressStatus(status)) {
+    case "to_request":
+      return "urgent";
+    case "request_sent":
+    case "waiting_confirmation":
+      return "pending";
+    case "paid":
+      return "paid";
+    case "confirmed":
+      return "confirmed";
+    case "cancelled":
+      return "cancelled";
+    default:
+      return "urgent";
+  }
+}
+
+export function bookingProgressToneClass(tone: BookingProgressTone): string {
+  return `bp-tone--${tone}`;
+}
+
+export function bookingProgressStatusClass(status: BookingStatus): string {
+  return bookingProgressToneClass(bookingProgressTone(status));
+}
+
+export function worstBookingProgressTone(
+  items: ReservationStatusItem[]
+): BookingProgressTone {
+  if (items.some((item) => item.booking_status === "to_request")) {
+    return "urgent";
+  }
+  if (
+    items.some((item) =>
+      ["request_sent", "waiting_confirmation"].includes(item.booking_status)
+    )
+  ) {
+    return "pending";
+  }
+  if (items.some((item) => item.booking_status === "paid")) {
+    return "paid";
+  }
+  if (items.every((item) => isBookingProgressComplete(item.booking_status))) {
+    return "confirmed";
+  }
+  return "pending";
+}
+
+export function computePlannerBookingPriority(
+  items: ReservationStatusItem[]
+): PlannerBookingPriority {
+  if (items.some((item) => item.booking_status === "to_request")) {
+    return "high";
+  }
+  return "medium";
+}
+
+export const PLANNER_BOOKING_PRIORITY_LABELS: Record<
+  PlannerBookingPriority,
+  string
+> = {
+  high: "High Priority",
+  medium: "Medium Priority",
+};
+
+export interface PlannerBookingSummary {
+  total: number;
+  confirmed: number;
+  remaining: number;
+  percent: number;
+  priority: PlannerBookingPriority;
+  progressTone: BookingProgressTone;
+}
+
+export function computePlannerBookingSummary(
+  items: ReservationStatusItem[]
+): PlannerBookingSummary {
+  const total = items.length;
+  const confirmed = items.filter(
+    (item) => item.booking_status === "confirmed"
+  ).length;
+  const remaining = items.filter((item) =>
+    isBookingRequiringAction(item.booking_status)
+  ).length;
+  const percent = total === 0 ? 100 : Math.round((confirmed / total) * 100);
+
+  return {
+    total,
+    confirmed,
+    remaining,
+    percent,
+    priority: computePlannerBookingPriority(items),
+    progressTone: worstBookingProgressTone(items),
+  };
 }
 
 export function isTrackableReservationActivity(activity: Activity): boolean {
@@ -166,15 +307,7 @@ export function buildReservationStatusItems(
     }
   }
 
-  items.sort((a, b) => {
-    const dateCmp = a.date.localeCompare(b.date);
-    if (dateCmp !== 0) return dateCmp;
-    const timeCmp = a.time.localeCompare(b.time);
-    if (timeCmp !== 0) return timeCmp;
-    return a.venue.localeCompare(b.venue);
-  });
-
-  return items;
+  return sortBookingProgressItems(items);
 }
 
 /** Summary order for compact display (most actionable first). */
@@ -215,12 +348,16 @@ export function formatBookingStatusSummary(
 }
 
 export function bookingStatusDotClass(status: BookingStatus): string {
-  if (status === "confirmed" || status === "paid") return "rs-dot rs-dot--confirmed";
-  if (status === "waiting_confirmation" || status === "request_sent") {
-    return "rs-dot rs-dot--pending";
+  switch (bookingProgressTone(status)) {
+    case "confirmed":
+      return "rs-dot rs-dot--confirmed";
+    case "pending":
+      return "rs-dot rs-dot--pending";
+    case "paid":
+      return "rs-dot rs-dot--paid";
+    case "cancelled":
+      return "rs-dot rs-dot--closed";
+    default:
+      return "rs-dot rs-dot--todo";
   }
-  if (status === "rejected" || status === "cancelled") {
-    return "rs-dot rs-dot--closed";
-  }
-  return "rs-dot rs-dot--todo";
 }
