@@ -20,6 +20,7 @@
     "test:website-import": "node scripts/test-website-import.mjs",
     "test:guest-name": "node scripts/test-format-guest-name.mjs",
     "test:activity-time-sort": "node scripts/test-activity-time-sort.mjs",
+    "test:booking-progress": "npx tsx scripts/test-booking-progress.mjs",
     "seed:library-v3": "node scripts/seed-library-v3.mjs",
     "seed:auth": "node scripts/seed-auth-users.mjs",
     "reset:auth": "node scripts/seed-auth-users.mjs"

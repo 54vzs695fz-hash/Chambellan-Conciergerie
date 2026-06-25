@@ -17,11 +17,14 @@ export interface DaySection {
 
 export type ActivityStatus = "confirmed" | "awaiting";
 
+export type BookingAssignee = "" | "matthieu" | "yanis" | "chambellan";
+
 export type BookingStatus =
   | "to_request"
   | "request_sent"
   | "waiting_confirmation"
   | "confirmed"
+  | "paid"
   | "rejected"
   | "cancelled";
 
@@ -186,6 +189,8 @@ export interface Activity {
   details: string;
   status: ActivityStatus;
   booking_status: BookingStatus;
+  assigned_to: BookingAssignee | string;
+  booking_notes: string;
   sort_order: number;
 }
 

@@ -63,6 +63,8 @@ function mapActivity(row: PrismaActivity): Activity {
     details: row.details,
     status: row.status as Activity["status"],
     booking_status: (row.booking_status ?? "to_request") as Activity["booking_status"],
+    assigned_to: row.assigned_to ?? "",
+    booking_notes: row.booking_notes ?? "",
     sort_order: row.sort_order,
   };
 }
@@ -103,6 +105,31 @@ export async function getTrip(id: number): Promise<TripWithDays | undefined> {
 export async function listTrips(): Promise<Trip[]> {
   const rows = await prisma.trip.findMany({ orderBy: { updated_at: "desc" } });
   return rows.map(mapTrip);
+}
+
+export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
+  const rows = await prisma.trip.findMany({
+    where: { follow_up_status: "confirmed" },
+    orderBy: [{ arrival_date: "asc" }, { updated_at: "desc" }],
+    include: {
+      days: {
+        orderBy: { date: "asc" },
+        include: {
+          activities: {
+            orderBy: [{ sort_order: "asc" }, { time: "asc" }],
+          },
+        },
+      },
+    },
+  });
+
+  return rows.map((row) => {
+    const trip = mapTrip(row);
+    const days = row.days.map((day) =>
+      mapDay(day, day.activities.map(mapActivity))
+    );
+    return { ...trip, days, client: null, checklist: [] };
+  });
 }
 
 const tripDataFields = (
@@ -365,6 +392,8 @@ export async function updateActivity(
       | "details"
       | "status"
       | "booking_status"
+      | "assigned_to"
+      | "booking_notes"
       | "sort_order"
     >
   >

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { DashboardCalendarWidget } from "@/components/calendar/DashboardCalendarWidget";
+import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
 import { DashboardFollowUpSummary } from "@/components/dashboard/DashboardFollowUpSummary";
 import { DashboardPaymentSummary } from "@/components/dashboard/DashboardPaymentSummary";
 import { DashboardRecentPlanners } from "@/components/dashboard/DashboardRecentPlanners";
+import { listBookingProgressPlanners } from "@/lib/dashboard/booking-progress";
 import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
-import { listTrips } from "@/lib/db/trips";
+import { listConfirmedTripsWithDays, listTrips } from "@/lib/db/trips";
 import "@/app/calendar/calendar.css";
 import "@/app/dashboard.css";
 
@@ -16,6 +18,8 @@ export default async function DashboardPage() {
   const allTrips = await listTrips();
   const clients = (await listClients()).slice(0, 5);
   const pendingFollowUp = await listDashboardFollowUpItems();
+  const confirmedTrips = await listConfirmedTripsWithDays();
+  const bookingProgress = listBookingProgressPlanners(confirmedTrips);
 
   return (
     <div className="page-shell max-w-4xl">
@@ -46,6 +50,8 @@ export default async function DashboardPage() {
       <DashboardPaymentSummary trips={allTrips} />
 
       <DashboardFollowUpSummary initialProgrammes={pendingFollowUp} />
+
+      <DashboardBookingProgress initialPlanners={bookingProgress} />
 
       <DashboardRecentPlanners trips={allTrips} />
 

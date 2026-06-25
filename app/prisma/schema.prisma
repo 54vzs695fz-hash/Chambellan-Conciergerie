@@ -107,6 +107,8 @@ model Activity {
   details        String  @default("")
   status         String  @default("confirmed")
   booking_status String  @default("to_request")
+  assigned_to    String  @default("")
+  booking_notes  String  @default("")
   sort_order     Int     @default(0)
   trip_day       TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
 
