@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import {
@@ -15,7 +15,6 @@ import {
   BOOKING_PROGRESS_STATUS_OPTIONS,
   PLANNER_BOOKING_PRIORITY_LABELS,
   bookingProgressStatusClass,
-  bookingProgressToneClass,
   sortBookingProgressItems,
   toBookingProgressStatus,
   type ReservationStatusItem,
@@ -38,51 +37,33 @@ function formatItemTime(time: string): string {
   return time.slice(0, 5);
 }
 
-function PlannerProgressSummary({
-  planner,
-}: {
-  planner: BookingProgressPlanner;
-}) {
-  const { summary } = planner;
-
+function ChevronIcon({ open }: { open: boolean }) {
   return (
-    <div
-      className={`dash-booking-progress-summary ${bookingProgressToneClass(summary.progressTone)}`}
+    <svg
+      className={`dash-bp-planner-chevron${open ? " is-open" : ""}`}
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      aria-hidden
     >
-      <div className="dash-booking-progress-summary-head">
-        <span className="dash-booking-progress-summary-title">
-          Bookings Progress
-        </span>
-        <span className="dash-booking-progress-summary-percent">
-          {summary.percent}%
-        </span>
-      </div>
-      <div
-        className="dash-booking-progress-summary-bar"
-        role="progressbar"
-        aria-valuenow={summary.percent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`${summary.confirmed} of ${summary.total} bookings confirmed`}
-      >
-        <span
-          className="dash-booking-progress-summary-fill"
-          style={{ width: `${summary.percent}%` }}
-        />
-      </div>
-      <p className="dash-booking-progress-summary-meta">
-        <span>
-          {summary.confirmed} / {summary.total} confirmed
-        </span>
-        {summary.remaining > 0 ? (
-          <span className="dash-booking-progress-summary-remaining">
-            {summary.remaining} booking{summary.remaining === 1 ? "" : "s"}{" "}
-            remaining
-          </span>
-        ) : null}
-      </p>
-    </div>
+      <path
+        d="M5 3.5L9 7L5 10.5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
+}
+
+function plannerListTone(
+  planner: BookingProgressPlanner
+): "urgent" | "pending" | "confirmed" {
+  if (planner.summary.priority === "high") return "urgent";
+  if (planner.summary.remaining > 0) return "pending";
+  return "confirmed";
 }
 
 function PlannerPriorityBadge({
@@ -98,17 +79,213 @@ function PlannerPriorityBadge({
   );
 }
 
+function BookingProgressItemRow({
+  item,
+  tripId,
+  updatingId,
+  onPatch,
+  onNotesChange,
+}: {
+  item: ReservationStatusItem;
+  tripId: number;
+  updatingId: number | null;
+  onPatch: (
+    tripId: number,
+    activityId: number,
+    patch: Partial<
+      Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
+    >
+  ) => void;
+  onNotesChange: (tripId: number, activityId: number, value: string) => void;
+}) {
+  const progressStatus = toBookingProgressStatus(item.booking_status);
+  const statusClass = bookingProgressStatusClass(item.booking_status);
+
+  return (
+    <li className={`dash-booking-progress-item ${statusClass}`}>
+      <div className="dash-booking-progress-item-main">
+        <p className="dash-booking-progress-venue">
+          <span className="dash-booking-progress-status-dot" aria-hidden />
+          {item.venue}
+        </p>
+        <p className="dash-booking-progress-item-meta">
+          {formatItemDate(item.date)}
+          {" · "}
+          {formatItemTime(item.time)}
+          {" · "}
+          {item.categoryLabel}
+        </p>
+      </div>
+
+      <div className="dash-booking-progress-item-controls">
+        <label className="dash-booking-progress-field">
+          <span className="dash-booking-progress-label">Status</span>
+          <select
+            className={`dash-booking-progress-select ${statusClass}`}
+            value={progressStatus}
+            disabled={updatingId === item.activityId}
+            onChange={(event) => {
+              const next = event.target
+                .value as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number];
+              onPatch(tripId, item.activityId, {
+                booking_status: next as BookingStatus,
+              });
+            }}
+          >
+            {BOOKING_PROGRESS_STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {BOOKING_PROGRESS_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="dash-booking-progress-field">
+          <span className="dash-booking-progress-label">Assigned</span>
+          <select
+            className="dash-booking-progress-select"
+            value={item.assigned_to}
+            disabled={updatingId === item.activityId}
+            onChange={(event) => {
+              onPatch(tripId, item.activityId, {
+                assigned_to: event.target.value,
+              });
+            }}
+          >
+            {BOOKING_ASSIGNEE_OPTIONS.map((assignee) => (
+              <option key={assignee || "none"} value={assignee}>
+                {BOOKING_ASSIGNEE_LABELS[assignee]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="dash-booking-progress-field dash-booking-progress-field--notes">
+          <span className="dash-booking-progress-label">Notes</span>
+          <input
+            type="text"
+            className="dash-booking-progress-notes"
+            value={item.booking_notes}
+            placeholder="Internal booking notes"
+            disabled={updatingId === item.activityId}
+            onChange={(event) => {
+              onNotesChange(tripId, item.activityId, event.target.value);
+            }}
+            onBlur={(event) => {
+              const value = event.target.value.trim();
+              if (value === item.booking_notes) return;
+              onPatch(tripId, item.activityId, { booking_notes: value });
+            }}
+          />
+        </label>
+      </div>
+    </li>
+  );
+}
+
+function BookingProgressPlannerCard({
+  planner,
+  isOpen,
+  onToggle,
+  updatingId,
+  onPatch,
+  onNotesChange,
+}: {
+  planner: BookingProgressPlanner;
+  isOpen: boolean;
+  onToggle: () => void;
+  updatingId: number | null;
+  onPatch: (
+    tripId: number,
+    activityId: number,
+    patch: Partial<
+      Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
+    >
+  ) => void;
+  onNotesChange: (tripId: number, activityId: number, value: string) => void;
+}) {
+  const panelId = useId();
+  const listTone = plannerListTone(planner);
+  const remainingLabel = `${planner.summary.remaining} booking${
+    planner.summary.remaining === 1 ? "" : "s"
+  } remaining`;
+
+  return (
+    <li
+      className={`dash-bp-planner-section bp-list-tone--${listTone}${
+        isOpen ? " is-open" : ""
+      }`}
+    >
+      <button
+        type="button"
+        className="dash-bp-planner-trigger"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={onToggle}
+      >
+        <span className="dash-bp-planner-trigger-main">
+          <ChevronIcon open={isOpen} />
+          <span className="dash-bp-planner-trigger-copy">
+            <span className="dash-booking-progress-client">
+              {planner.client_name}
+              <span className="dash-booking-progress-sep">·</span>
+              {planner.destination}
+            </span>
+            <span className="dash-booking-progress-dates">{planner.dates}</span>
+            <span className="dash-bp-planner-remaining">{remainingLabel}</span>
+          </span>
+        </span>
+        <PlannerPriorityBadge priority={planner.summary.priority} />
+      </button>
+
+      <div
+        id={panelId}
+        className={`dash-bp-planner-panel${isOpen ? " is-open" : ""}`}
+        aria-hidden={!isOpen}
+        {...(!isOpen ? { inert: true } : {})}
+      >
+        <div className="dash-bp-planner-panel-inner">
+          <div className="dash-bp-planner-panel-head">
+            <PaymentStatusBadge
+              status={planner.payment_status}
+              arrivalDate={planner.arrival_date}
+              detail={planner.payment_detail}
+            />
+            <Link href={planner.href} className="btn-ghost dash-booking-progress-open">
+              Open planner
+            </Link>
+          </div>
+
+          <ul className="dash-booking-progress-items">
+            {planner.items.map((item) => (
+              <BookingProgressItemRow
+                key={item.activityId}
+                item={item}
+                tripId={planner.tripId}
+                updatingId={updatingId}
+                onPatch={onPatch}
+                onNotesChange={onNotesChange}
+              />
+            ))}
+          </ul>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 export function DashboardBookingProgress({
   initialPlanners,
   embedded = false,
 }: Props) {
   const [planners, setPlanners] = useState(initialPlanners);
+  const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const applyPlannerUpdate = useCallback(
     (tripId: number, updater: (items: ReservationStatusItem[]) => ReservationStatusItem[]) => {
-      setPlanners((current) =>
-        sortBookingProgressPlanners(
+      setPlanners((current) => {
+        const next = sortBookingProgressPlanners(
           current
             .map((planner) => {
               if (planner.tripId !== tripId) return planner;
@@ -118,6 +295,34 @@ export function DashboardBookingProgress({
               });
             })
             .filter((planner): planner is BookingProgressPlanner => planner !== null)
+        );
+
+        if (expandedTripId !== null && !next.some((p) => p.tripId === expandedTripId)) {
+          setExpandedTripId(null);
+        }
+
+        return next;
+      });
+    },
+    [expandedTripId]
+  );
+
+  const handleNotesChange = useCallback(
+    (tripId: number, activityId: number, value: string) => {
+      setPlanners((current) =>
+        current.map((planner) =>
+          planner.tripId !== tripId
+            ? planner
+            : {
+                ...planner,
+                items: sortBookingProgressItems(
+                  planner.items.map((row) =>
+                    row.activityId === activityId
+                      ? { ...row, booking_notes: value }
+                      : row
+                  )
+                ),
+              }
         )
       );
     },
@@ -153,6 +358,10 @@ export function DashboardBookingProgress({
     [applyPlannerUpdate]
   );
 
+  const togglePlanner = useCallback((tripId: number) => {
+    setExpandedTripId((current) => (current === tripId ? null : tripId));
+  }, []);
+
   if (!embedded && planners.length === 0) return null;
 
   const content =
@@ -161,172 +370,19 @@ export function DashboardBookingProgress({
         No active planners with bookings to complete.
       </p>
     ) : (
-      <ul className="dash-booking-progress-list">
+      <ul className="dash-bp-planner-list">
         {planners.map((planner) => (
-          <li key={planner.tripId}>
-            <article
-              className={`dash-card dash-card--follow-up dash-booking-progress-card ${bookingProgressToneClass(planner.summary.progressTone)}`}
-            >
-              <div className="dash-booking-progress-card-head">
-                <div className="dash-booking-progress-card-meta">
-                  <div className="dash-booking-progress-card-title-row">
-                    <div className="dash-booking-progress-card-identity">
-                      <p className="dash-booking-progress-client">
-                        {planner.client_name}
-                        <span className="dash-booking-progress-sep">·</span>
-                        {planner.destination}
-                      </p>
-                      <p className="dash-booking-progress-dates">
-                        {planner.dates}
-                      </p>
-                    </div>
-                    <PlannerPriorityBadge priority={planner.summary.priority} />
-                  </div>
-
-                  <PlannerProgressSummary planner={planner} />
-                </div>
-
-                <div className="dash-booking-progress-card-badges">
-                  <span className="dash-booking-progress-remaining-badge">
-                    Remaining bookings: {planner.summary.remaining}
-                  </span>
-                  <PaymentStatusBadge
-                    status={planner.payment_status}
-                    arrivalDate={planner.arrival_date}
-                    detail={planner.payment_detail}
-                  />
-                  <Link
-                    href={planner.href}
-                    className="btn-ghost dash-booking-progress-open"
-                  >
-                    Open planner
-                  </Link>
-                </div>
-              </div>
-
-              <ul className="dash-booking-progress-items">
-                {planner.items.map((item) => {
-                  const progressStatus = toBookingProgressStatus(
-                    item.booking_status
-                  );
-                  const statusClass = bookingProgressStatusClass(
-                    item.booking_status
-                  );
-
-                  return (
-                    <li
-                      key={item.activityId}
-                      className={`dash-booking-progress-item ${statusClass}`}
-                    >
-                      <div className="dash-booking-progress-item-main">
-                        <p className="dash-booking-progress-venue">
-                          <span
-                            className="dash-booking-progress-status-dot"
-                            aria-hidden
-                          />
-                          {item.venue}
-                        </p>
-                        <p className="dash-booking-progress-item-meta">
-                          {formatItemDate(item.date)}
-                          {" · "}
-                          {formatItemTime(item.time)}
-                          {" · "}
-                          {item.categoryLabel}
-                        </p>
-                      </div>
-
-                      <div className="dash-booking-progress-item-controls">
-                        <label className="dash-booking-progress-field">
-                          <span className="dash-booking-progress-label">
-                            Status
-                          </span>
-                          <select
-                            className={`dash-booking-progress-select ${statusClass}`}
-                            value={progressStatus}
-                            disabled={updatingId === item.activityId}
-                            onChange={(event) => {
-                              const next = event.target
-                                .value as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number];
-                              void patchItem(planner.tripId, item.activityId, {
-                                booking_status: next as BookingStatus,
-                              });
-                            }}
-                          >
-                            {BOOKING_PROGRESS_STATUS_OPTIONS.map((status) => (
-                              <option key={status} value={status}>
-                                {BOOKING_PROGRESS_STATUS_LABELS[status]}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <label className="dash-booking-progress-field">
-                          <span className="dash-booking-progress-label">
-                            Assigned
-                          </span>
-                          <select
-                            className="dash-booking-progress-select"
-                            value={item.assigned_to}
-                            disabled={updatingId === item.activityId}
-                            onChange={(event) => {
-                              void patchItem(planner.tripId, item.activityId, {
-                                assigned_to: event.target.value,
-                              });
-                            }}
-                          >
-                            {BOOKING_ASSIGNEE_OPTIONS.map((assignee) => (
-                              <option key={assignee || "none"} value={assignee}>
-                                {BOOKING_ASSIGNEE_LABELS[assignee]}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-
-                        <label className="dash-booking-progress-field dash-booking-progress-field--notes">
-                          <span className="dash-booking-progress-label">
-                            Notes
-                          </span>
-                          <input
-                            type="text"
-                            className="dash-booking-progress-notes"
-                            value={item.booking_notes}
-                            placeholder="Internal booking notes"
-                            disabled={updatingId === item.activityId}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              setPlanners((current) =>
-                                current.map((p) =>
-                                  p.tripId !== planner.tripId
-                                    ? p
-                                    : {
-                                        ...p,
-                                        items: sortBookingProgressItems(
-                                          p.items.map((row) =>
-                                            row.activityId === item.activityId
-                                              ? { ...row, booking_notes: value }
-                                              : row
-                                          )
-                                        ),
-                                      }
-                                )
-                              );
-                            }}
-                            onBlur={(event) => {
-                              const value = event.target.value.trim();
-                              if (value === item.booking_notes) return;
-                              void patchItem(planner.tripId, item.activityId, {
-                                booking_notes: value,
-                              });
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </article>
-          </li>
+          <BookingProgressPlannerCard
+            key={planner.tripId}
+            planner={planner}
+            isOpen={expandedTripId === planner.tripId}
+            onToggle={() => togglePlanner(planner.tripId)}
+            updatingId={updatingId}
+            onPatch={(tripId, activityId, patch) => {
+              void patchItem(tripId, activityId, patch);
+            }}
+            onNotesChange={handleNotesChange}
+          />
         ))}
       </ul>
     );
@@ -335,8 +391,7 @@ export function DashboardBookingProgress({
     return (
       <div className="dash-embedded-section dash-booking-progress-embedded">
         <p className="dash-booking-progress-lead dash-booking-progress-lead--embedded">
-          Internal follow-up after client programme confirmation — assign and
-          track each reservation until fully booked.
+          Select a client to view and update their reservations.
         </p>
         {content}
       </div>
@@ -349,8 +404,7 @@ export function DashboardBookingProgress({
         <div>
           <h2 className="section-title">Bookings Progress</h2>
           <p className="dash-booking-progress-lead">
-            Internal follow-up after client programme confirmation — assign and
-            track each reservation until fully booked.
+            Select a client to view and update their reservations.
           </p>
         </div>
         <Link href="/calendar" className="btn-ghost">
