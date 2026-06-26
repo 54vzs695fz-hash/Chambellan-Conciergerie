@@ -5,6 +5,11 @@ import { useCallback, useId, useState } from "react";
 import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import {
+  buildBookingRequestMessage,
+  copyTextToClipboard,
+  showsBookingRequestMessage,
+} from "@/lib/dashboard/booking-request-message";
+import {
   reconcileBookingProgressPlanner,
   sortBookingProgressPlanners,
 } from "@/lib/dashboard/booking-progress";
@@ -81,14 +86,22 @@ function PlannerPriorityBadge({
 
 function BookingProgressItemRow({
   item,
+  planner,
   tripId,
   updatingId,
+  copied,
+  onCopyMessage,
+  onOpenClientFile,
   onPatch,
   onNotesChange,
 }: {
   item: ReservationStatusItem;
+  planner: BookingProgressPlanner;
   tripId: number;
   updatingId: number | null;
+  copied: boolean;
+  onCopyMessage: () => void;
+  onOpenClientFile: () => void;
   onPatch: (
     tripId: number,
     activityId: number,
@@ -100,6 +113,7 @@ function BookingProgressItemRow({
 }) {
   const progressStatus = toBookingProgressStatus(item.booking_status);
   const statusClass = bookingProgressStatusClass(item.booking_status);
+  const showRequestActions = showsBookingRequestMessage(item.booking_status);
 
   return (
     <li className={`dash-booking-progress-item ${statusClass}`}>
@@ -115,6 +129,24 @@ function BookingProgressItemRow({
           {" · "}
           {item.categoryLabel}
         </p>
+        {showRequestActions ? (
+          <div className="dash-bp-request-actions">
+            <button
+              type="button"
+              className={`dash-bp-copy-message-btn${copied ? " is-copied" : ""}`}
+              onClick={onCopyMessage}
+            >
+              {copied ? "Copied" : "Copy message"}
+            </button>
+            <button
+              type="button"
+              className="dash-bp-client-file-btn dash-bp-client-file-btn--inline"
+              onClick={onOpenClientFile}
+            >
+              Open client file
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="dash-booking-progress-item-controls">
@@ -231,6 +263,9 @@ function BookingProgressPlannerCard({
   isClientFileOpen,
   onToggle,
   onToggleClientFile,
+  onOpenClientFile,
+  copiedActivityId,
+  onCopyMessage,
   updatingId,
   onPatch,
   onNotesChange,
@@ -240,6 +275,9 @@ function BookingProgressPlannerCard({
   isClientFileOpen: boolean;
   onToggle: () => void;
   onToggleClientFile: () => void;
+  onOpenClientFile: () => void;
+  copiedActivityId: number | null;
+  onCopyMessage: (activityId: number) => void;
   updatingId: number | null;
   onPatch: (
     tripId: number,
@@ -326,8 +364,12 @@ function BookingProgressPlannerCard({
               <BookingProgressItemRow
                 key={item.activityId}
                 item={item}
+                planner={planner}
                 tripId={planner.tripId}
                 updatingId={updatingId}
+                copied={copiedActivityId === item.activityId}
+                onCopyMessage={() => onCopyMessage(item.activityId)}
+                onOpenClientFile={onOpenClientFile}
                 onPatch={onPatch}
                 onNotesChange={onNotesChange}
               />
@@ -346,6 +388,7 @@ export function DashboardBookingProgress({
   const [planners, setPlanners] = useState(initialPlanners);
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const [clientFileTripId, setClientFileTripId] = useState<number | null>(null);
+  const [copiedActivityId, setCopiedActivityId] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const applyPlannerUpdate = useCallback(
@@ -435,6 +478,39 @@ export function DashboardBookingProgress({
     setClientFileTripId((current) => (current === tripId ? null : tripId));
   }, []);
 
+  const openClientFile = useCallback((tripId: number) => {
+    setExpandedTripId(tripId);
+    setClientFileTripId(tripId);
+  }, []);
+
+  const handleCopyMessage = useCallback(
+    (planner: BookingProgressPlanner, activityId: number) => {
+      const item = planner.items.find((row) => row.activityId === activityId);
+      if (!item) return;
+
+      const message = buildBookingRequestMessage({
+        establishmentName: item.venue,
+        date: item.date,
+        time: item.time,
+        clientName: planner.client_name,
+        guestCount: planner.guest_count,
+        clientPhone: planner.client_file.phone,
+        clientEmail: planner.client_file.email,
+      });
+
+      void copyTextToClipboard(message).then((ok) => {
+        if (!ok) return;
+        setCopiedActivityId(activityId);
+        window.setTimeout(() => {
+          setCopiedActivityId((current) =>
+            current === activityId ? null : current
+          );
+        }, 2000);
+      });
+    },
+    []
+  );
+
   if (!embedded && planners.length === 0) return null;
 
   const content =
@@ -452,6 +528,9 @@ export function DashboardBookingProgress({
             isClientFileOpen={clientFileTripId === planner.tripId}
             onToggle={() => togglePlanner(planner.tripId)}
             onToggleClientFile={() => toggleClientFile(planner.tripId)}
+            onOpenClientFile={() => openClientFile(planner.tripId)}
+            copiedActivityId={copiedActivityId}
+            onCopyMessage={(activityId) => handleCopyMessage(planner, activityId)}
             updatingId={updatingId}
             onPatch={(tripId, activityId, patch) => {
               void patchItem(tripId, activityId, patch);

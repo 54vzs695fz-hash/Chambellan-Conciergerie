@@ -1281,6 +1281,63 @@
   font-size: 0.72rem;
 }
 
+.dash-bp-request-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.dash-bp-copy-message-btn,
+.dash-bp-client-file-btn--inline {
+  min-height: 34px;
+  padding: 0.35rem 0.62rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.dash-bp-copy-message-btn {
+  color: var(--shell-text, #111);
+  background: color-mix(in srgb, #2d5f94 10%, #fff);
+  border: 1px solid color-mix(in srgb, #2d5f94 28%, transparent);
+}
+
+.dash-bp-copy-message-btn:hover,
+.dash-bp-copy-message-btn.is-copied {
+  background: color-mix(in srgb, #2d5f94 16%, #fff);
+  border-color: color-mix(in srgb, #2d5f94 38%, transparent);
+}
+
+.dash-bp-copy-message-btn.is-copied {
+  color: color-mix(in srgb, #2d5f94 88%, #111);
+}
+
+.dash-bp-client-file-btn--inline {
+  color: var(--shell-text, #111);
+  background: color-mix(in srgb, var(--shell-accent, #a67c3d) 8%, #fff);
+  border: 1px solid color-mix(in srgb, var(--shell-accent, #a67c3d) 22%, transparent);
+}
+
+.dash-bp-client-file-btn--inline:hover {
+  background: color-mix(in srgb, var(--shell-accent, #a67c3d) 14%, #fff);
+  border-color: color-mix(in srgb, var(--shell-accent, #a67c3d) 32%, transparent);
+}
+
+@media (max-width: 767px) {
+  .dash-bp-copy-message-btn,
+  .dash-bp-client-file-btn--inline {
+    min-height: 40px;
+    padding: 0.42rem 0.7rem;
+    font-size: 0.64rem;
+  }
+}
+
 .dash-bp-planner-section.bp-list-tone--urgent .dash-bp-planner-remaining {
   color: #9b4f5c;
 }

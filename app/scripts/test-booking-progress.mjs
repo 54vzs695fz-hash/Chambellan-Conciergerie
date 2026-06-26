@@ -180,4 +180,38 @@ const sorted = sortBookingProgressItems([
 ]);
 assert(sorted[0]?.booking_status === "to_request", "actionable booking first");
 
+const {
+  buildBookingRequestMessage,
+  formatBookingRequestContactEmail,
+  formatBookingRequestContactPhone,
+  formatBookingRequestPax,
+  formatBookingRequestTime,
+  showsBookingRequestMessage,
+} = await loadModule("src/lib/dashboard/booking-request-message.ts");
+
+assert(showsBookingRequestMessage("to_request"), "to_request shows copy message");
+assert(showsBookingRequestMessage("request_sent"), "request_sent shows copy message");
+assert(showsBookingRequestMessage("waiting_confirmation"), "waiting shows copy message");
+assert(!showsBookingRequestMessage("confirmed"), "confirmed hides copy message");
+
+assert(formatBookingRequestTime("15:30") === "15h30", "time format");
+assert(formatBookingRequestPax("4 guests") === "4 pax", "guest pax format");
+assert(formatBookingRequestContactPhone("Missing phone") === "Phone missing", "phone missing");
+assert(formatBookingRequestContactEmail("Missing email") === "Email missing", "email missing");
+
+const message = buildBookingRequestMessage({
+  establishmentName: "Verde Beach",
+  date: "2026-07-28",
+  time: "15:30",
+  clientName: "Alex Borovskoy",
+  guestCount: "4 guests",
+  clientPhone: "+1 (718) 724-4554",
+  clientEmail: "alexborovskoy22@gmail.com",
+});
+
+assert(message.includes("Verde Beach"), "message venue");
+assert(message.includes("28/07 à 15h30"), "message date time");
+assert(message.includes("4 pax"), "message pax");
+assert(message.includes("+1 (718) 724-4554"), "message phone");
+
 console.log("booking-progress tests passed");
