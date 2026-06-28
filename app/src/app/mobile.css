@@ -628,6 +628,143 @@
   cursor: not-allowed;
 }
 
+/* Client CRM — delete + relationship tags */
+.crm-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.1rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8b3a3a;
+  background: transparent;
+  border: 1px solid rgba(139, 58, 58, 0.35);
+  border-radius: 4px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.crm-delete-btn:hover {
+  background: rgba(139, 58, 58, 0.06);
+  border-color: rgba(139, 58, 58, 0.55);
+}
+
+.crm-delete-dialog {
+  max-width: 24rem;
+}
+
+.crm-delete-warning {
+  padding: 0.65rem 0.75rem;
+  border-radius: 4px;
+  color: #6b4a12;
+  background: rgba(184, 149, 106, 0.12);
+  border: 1px solid rgba(184, 149, 106, 0.28);
+}
+
+.crm-delete-confirm-field {
+  display: block;
+}
+
+.crm-relationships-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.crm-relationship-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.crm-relationship-item {
+  padding: 0.85rem 1rem;
+}
+
+.crm-relationship-item-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.crm-relationship-name {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #2a2622;
+  text-decoration: none;
+}
+
+.crm-relationship-name:hover {
+  color: #9a7b4f;
+}
+
+.crm-relationship-type {
+  margin: 0.18rem 0 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a736c;
+}
+
+.crm-relationship-remove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #9a948c;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.crm-relationship-remove:hover:not(:disabled) {
+  color: #8b3a3a;
+}
+
+.crm-relationship-notes,
+.crm-relationship-notes-edit {
+  margin-top: 0.65rem;
+}
+
+.crm-relationship-notes {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #5c574f;
+  font-style: italic;
+}
+
+.crm-relationship-notes-btn {
+  margin-top: 0.55rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  cursor: pointer;
+}
+
+.crm-relationship-notes-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.crm-relationship-form {
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
 /* Establishment form — advanced + quick add */
 .est-advanced-details {
   border-top: 1px solid rgba(229, 221, 210, 0.8);

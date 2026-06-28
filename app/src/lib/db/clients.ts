@@ -73,6 +73,12 @@ export async function updateClient(
   }
 }
 
+export async function getClientLinkedTripCount(clientId: number): Promise<number> {
+  return prisma.trip.count({
+    where: { client_id: clientId },
+  });
+}
+
 export async function deleteClient(id: number): Promise<boolean> {
   try {
     await prisma.client.delete({ where: { id } });

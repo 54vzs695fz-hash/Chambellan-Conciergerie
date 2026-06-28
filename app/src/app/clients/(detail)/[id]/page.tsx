@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ClientDeleteButton } from "@/components/crm/ClientDeleteButton";
 import { ClientForm } from "@/components/crm/ClientForm";
+import { ClientRelationshipsSection } from "@/components/crm/ClientRelationshipsSection";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { listClientRelationships } from "@/lib/db/client-relationships";
 import {
   getClient,
   getClientDestinations,
+  getClientLinkedTripCount,
   getClientTripHistory,
+  listClients,
 } from "@/lib/db/clients";
 import { createTrip } from "@/lib/db/trips";
 import { formatDateRange } from "@/lib/planner-utils";
@@ -54,45 +59,63 @@ export default async function ClientDetailPage({
 
   const trips = await getClientTripHistory(clientId);
   const destinations = await getClientDestinations(clientId);
+  const linkedPlannerCount = await getClientLinkedTripCount(clientId);
+  const relationships = await listClientRelationships(clientId);
+  const allClients = await listClients();
 
   return (
     <div className="page-shell max-w-4xl">
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
           <h1 className="font-serif text-2xl tracking-wide">{client.full_name}</h1>
           <p className="text-sm text-muted mt-1">Client profile & trip history</p>
         </div>
-        <form
-          action={async () => {
-            "use server";
-            const tripId = await createPlannerForClient(
-              client.id,
-              client.full_name
-            );
-            const { redirect } = await import("next/navigation");
-            redirect(`/planner/${tripId}`);
-          }}
-        >
-          <button type="submit" className="btn-primary">
-            New planner
-          </button>
-        </form>
+        <div className="flex flex-wrap gap-3">
+          <form
+            action={async () => {
+              "use server";
+              const tripId = await createPlannerForClient(
+                client.id,
+                client.full_name
+              );
+              const { redirect } = await import("next/navigation");
+              redirect(`/planner/${tripId}`);
+            }}
+          >
+            <button type="submit" className="btn-primary min-h-[44px]">
+              New planner
+            </button>
+          </form>
+          <ClientDeleteButton
+            clientId={client.id}
+            clientName={client.full_name}
+            linkedPlannerCount={linkedPlannerCount}
+          />
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-10 mb-12">
-        <div>
-          <h2 className="section-title mb-4">Profile</h2>
-          <ClientForm
-            initial={{
-              full_name: client.full_name,
-              phone: client.phone,
-              whatsapp: client.whatsapp,
-              email: client.email,
-              nationality: client.nationality,
-              notes: client.notes,
-              preferences: client.preferences,
-            }}
+        <div className="space-y-10">
+          <div>
+            <h2 className="section-title mb-4">Profile</h2>
+            <ClientForm
+              initial={{
+                full_name: client.full_name,
+                phone: client.phone,
+                whatsapp: client.whatsapp,
+                email: client.email,
+                nationality: client.nationality,
+                notes: client.notes,
+                preferences: client.preferences,
+              }}
+              clientId={client.id}
+            />
+          </div>
+
+          <ClientRelationshipsSection
             clientId={client.id}
+            initialRelationships={relationships}
+            allClients={allClients.map(({ id, full_name }) => ({ id, full_name }))}
           />
         </div>
 

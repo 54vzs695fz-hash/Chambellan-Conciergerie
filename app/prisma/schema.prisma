@@ -19,8 +19,27 @@ model Client {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
   trips       Trip[]
+  relationships         ClientRelationship[] @relation("ClientRelationships")
+  related_relationships ClientRelationship[] @relation("RelatedClientRelationships")
 
   @@map("clients")
+}
+
+model ClientRelationship {
+  id                Int      @id @default(autoincrement())
+  client_id         Int
+  related_client_id Int
+  relationship_type String   @default("")
+  notes             String   @default("")
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  client            Client   @relation("ClientRelationships", fields: [client_id], references: [id], onDelete: Cascade)
+  related_client    Client   @relation("RelatedClientRelationships", fields: [related_client_id], references: [id], onDelete: Cascade)
+
+  @@unique([client_id, related_client_id])
+  @@index([client_id], map: "client_relationships_client_id_idx")
+  @@index([related_client_id], map: "client_relationships_related_client_id_idx")
+  @@map("client_relationships")
 }
 
 model Trip {

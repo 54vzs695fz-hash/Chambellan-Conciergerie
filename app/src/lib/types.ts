@@ -136,6 +136,30 @@ export interface Client {
   updated_at: string;
 }
 
+export type ClientRelationshipType =
+  | "friend"
+  | "family"
+  | "partner"
+  | "business_relation"
+  | "travel_group"
+  | "vip_group"
+  | "introduced_by"
+  | "other";
+
+export interface ClientRelationship {
+  id: number;
+  client_id: number;
+  related_client_id: number;
+  relationship_type: ClientRelationshipType;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientRelationshipWithClient extends ClientRelationship {
+  related_client: Pick<Client, "id" | "full_name">;
+}
+
 export interface Trip {
   id: number;
   client_id: number | null;
