@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
+import { MobileFab } from "./MobileFab";
 import { MobileNav } from "./MobileNav";
 import { resolveSectionFromPath } from "@/lib/theme/section-colors";
 
@@ -30,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
         <MobileNav />
+        <MobileFab />
       </>
     );
   }
@@ -41,6 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <MobileNav />
+      <MobileFab />
     </div>
   );
 }

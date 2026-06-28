@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PlannerLuxuryDocument } from "./PlannerLuxuryDocument";
 import {
   PlannerConciergeDashboard,
@@ -34,6 +35,14 @@ import {
   buildDefaultPlannerPdfFilename,
   sanitizePdfFilename,
 } from "@/lib/planner/planner-pdf-filename";
+import {
+  defaultWeekRange,
+  isMobileQuickAddKind,
+  MOBILE_QUICK_ADD_ACTIVITY,
+  pickQuickAddTarget,
+  PLANNER_QUICK_ADD_EVENT,
+  type MobileQuickAddKind,
+} from "@/lib/mobile/planner-quick-add";
 
 type ViewMode = "concierge" | "client";
 type PreviewDisplay = "fit" | "full";
@@ -60,6 +69,9 @@ function patchActivityInTrip(
 }
 
 export function PlannerEditor({ initialTrip }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const quickAddHandled = useRef<string | null>(null);
   const [trip, setTrip] = useState(initialTrip);
   const [clientPreviewTrip, setClientPreviewTrip] =
     useState<TripWithDays | null>(null);
@@ -306,6 +318,92 @@ export function PlannerEditor({ initialTrip }: Props) {
       })
     );
   };
+
+  const runQuickAdd = useCallback(
+    async (kind: MobileQuickAddKind) => {
+      setViewMode("concierge");
+
+      let current = tripRef.current ?? trip;
+      if (!current.days.length) {
+        const { arrival, departure } = defaultWeekRange();
+        current = syncTripDaysInState({
+          ...current,
+          arrival_date: arrival,
+          departure_date: departure,
+        });
+        tripRef.current = current;
+        setTrip(current);
+        const updated = await persist(current);
+        if (!updated) return;
+        current = updated;
+        setTrip(updated);
+        tripRef.current = updated;
+      }
+
+      const target = pickQuickAddTarget(current.days);
+      if (!target) return;
+
+      const resolvedId = await resolveDayId(target.dayId, current);
+      if (!resolvedId) return;
+
+      const res = await fetch(`/api/trips/${current.id}/activities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trip_day_id: resolvedId,
+          period: target.period,
+          activity_type: MOBILE_QUICK_ADD_ACTIVITY[kind],
+        }),
+      });
+      if (!res.ok) return;
+
+      const activity: Activity = await res.json();
+      setTrip((prev) =>
+        applyItineraryDestinationSync({
+          ...prev,
+          days: prev.days.map((d) =>
+            d.id === target.dayId || d.id === resolvedId
+              ? {
+                  ...d,
+                  id: resolvedId,
+                  activities: [...d.activities, activity],
+                }
+              : d
+          ),
+        })
+      );
+
+      requestAnimationFrame(() => {
+        document
+          .querySelector(".adm-days")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    },
+    [persist, resolveDayId, trip]
+  );
+
+  useEffect(() => {
+    const onQuickAdd = (event: Event) => {
+      const detail = (event as CustomEvent<{ kind?: MobileQuickAddKind }>).detail;
+      if (!detail?.kind || !isMobileQuickAddKind(detail.kind)) return;
+      void runQuickAdd(detail.kind);
+    };
+    window.addEventListener(PLANNER_QUICK_ADD_EVENT, onQuickAdd);
+    return () => window.removeEventListener(PLANNER_QUICK_ADD_EVENT, onQuickAdd);
+  }, [runQuickAdd]);
+
+  useEffect(() => {
+    const quickAdd = searchParams.get("quickAdd");
+    if (!quickAdd || !isMobileQuickAddKind(quickAdd)) return;
+
+    const key = `${trip.id}:${quickAdd}`;
+    if (quickAddHandled.current === key) return;
+    quickAddHandled.current = key;
+
+    void runQuickAdd(quickAdd).finally(() => {
+      router.replace(`/planner/${trip.id}`, { scroll: false });
+    });
+  }, [runQuickAdd, router, searchParams, trip.id]);
 
   const patchActivity = useCallback(
     (
