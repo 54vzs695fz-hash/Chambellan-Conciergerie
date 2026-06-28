@@ -2,7 +2,7 @@ import Link from "next/link";
 import { DashboardHomeAccordion } from "@/components/dashboard/DashboardHomeAccordion";
 import { DashboardMobileHome } from "@/components/dashboard/DashboardMobileHome";
 import { computeHomeSectionCounts } from "@/lib/dashboard/home-sections";
-import { buildTodayActionGroups } from "@/lib/dashboard/home-today";
+import { listBookingPriorityItems } from "@/lib/dashboard/booking-priority";
 import { listBookingProgressPlanners } from "@/lib/dashboard/booking-progress";
 import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
@@ -25,7 +25,10 @@ export default async function DashboardPage() {
     confirmedTrips,
     establishments
   );
-  const todayGroups = buildTodayActionGroups(allTrips, confirmedTrips);
+  const bookingPriority = listBookingPriorityItems(
+    confirmedTrips,
+    establishments
+  );
   const counts = computeHomeSectionCounts({
     trips: allTrips,
     confirmedTrips,
@@ -63,7 +66,7 @@ export default async function DashboardPage() {
       </div>
 
       <DashboardMobileHome
-        todayGroups={todayGroups}
+        bookingPriority={bookingPriority}
         bookingProgress={bookingProgress}
         trips={allTrips}
         clients={clients}

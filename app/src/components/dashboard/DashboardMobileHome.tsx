@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useRef, useState } from "react";
 import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
-import { DashboardMobileToday } from "@/components/dashboard/DashboardMobileToday";
+import { DashboardMobileBookingPriority } from "@/components/dashboard/DashboardMobileBookingPriority";
 import { DashboardRecentPlanners } from "@/components/dashboard/DashboardRecentPlanners";
+import type { BookingPriorityItem } from "@/lib/dashboard/booking-priority";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
-import type { TodayActionGroup } from "@/lib/dashboard/home-today";
 import type { Trip } from "@/lib/types";
 
 interface ClientPreview {
@@ -15,23 +16,43 @@ interface ClientPreview {
 }
 
 interface Props {
-  todayGroups: TodayActionGroup[];
+  bookingPriority: BookingPriorityItem[];
   bookingProgress: BookingProgressPlanner[];
   trips: Trip[];
   clients: ClientPreview[];
 }
 
 export function DashboardMobileHome({
-  todayGroups,
+  bookingPriority,
   bookingProgress,
   trips,
   clients,
 }: Props) {
+  const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
+  const bookingProgressRef = useRef<HTMLElement>(null);
+
+  const handlePrioritySelect = useCallback((tripId: number) => {
+    setExpandedTripId(tripId);
+    window.requestAnimationFrame(() => {
+      bookingProgressRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, []);
+
   return (
     <div className="dash-mobile-home md:hidden">
-      <DashboardMobileToday groups={todayGroups} />
+      <DashboardMobileBookingPriority
+        items={bookingPriority}
+        onSelect={handlePrioritySelect}
+      />
 
-      <section className="dash-mobile-section" data-section="planner">
+      <section
+        ref={bookingProgressRef}
+        className="dash-mobile-section"
+        data-section="planner"
+      >
         <header className="dash-mobile-section-head">
           <h2 className="dash-mobile-section-title">Booking progress</h2>
           {bookingProgress.length > 0 ? (
@@ -40,7 +61,12 @@ export function DashboardMobileHome({
             </span>
           ) : null}
         </header>
-        <DashboardBookingProgress embedded initialPlanners={bookingProgress} />
+        <DashboardBookingProgress
+          embedded
+          initialPlanners={bookingProgress}
+          expandedTripId={expandedTripId}
+          onExpandedTripIdChange={setExpandedTripId}
+        />
       </section>
 
       <section className="dash-mobile-section" data-section="planner">

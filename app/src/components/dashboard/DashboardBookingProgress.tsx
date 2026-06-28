@@ -17,6 +17,8 @@ import { formatGridDayDate, formatGridDayName } from "@/lib/planner-utils";
 interface Props {
   initialPlanners: BookingProgressPlanner[];
   embedded?: boolean;
+  expandedTripId?: number | null;
+  onExpandedTripIdChange?: (tripId: number | null) => void;
 }
 
 function formatItemMeta(item: ReservationStatusItem): string {
@@ -226,14 +228,36 @@ function PlannerCard({
 export function DashboardBookingProgress({
   initialPlanners,
   embedded = false,
+  expandedTripId: expandedTripIdProp,
+  onExpandedTripIdChange,
 }: Props) {
-  const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
+  const [internalExpandedTripId, setInternalExpandedTripId] = useState<
+    number | null
+  >(null);
+  const expandedTripId =
+    expandedTripIdProp !== undefined
+      ? expandedTripIdProp
+      : internalExpandedTripId;
   const [copiedItemKey, setCopiedItemKey] = useState<string | null>(null);
   const planners = initialPlanners;
 
-  const togglePlanner = useCallback((tripId: number) => {
-    setExpandedTripId((current) => (current === tripId ? null : tripId));
-  }, []);
+  const setExpandedTripId = useCallback(
+    (tripId: number | null) => {
+      if (onExpandedTripIdChange) {
+        onExpandedTripIdChange(tripId);
+        return;
+      }
+      setInternalExpandedTripId(tripId);
+    },
+    [onExpandedTripIdChange]
+  );
+
+  const togglePlanner = useCallback(
+    (tripId: number) => {
+      setExpandedTripId(expandedTripId === tripId ? null : tripId);
+    },
+    [expandedTripId, setExpandedTripId]
+  );
 
   const handleCopyRequest = useCallback(
     (planner: BookingProgressPlanner, itemKey: string) => {
