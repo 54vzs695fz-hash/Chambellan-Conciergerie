@@ -8,6 +8,7 @@ import {
   ESTABLISHMENT_CATEGORY_LABELS,
 } from "@/lib/establishments/categories";
 import { LIBRARY_DESTINATIONS } from "@/lib/establishments/destinations";
+import { EstablishmentCommissionSection } from "@/components/establishments/EstablishmentCommissionSection";
 
 type FormVariant = "standard" | "quick";
 
@@ -349,6 +350,10 @@ export function EstablishmentForm({
       </div>
 
       {!isQuick ? advancedFields : null}
+
+      {!isQuick ? (
+        <EstablishmentCommissionSection form={form} onChange={set} />
+      ) : null}
 
       <div
         className={

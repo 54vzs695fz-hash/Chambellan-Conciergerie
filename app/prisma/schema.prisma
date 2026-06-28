@@ -166,6 +166,16 @@ model Establishment {
   tags           String   @default("")
   internal_notes String   @default("")
   is_favorite    Boolean  @default(false)
+  commission_available           Boolean @default(false)
+  commission_calc_type           String  @default("percentage")
+  commission_percentage          String  @default("")
+  commission_fixed_amount          String  @default("")
+  commission_calc_custom           String  @default("")
+  commission_basis                 String  @default("total_bill")
+  commission_basis_custom          String  @default("")
+  commission_eligibility           String  @default("none")
+  commission_eligibility_custom    String  @default("")
+  commission_threshold_amount      String  @default("")
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 

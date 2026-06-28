@@ -1,6 +1,7 @@
 import type { Establishment as PrismaEstablishment } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { Establishment } from "@/lib/types";
+import { normalizeEstablishmentCommission } from "@/lib/establishments/commission";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
 import { establishmentDedupKey } from "@/lib/establishments/destinations";
 import {
@@ -26,6 +27,18 @@ function mapEstablishment(row: PrismaEstablishment): Establishment {
     tags: row.tags,
     internal_notes: row.internal_notes,
     is_favorite: row.is_favorite,
+    ...normalizeEstablishmentCommission({
+      commission_available: row.commission_available,
+      commission_calc_type: row.commission_calc_type,
+      commission_percentage: row.commission_percentage,
+      commission_fixed_amount: row.commission_fixed_amount,
+      commission_calc_custom: row.commission_calc_custom,
+      commission_basis: row.commission_basis,
+      commission_basis_custom: row.commission_basis_custom,
+      commission_eligibility: row.commission_eligibility,
+      commission_eligibility_custom: row.commission_eligibility_custom,
+      commission_threshold_amount: row.commission_threshold_amount,
+    }),
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
   };
@@ -90,8 +103,9 @@ export async function getEstablishment(
 export async function createEstablishment(
   data: Omit<Establishment, "id" | "created_at" | "updated_at">
 ): Promise<Establishment> {
+  const commission = normalizeEstablishmentCommission(data);
   const row = await prisma.establishment.create({
-    data: { ...data, city: data.city.trim() },
+    data: { ...data, ...commission, city: data.city.trim() },
   });
   return mapEstablishment(row);
 }
@@ -101,9 +115,10 @@ export async function updateEstablishment(
   data: Omit<Establishment, "id" | "created_at" | "updated_at">
 ): Promise<Establishment | undefined> {
   try {
+    const commission = normalizeEstablishmentCommission(data);
     const row = await prisma.establishment.update({
       where: { id },
-      data: { ...data, city: data.city.trim() },
+      data: { ...data, ...commission, city: data.city.trim() },
     });
     return mapEstablishment(row);
   } catch {

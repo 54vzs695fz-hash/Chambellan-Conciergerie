@@ -1,3 +1,9 @@
+import type {
+  CommissionBasis,
+  CommissionCalculationType,
+  CommissionEligibility,
+} from "@/lib/establishments/commission";
+
 export type ActivityType =
   | "restaurant"
   | "beach_club"
@@ -264,6 +270,16 @@ export interface Establishment {
   tags: string;
   internal_notes: string;
   is_favorite: boolean;
+  commission_available: boolean;
+  commission_calc_type: CommissionCalculationType;
+  commission_percentage: string;
+  commission_fixed_amount: string;
+  commission_calc_custom: string;
+  commission_basis: CommissionBasis;
+  commission_basis_custom: string;
+  commission_eligibility: CommissionEligibility;
+  commission_eligibility_custom: string;
+  commission_threshold_amount: string;
   created_at: string;
   updated_at: string;
 }
@@ -336,6 +352,16 @@ export const EMPTY_ESTABLISHMENT: EstablishmentInput = {
   tags: "",
   internal_notes: "",
   is_favorite: false,
+  commission_available: false,
+  commission_calc_type: "percentage",
+  commission_percentage: "",
+  commission_fixed_amount: "",
+  commission_calc_custom: "",
+  commission_basis: "total_bill",
+  commission_basis_custom: "",
+  commission_eligibility: "none",
+  commission_eligibility_custom: "",
+  commission_threshold_amount: "",
 };
 
 export const EMPTY_EVENT: ConciergeEventInput = {

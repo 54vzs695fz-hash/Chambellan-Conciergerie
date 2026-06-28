@@ -4,6 +4,7 @@ import {
   validateEstablishmentInput,
 } from "@/lib/db/establishments";
 import { bulkImportEvents, validateEventInput } from "@/lib/db/events";
+import { DEFAULT_ESTABLISHMENT_COMMISSION } from "@/lib/establishments/commission";
 import type { EstablishmentInput } from "@/lib/types";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
 import { isEventCategory } from "@/lib/events/categories";
@@ -46,6 +47,7 @@ function sanitizeEstablishment(raw: ImportItemBody): EstablishmentInput | null {
     tags: raw.tags?.trim() ?? "",
     internal_notes: raw.internal_notes?.trim() ?? "",
     is_favorite: false,
+    ...DEFAULT_ESTABLISHMENT_COMMISSION,
   };
 
   return validateEstablishmentInput(item) ? null : item;
