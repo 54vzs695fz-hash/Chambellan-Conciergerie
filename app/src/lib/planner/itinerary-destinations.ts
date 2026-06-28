@@ -1,5 +1,6 @@
 import { citiesMatch, normalizeCity } from "@/lib/establishments/group-by-city";
 import { normalizeDestination } from "@/lib/establishments/destinations";
+import { destinationsMatch } from "@/lib/planner/destination-matching";
 import type { Activity, ActivityType, TripDay, TripWithDays } from "@/lib/types";
 import {
   normalizeTripDestinations,
@@ -183,7 +184,7 @@ export function mergeDetectedDestinationsWhenMulti(
   const merged = [...normalized.destinations];
 
   for (const city of detected) {
-    if (!merged.some((entry) => citiesMatch(entry, city))) {
+    if (!merged.some((entry) => destinationsMatch(entry, city))) {
       merged.push(city);
     }
   }

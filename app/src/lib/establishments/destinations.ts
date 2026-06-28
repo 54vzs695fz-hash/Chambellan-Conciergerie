@@ -17,6 +17,8 @@ const WEBSITE_CITY_MAP: Record<string, LibraryDestination> = {
   sainttropez: "Saint-Tropez",
   "saint-tropez": "Saint-Tropez",
   "saint tropez": "Saint-Tropez",
+  "st tropez": "Saint-Tropez",
+  "st. tropez": "Saint-Tropez",
   monaco: "Monaco",
   cannes: "Cannes",
   courchevel: "Courchevel",
