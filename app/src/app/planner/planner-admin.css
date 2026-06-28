@@ -1400,3 +1400,37 @@ body.lux-pdf-export-open {
     width: 100%;
   }
 }
+
+.adm-transport-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
+}
+
+.adm-transport-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.adm-transport-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7a736c;
+}
+
+.adm-transport-auto-title {
+  margin: 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #2a2622;
+}
+
+.adm-input--transport-type,
+.adm-input--transport-location {
+  min-height: 44px;
+}

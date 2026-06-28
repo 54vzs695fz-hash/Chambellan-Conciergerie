@@ -31,6 +31,17 @@ import {
   normalizeBeachClubActivity,
   syncBeachClubPersistedFields,
 } from "@/lib/planner/beach-club";
+import {
+  normalizeTransportationActivity,
+  normalizeTransportType,
+  syncTransportationPersistedFields,
+  TRANSPORT_TYPE_LABELS,
+  TRANSPORT_TYPE_OPTIONS,
+  transportTypeAutoTitle,
+  type TransportType,
+  TRANSPORTATION_BOOKING_STATUS_LABELS,
+  TRANSPORTATION_BOOKING_STATUS_OPTIONS,
+} from "@/lib/planner/transportation";
 
 function reorderItems<T>(items: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= items.length) return items;
@@ -91,10 +102,20 @@ const ActivityEditRow = memo(function ActivityEditRow({
   onDrop?: (e: DragEvent) => void;
 }) {
   const initialBeach = normalizeBeachClubActivity(activity);
+  const initialTransport = normalizeTransportationActivity(activity);
   const [time, setTime] = useState(activity.time);
   const [title, setTitle] = useState(activity.title);
   const [details, setDetails] = useState(activity.details);
   const [activityType, setActivityType] = useState(activity.activity_type);
+  const [transportType, setTransportType] = useState<TransportType>(
+    initialTransport.transportType
+  );
+  const [transportPickup, setTransportPickup] = useState(
+    activity.transport_pickup ?? ""
+  );
+  const [transportDestination, setTransportDestination] = useState(
+    activity.transport_destination ?? ""
+  );
   const [bookingStatus, setBookingStatus] = useState(
     normalizeBookingStatus(activity.booking_status)
   );
@@ -120,14 +141,21 @@ const ActivityEditRow = memo(function ActivityEditRow({
     beach_lunch_time: beachLunchTime,
     beach_sunbeds_status: beachSunbedsStatus,
     beach_lunch_status: beachLunchStatus,
+    transport_type: transportType,
+    transport_pickup: transportPickup,
+    transport_destination: transportDestination,
   });
 
   useEffect(() => {
     const nextBeach = normalizeBeachClubActivity(activity);
+    const nextTransport = normalizeTransportationActivity(activity);
     setTime(activity.time);
     setTitle(activity.title);
     setDetails(activity.details);
     setActivityType(activity.activity_type);
+    setTransportType(nextTransport.transportType);
+    setTransportPickup(activity.transport_pickup ?? "");
+    setTransportDestination(activity.transport_destination ?? "");
     setBookingStatus(normalizeBookingStatus(activity.booking_status));
     setBeachSunbeds(nextBeach.sunbedsEnabled);
     setBeachSunbedsTime(nextBeach.sunbedsTime);
@@ -148,6 +176,9 @@ const ActivityEditRow = memo(function ActivityEditRow({
       beach_lunch_time: nextBeach.lunchTime,
       beach_sunbeds_status: nextBeach.sunbedsStatus,
       beach_lunch_status: nextBeach.lunchStatus,
+      transport_type: nextTransport.transportType,
+      transport_pickup: activity.transport_pickup ?? "",
+      transport_destination: activity.transport_destination ?? "",
     };
   }, [
     activity.id,
@@ -163,6 +194,9 @@ const ActivityEditRow = memo(function ActivityEditRow({
     activity.beach_lunch_time,
     activity.beach_sunbeds_status,
     activity.beach_lunch_status,
+    activity.transport_type,
+    activity.transport_pickup,
+    activity.transport_destination,
   ]);
 
   useEffect(() => {
@@ -177,10 +211,12 @@ const ActivityEditRow = memo(function ActivityEditRow({
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      const payload = syncBeachClubPersistedFields({
-        ...draftRef.current,
-        activity_type: draftRef.current.activity_type,
-      });
+      const payload = syncTransportationPersistedFields(
+        syncBeachClubPersistedFields({
+          ...draftRef.current,
+          activity_type: draftRef.current.activity_type,
+        })
+      );
       onPatch(
         activity.id,
         {
@@ -198,6 +234,10 @@ const ActivityEditRow = memo(function ActivityEditRow({
             payload.beach_sunbeds_status ?? draftRef.current.beach_sunbeds_status,
           beach_lunch_status:
             payload.beach_lunch_status ?? draftRef.current.beach_lunch_status,
+          transport_type: payload.transport_type ?? draftRef.current.transport_type,
+          transport_pickup: payload.transport_pickup ?? draftRef.current.transport_pickup,
+          transport_destination:
+            payload.transport_destination ?? draftRef.current.transport_destination,
         },
         { immediate }
       );
@@ -226,6 +266,9 @@ const ActivityEditRow = memo(function ActivityEditRow({
         | "beach_lunch_time"
         | "beach_sunbeds_status"
         | "beach_lunch_status"
+        | "transport_type"
+        | "transport_pickup"
+        | "transport_destination"
       >
     >,
     immediate = false
@@ -242,13 +285,24 @@ const ActivityEditRow = memo(function ActivityEditRow({
     if (patch.beach_lunch_status !== undefined) {
       setBeachLunchStatus(patch.beach_lunch_status);
     }
-    draftRef.current = { ...draftRef.current, ...patch };
+    const { transport_type: patchTransportType, ...restPatch } = patch;
+    draftRef.current = {
+      ...draftRef.current,
+      ...restPatch,
+      ...(patchTransportType !== undefined
+        ? { transport_type: normalizeTransportType(patchTransportType) }
+        : {}),
+    };
     if (immediate) flush(true);
     else schedule();
   };
 
-  const category = ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY[activityType];
+  const category =
+    activityType === "transportation"
+      ? undefined
+      : ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY[activityType];
   const isBeachClub = activityType === "beach_club";
+  const isTransportation = activityType === "transportation";
 
   const bookingStatusSelect = (
     value: BookingStatus,
@@ -294,6 +348,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
             }}
             onBlur={() => flush(true)}
             className="adm-input adm-input--time"
+            aria-label={isTransportation ? "Time (optional)" : "Time"}
           />
         ) : null}
         <select
@@ -313,6 +368,21 @@ const ActivityEditRow = memo(function ActivityEditRow({
               );
               setBeachLunch(true);
               setBeachLunchTime(time);
+              return;
+            }
+            if (activity_type === "transportation") {
+              const nextTransportType: TransportType = "van";
+              const nextTitle = transportTypeAutoTitle(nextTransportType);
+              updateDraft(
+                {
+                  activity_type,
+                  transport_type: nextTransportType,
+                  title: nextTitle,
+                },
+                true
+              );
+              setTransportType(nextTransportType);
+              setTitle(nextTitle);
               return;
             }
             updateDraft({ activity_type }, true);
@@ -352,7 +422,62 @@ const ActivityEditRow = memo(function ActivityEditRow({
           </button>
         </div>
       </div>
-      {activityType === "event" ? (
+      {isTransportation ? (
+        <div className="adm-transport-options">
+          <label className="adm-transport-field">
+            <span className="adm-transport-label">Transportation type</span>
+            <select
+              className="adm-input adm-input--transport-type"
+              value={transportType}
+              onChange={(event) => {
+                const nextType = event.target.value as TransportType;
+                const nextTitle = transportTypeAutoTitle(nextType);
+                setTransportType(nextType);
+                setTitle(nextTitle);
+                updateDraft(
+                  {
+                    transport_type: nextType,
+                    title: nextTitle,
+                  },
+                  true
+                );
+              }}
+              aria-label="Transportation type"
+            >
+              {TRANSPORT_TYPE_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {TRANSPORT_TYPE_LABELS[option]}
+                </option>
+              ))}
+            </select>
+          </label>
+          {title.trim() ? (
+            <p className="adm-transport-auto-title">{title.trim()}</p>
+          ) : null}
+          <input
+            value={transportPickup}
+            placeholder="Pickup (optional)"
+            onChange={(event) => {
+              setTransportPickup(event.target.value);
+              updateDraft({ transport_pickup: event.target.value });
+            }}
+            onBlur={() => flush(true)}
+            className="adm-input adm-input--transport-location"
+            aria-label="Pickup location"
+          />
+          <input
+            value={transportDestination}
+            placeholder="Destination (optional)"
+            onChange={(event) => {
+              setTransportDestination(event.target.value);
+              updateDraft({ transport_destination: event.target.value });
+            }}
+            onBlur={() => flush(true)}
+            className="adm-input adm-input--transport-location"
+            aria-label="Destination"
+          />
+        </div>
+      ) : activityType === "event" ? (
         <LibraryAutocomplete
           source="event"
           value={title}
@@ -511,7 +636,27 @@ const ActivityEditRow = memo(function ActivityEditRow({
         onBlur={() => flush(true)}
         className="adm-input adm-input--detail"
       />
-      {isReservationActivityType(activityType) && !isBeachClub ? (
+      {isTransportation ? (
+        <label className="adm-booking-status">
+          <span className="adm-booking-status-label">Arrangement status</span>
+          <select
+            className="adm-input adm-input--booking-status"
+            value={bookingStatus}
+            onChange={(e) => {
+              const next = normalizeBookingStatus(e.target.value);
+              setBookingStatus(next);
+              updateDraft({ booking_status: next }, true);
+            }}
+            aria-label={`Arrangement status for ${title || "transportation"}`}
+          >
+            {TRANSPORTATION_BOOKING_STATUS_OPTIONS.map((status) => (
+              <option key={status} value={status}>
+                {TRANSPORTATION_BOOKING_STATUS_LABELS[status]}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : isReservationActivityType(activityType) && !isBeachClub ? (
         <label className="adm-booking-status">
           <span className="adm-booking-status-label">Booking status</span>
           <select

@@ -271,7 +271,8 @@ export function formatItinerarySectionTitle(label: string): string {
     case "excursion":
       return "✦ Activity";
     case "transfer":
-      return "➝ Transfer";
+    case "transportation":
+      return "➝ Transportation";
     case "departure":
       return "➝ Departure";
     default:
@@ -297,7 +298,7 @@ export function formatItinerarySectionTitle(label: string): string {
   ) {
     return `🏁 ${trimmed}`;
   }
-  if (normalized.includes("transfer") || normalized.includes("departure")) {
+  if (normalized.includes("transfer") || normalized.includes("transportation") || normalized.includes("departure")) {
     return `➝ ${trimmed}`;
   }
   return trimmed;
@@ -321,6 +322,7 @@ export function itineraryActivityIcon(sectionLabel: string): string | null {
     case "excursion":
       return "◉";
     case "transfer":
+    case "transportation":
     case "departure":
       return "➝";
     default: {
@@ -342,7 +344,7 @@ export function itineraryActivityIcon(sectionLabel: string): string | null {
       ) {
         return "◉";
       }
-      if (normalized.includes("transfer") || normalized.includes("departure")) {
+      if (normalized.includes("transfer") || normalized.includes("transportation") || normalized.includes("departure")) {
         return "➝";
       }
       return null;
@@ -362,6 +364,7 @@ const ITINERARY_SECTION_ORDER: Record<string, number> = {
   dinner: 40,
   club: 50,
   transfer: 60,
+  transportation: 60,
   departure: 60,
 };
 
@@ -380,7 +383,7 @@ export function itinerarySectionSortKey(label: string): number {
   ) {
     return 30;
   }
-  if (normalized.includes("transfer") || normalized.includes("departure")) {
+  if (normalized.includes("transfer") || normalized.includes("transportation") || normalized.includes("departure")) {
     return 60;
   }
   return 45;
@@ -439,7 +442,7 @@ export function getLuxuryDisplayPeriod(
     return "evening";
   }
 
-  if (slug === "departure" || slug === "transfer") {
+  if (slug === "departure" || slug === "transfer" || slug === "transportation") {
     if (
       safeTime &&
       activityTimeSortKey(safeTime, { eveningSection: true }) >= 17 * 60
@@ -561,8 +564,13 @@ export function getLuxuryCategoryDisplay(label: string): {
   if (slug === "departure" || normalized.includes("departure")) {
     return { icon: "→", label: "Departure" };
   }
-  if (slug === "transfer" || normalized.includes("transfer")) {
-    return { icon: "→", label: editorialCategoryLabel(cleaned) };
+  if (
+    slug === "transfer" ||
+    slug === "transportation" ||
+    normalized.includes("transfer") ||
+    normalized.includes("transportation")
+  ) {
+    return { icon: "◇", label: "Transportation" };
   }
   if (slug === "lunch" || normalized.includes("lunch")) {
     return { icon: "◦", label: "Lunch" };

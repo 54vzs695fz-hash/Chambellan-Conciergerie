@@ -978,6 +978,96 @@
   font-size: 1.35rem;
 }
 
+.lux-transport-card {
+  background: #f1ece4;
+  border-radius: 8px;
+  border-left: 2px solid #8a7355;
+  padding: 0.32rem 0.34rem 0.34rem 0.38rem;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.lux-transport-card + .lux-transport-card,
+.lux-travel-card + .lux-transport-card,
+.lux-transport-card + .lux-travel-card {
+  margin-top: 0.08rem;
+}
+
+.lux-transport-time {
+  display: block;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: #252320;
+  margin-bottom: 0.18rem;
+}
+
+.lux-transport-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.42rem;
+}
+
+.lux-transport-icon {
+  flex-shrink: 0;
+  margin-top: 0.18rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #9a7b4f;
+  letter-spacing: 0;
+}
+
+.lux-transport-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.lux-transport-type {
+  display: block;
+  margin-top: 0.08rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a7a66;
+  font-weight: 600;
+}
+
+.lux-transport-route {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-top: 0.28rem;
+}
+
+.lux-transport-location {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 1.02rem;
+  letter-spacing: 0.04em;
+  color: #2a2622;
+  line-height: 1.2;
+}
+
+.lux-transport-route-arrow {
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #9a7b4f;
+  letter-spacing: 0;
+  padding: 0.06rem 0;
+}
+
+.lux-activity-card--transport {
+  border-left: 2px solid #8a7355;
+  background: #f1ece4;
+}
+
+.lux-transport-type--concierge {
+  margin-top: 0.12rem;
+}
+
 .lux-activity-venue {
   font-family: var(--font-cormorant), Georgia, serif;
   font-size: 1.33rem;

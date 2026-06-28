@@ -57,9 +57,20 @@ async function main() {
 
   assert(
     !isTrackableReservationActivity(
-      makeActivity({ activity_type: "transfer", title: "Airport" })
+      makeActivity({ activity_type: "note", title: "Reminder" })
     ),
-    "Transfer should not be trackable"
+    "Note should not be trackable"
+  );
+
+  assert(
+    isTrackableReservationActivity(
+      makeActivity({
+        activity_type: "transportation",
+        title: "",
+        transport_type: "van",
+      })
+    ),
+    "Transportation with type should be trackable"
   );
 
   assert(
@@ -155,6 +166,28 @@ async function main() {
         item.booking_status === "confirmed"
     ),
     "lunch item tracked separately"
+  );
+
+  const transportItems = buildReservationStatusItems([
+    makeDay([
+      makeActivity({
+        id: 20,
+        title: "",
+        activity_type: "transportation",
+        transport_type: "helicopter",
+        transport_pickup: "Saint-Tropez Heliport",
+        booking_status: "to_request",
+      }),
+    ]),
+  ]);
+  assert(transportItems.length === 1, "transportation item tracked");
+  assert(
+    transportItems[0]?.categoryLabel === "Transportation",
+    "transportation category label"
+  );
+  assert(
+    transportItems[0]?.venue === "HELICOPTER TRANSFER",
+    "transportation auto title"
   );
 
   console.log("test-reservation-status: ok");

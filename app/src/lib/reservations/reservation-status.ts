@@ -6,6 +6,11 @@ import {
   normalizeBeachClubActivity,
   reservationItemKey,
 } from "@/lib/planner/beach-club";
+import {
+  activityHasTransportDisplayContent,
+  isTransportationActivity,
+  normalizeTransportationActivity,
+} from "@/lib/planner/transportation";
 
 export type { BookingStatus };
 
@@ -88,7 +93,7 @@ export const BOOKING_ASSIGNEE_LABELS: Record<
   chambellan: "Chambellan",
 };
 
-/** Activity types that represent bookable reservations (not transfers or notes). */
+/** Activity types that represent bookable reservations (not transportation or notes). */
 export const RESERVATION_ACTIVITY_TYPES: ActivityType[] = [
   "restaurant",
   "beach_club",
@@ -96,6 +101,8 @@ export const RESERVATION_ACTIVITY_TYPES: ActivityType[] = [
   "event",
   "activity",
 ];
+
+export const TRANSPORTATION_ACTIVITY_TYPES: ActivityType[] = ["transportation"];
 
 const RESERVATION_TYPE_SET = new Set<ActivityType>(RESERVATION_ACTIVITY_TYPES);
 
@@ -273,6 +280,9 @@ export function computePlannerBookingSummary(
 }
 
 export function isTrackableReservationActivity(activity: Activity): boolean {
+  if (isTransportationActivity(activity)) {
+    return activityHasTransportDisplayContent(activity);
+  }
   if (!isReservationActivityType(activity.activity_type)) return false;
   if (!activity.title.trim().length) return false;
   if (isBeachClubActivity(activity)) {
@@ -305,13 +315,14 @@ function pushReservationItem(
     time: string;
     booking_status: BookingStatus;
     categoryLabel: string;
+    venue?: string;
   }
 ) {
   items.push({
     activityId: activity.id,
     itemKey: reservationItemKey(activity.id, config.part),
     beachClubPart: config.part,
-    venue: activity.title.trim(),
+    venue: config.venue ?? activity.title.trim(),
     date: day.date,
     time: config.time.trim(),
     category: activity.activity_type,
@@ -349,6 +360,18 @@ export function buildReservationStatusItems(
             categoryLabel: beachClubCategoryLabel("lunch"),
           });
         }
+        continue;
+      }
+
+      if (isTransportationActivity(activity)) {
+        const transport = normalizeTransportationActivity(activity);
+        pushReservationItem(items, day, activity, {
+          part: null,
+          time: activity.time.trim(),
+          booking_status: activity.booking_status,
+          categoryLabel: ACTIVITY_TYPE_LABELS.transportation,
+          venue: transport.displayTitle,
+        });
         continue;
       }
 

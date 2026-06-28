@@ -34,7 +34,7 @@ function countActivityType(
   context: TripProgrammeContext,
   type: ActivityType
 ): number {
-  if (type === "transfer") return context.transferCount;
+  if (type === "transportation") return context.transferCount;
   return hasActivityType(context, type) ? 1 : 0;
 }
 
@@ -133,7 +133,7 @@ function isRelevantDefaultTitle(
       isFilled(trip.driver_name) ||
       isFilled(trip.driver) ||
       isFilled(trip.driver_phone);
-    const hasTransfer = hasActivityType(context, "transfer");
+    const hasTransfer = hasActivityType(context, "transportation");
 
     if (key === "airport transfer booked") {
       return hasDriver || hasTransfer;
@@ -142,7 +142,7 @@ function isRelevantDefaultTitle(
       return hasDriver;
     }
     if (key === "return transfer confirmed") {
-      return countActivityType(context, "transfer") >= 2 || hasTransfer;
+      return countActivityType(context, "transportation") >= 2 || hasTransfer;
     }
     return false;
   }

@@ -16,6 +16,10 @@ import {
   sortBookingProgressPlanners,
 } from "@/lib/dashboard/booking-progress";
 import {
+  TRANSPORTATION_BOOKING_STATUS_OPTIONS,
+  transportationBookingStatusLabel,
+} from "@/lib/planner/transportation";
+import {
   BOOKING_ASSIGNEE_LABELS,
   BOOKING_ASSIGNEE_OPTIONS,
   BOOKING_PROGRESS_STATUS_LABELS,
@@ -113,10 +117,26 @@ function BookingProgressItemRow({
   ) => void;
   onNotesChange: (tripId: number, item: ReservationStatusItem, value: string) => void;
 }) {
-  const progressStatus = toBookingProgressStatus(item.booking_status);
+  const isTransportation = item.category === "transportation";
+  const progressStatus = isTransportation
+    ? TRANSPORTATION_BOOKING_STATUS_OPTIONS.includes(
+        item.booking_status as (typeof TRANSPORTATION_BOOKING_STATUS_OPTIONS)[number]
+      )
+      ? item.booking_status
+      : "to_request"
+    : toBookingProgressStatus(item.booking_status);
   const statusClass = bookingProgressStatusClass(item.booking_status);
   const showRequestActions = showsBookingRequestMessage(item.booking_status);
   const itemUpdating = updatingId === item.itemKey;
+  const statusOptions = isTransportation
+    ? TRANSPORTATION_BOOKING_STATUS_OPTIONS
+    : BOOKING_PROGRESS_STATUS_OPTIONS;
+  const statusLabel = (status: BookingStatus) =>
+    isTransportation
+      ? transportationBookingStatusLabel(status)
+      : BOOKING_PROGRESS_STATUS_LABELS[
+          toBookingProgressStatus(status) as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number]
+        ];
 
   return (
     <li className={`dash-booking-progress-item ${statusClass}`}>
@@ -133,6 +153,11 @@ function BookingProgressItemRow({
               <span className="dash-bp-beach-part">
                 {item.beachClubPart === "sunbeds" ? "Sunbeds" : "Lunch"}
               </span>
+            </>
+          ) : item.category === "transportation" ? (
+            <>
+              {" · "}
+              <span className="dash-bp-transport-category">Transportation</span>
             </>
           ) : null}
           {" · "}
@@ -175,9 +200,9 @@ function BookingProgressItemRow({
               });
             }}
           >
-            {BOOKING_PROGRESS_STATUS_OPTIONS.map((status) => (
+            {statusOptions.map((status) => (
               <option key={status} value={status}>
-                {BOOKING_PROGRESS_STATUS_LABELS[status]}
+                {statusLabel(status)}
               </option>
             ))}
           </select>

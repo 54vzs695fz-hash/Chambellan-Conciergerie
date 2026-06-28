@@ -35,6 +35,10 @@ import {
   syncTripDestinationsFromItinerary,
 } from "../planner/itinerary-destinations";
 import { syncBeachClubPersistedFields } from "../planner/beach-club";
+import {
+  normalizeActivityType,
+  syncTransportationPersistedFields,
+} from "../planner/transportation";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -71,7 +75,7 @@ function mapActivity(row: PrismaActivity): Activity {
     id: row.id,
     trip_day_id: row.trip_day_id,
     period: row.period,
-    activity_type: row.activity_type as ActivityType,
+    activity_type: normalizeActivityType(row.activity_type),
     time: row.time,
     title: row.title,
     details: row.details,
@@ -89,6 +93,9 @@ function mapActivity(row: PrismaActivity): Activity {
       "to_request") as Activity["beach_sunbeds_status"],
     beach_lunch_status: (row.beach_lunch_status ??
       "to_request") as Activity["beach_lunch_status"],
+    transport_type: row.transport_type ?? "",
+    transport_pickup: row.transport_pickup ?? "",
+    transport_destination: row.transport_destination ?? "",
   };
 }
 
@@ -535,11 +542,16 @@ export async function updateActivity(
       | "beach_lunch_time"
       | "beach_sunbeds_status"
       | "beach_lunch_status"
+      | "transport_type"
+      | "transport_pickup"
+      | "transport_destination"
     >
   >
 ): Promise<Activity | undefined> {
   try {
-    const syncedFields = syncBeachClubPersistedFields(fields);
+    const syncedFields = syncTransportationPersistedFields(
+      syncBeachClubPersistedFields(fields)
+    );
     const row = await prisma.activity.update({
       where: { id },
       data: syncedFields,
@@ -550,7 +562,10 @@ export async function updateActivity(
       fields.establishment_city !== undefined ||
       fields.title !== undefined ||
       fields.beach_sunbeds !== undefined ||
-      fields.beach_lunch !== undefined
+      fields.beach_lunch !== undefined ||
+      fields.transport_type !== undefined ||
+      fields.transport_pickup !== undefined ||
+      fields.transport_destination !== undefined
     ) {
       const day = await prisma.tripDay.findUnique({
         where: { id: row.trip_day_id },
@@ -627,6 +642,12 @@ export async function duplicateTrip(tripId: number): Promise<TripWithDays | unde
           beach_lunch_time: act.beach_lunch_time ?? "",
           beach_sunbeds_status: act.beach_sunbeds_status ?? "to_request",
           beach_lunch_status: act.beach_lunch_status ?? "to_request",
+          transport_type: act.transport_type ?? "",
+          transport_pickup: act.transport_pickup ?? "",
+          transport_destination: act.transport_destination ?? "",
+          booking_status: act.booking_status ?? "to_request",
+          assigned_to: act.assigned_to ?? "",
+          booking_notes: act.booking_notes ?? "",
         },
       });
     }

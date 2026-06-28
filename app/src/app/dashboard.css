@@ -922,6 +922,12 @@
   color: #9a7b4f;
 }
 
+.dash-bp-transport-category {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #8a7355;
+}
+
 .dash-booking-progress-item-controls {
   display: grid;
   grid-template-columns: 1fr;

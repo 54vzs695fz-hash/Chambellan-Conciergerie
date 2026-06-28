@@ -26,6 +26,11 @@ import {
   isBeachClubActivity,
 } from "@/lib/planner/beach-club";
 import {
+  activityHasTransportDisplayContent,
+  isTransportationActivity,
+  normalizeTransportationActivity,
+} from "@/lib/planner/transportation";
+import {
   dayDestinationLabelMap,
   resolveAutoPlannerDestinationHeader,
 } from "@/lib/planner/itinerary-destinations";
@@ -55,7 +60,74 @@ export interface PlannerLuxuryDocumentProps {
 }
 
 function activityHasVisibleContent(activity: Activity): boolean {
+  if (isTransportationActivity(activity)) {
+    return activityHasTransportDisplayContent(activity);
+  }
   return activityHasDisplayContent(activity);
+}
+
+function activityHasClientRowContent(activity: Activity): boolean {
+  if (isTransportationActivity(activity)) {
+    return activityHasTransportDisplayContent(activity);
+  }
+  return Boolean(
+    activity.time?.trim() || activity.title?.trim() || activity.details?.trim()
+  );
+}
+
+function TransportationRoute({
+  pickup,
+  destination,
+}: {
+  pickup: string;
+  destination: string;
+}) {
+  if (!pickup && !destination) return null;
+
+  return (
+    <div className="lux-transport-route">
+      {pickup ? <span className="lux-transport-location">{pickup}</span> : null}
+      {pickup && destination ? (
+        <span className="lux-transport-route-arrow" aria-hidden>
+          ↓
+        </span>
+      ) : null}
+      {destination ? (
+        <span className="lux-transport-location lux-transport-location--destination">
+          {destination}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function TransportationTravelCard({ activity }: { activity: Activity }) {
+  const transport = normalizeTransportationActivity(activity);
+
+  return (
+    <article className="lux-transport-card">
+      {activity.time?.trim() ? (
+        <time className="lux-transport-time">
+          {formatTimeDisplay(activity.time)}
+        </time>
+      ) : null}
+      <div className="lux-transport-body">
+        <span className="lux-transport-icon" aria-hidden>
+          ◇
+        </span>
+        <div className="lux-transport-copy">
+          {transport.displayTitle ? (
+            <LuxuryVenueName name={transport.displayTitle} />
+          ) : null}
+          <span className="lux-transport-type">{transport.typeLabel}</span>
+          <TransportationRoute
+            pickup={transport.pickup}
+            destination={transport.destination}
+          />
+        </div>
+      </div>
+    </article>
+  );
 }
 
 function BeachClubSchedule({ activity }: { activity: Activity }) {
@@ -132,6 +204,10 @@ function ClientTravelCard({
   sectionLabel: string;
 }) {
   if (!activityHasVisibleContent(activity)) return null;
+
+  if (isTransportationActivity(activity)) {
+    return <TransportationTravelCard activity={activity} />;
+  }
 
   const detail = activity.details?.trim() || "";
   const showDetail = detail && !isGenericActivityNote(detail);
@@ -218,7 +294,7 @@ function ClientDayCard({
       day.activities.some(
         (a) =>
           a.period === s.id &&
-          (a.time || a.title?.trim() || a.details?.trim())
+          activityHasClientRowContent(a)
       )
     )
   );
@@ -302,6 +378,29 @@ function ConciergeActivityCard({
 }) {
   if (!activityHasVisibleContent(activity)) return null;
 
+  if (isTransportationActivity(activity)) {
+    const transport = normalizeTransportationActivity(activity);
+    return (
+      <div className="lux-activity-card lux-activity-card--itinerary lux-activity-card--transport">
+        {activity.time?.trim() ? (
+          <span className="lux-activity-time">
+            {formatTimeDisplay(activity.time)}
+          </span>
+        ) : null}
+        {transport.displayTitle ? (
+          <p className="lux-activity-venue">{transport.displayTitle}</p>
+        ) : null}
+        <p className="lux-transport-type lux-transport-type--concierge">
+          {transport.typeLabel}
+        </p>
+        <TransportationRoute
+          pickup={transport.pickup}
+          destination={transport.destination}
+        />
+      </div>
+    );
+  }
+
   const detail = activity.details?.trim() || "";
   const showDetail = detail && !/^confirmed$/i.test(detail);
   const beachClub = isBeachClubActivity(activity);
@@ -369,7 +468,7 @@ function ConciergeDayColumn({
       day.activities.some(
         (a) =>
           a.period === s.id &&
-          (a.time || a.title?.trim() || a.details?.trim())
+          activityHasClientRowContent(a)
       )
     )
   );

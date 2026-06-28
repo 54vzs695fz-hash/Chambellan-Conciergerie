@@ -41,7 +41,6 @@ export const ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY: Partial<
   restaurant: "restaurant",
   beach_club: "beach_club",
   club: "club",
-  transfer: "driver",
 };
 
 export const TRIP_FIELD_ESTABLISHMENT_CATEGORY: Partial<

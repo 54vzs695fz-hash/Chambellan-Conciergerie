@@ -4,7 +4,7 @@ export type ActivityType =
   | "club"
   | "activity"
   | "event"
-  | "transfer"
+  | "transportation"
   | "note";
 
 export type ActivityPeriod = string;
@@ -203,6 +203,9 @@ export interface Activity {
   beach_lunch_time: string;
   beach_sunbeds_status: BookingStatus;
   beach_lunch_status: BookingStatus;
+  transport_type: string;
+  transport_pickup: string;
+  transport_destination: string;
 }
 
 export interface TripDay {
@@ -347,7 +350,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   club: "Club",
   activity: "Activity",
   event: "Event",
-  transfer: "Transfer",
+  transportation: "Transportation",
   note: "Notes",
 };
 

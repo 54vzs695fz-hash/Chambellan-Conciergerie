@@ -121,6 +121,9 @@ model Activity {
   beach_lunch_time   String  @default("")
   beach_sunbeds_status String @default("to_request")
   beach_lunch_status   String @default("to_request")
+  transport_type       String @default("")
+  transport_pickup     String @default("")
+  transport_destination String @default("")
   trip_day           TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
 
   @@index([trip_day_id], map: "idx_activities_day")

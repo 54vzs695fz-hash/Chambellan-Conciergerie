@@ -228,6 +228,9 @@ export function syncBeachClubPersistedFields(
     beach_lunch_time: activity.beach_lunch_time ?? "",
     beach_sunbeds_status: activity.beach_sunbeds_status ?? "to_request",
     beach_lunch_status: activity.beach_lunch_status ?? "to_request",
+    transport_type: activity.transport_type ?? "",
+    transport_pickup: activity.transport_pickup ?? "",
+    transport_destination: activity.transport_destination ?? "",
   });
 
   return {

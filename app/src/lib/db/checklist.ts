@@ -289,9 +289,12 @@ async function getTripProgrammeContext(tripId: number): Promise<TripProgrammeCon
   };
 
   for (const row of rows) {
-    const activityType = row.activity_type as ActivityType;
+    const rawType = row.activity_type;
+    const activityType = (
+      rawType === "transfer" ? "transportation" : rawType
+    ) as ActivityType;
     context.activityTypes.add(activityType);
-    if (activityType === "transfer") {
+    if (rawType === "transfer" || rawType === "transportation") {
       context.transferCount += 1;
     }
   }
@@ -382,9 +385,12 @@ async function listTripProgrammeContextByTripId(): Promise<
       context = { activityTypes: new Set<ActivityType>(), transferCount: 0 };
       map.set(tripId, context);
     }
-    const activityType = row.activity_type as ActivityType;
+    const rawType = row.activity_type;
+    const activityType = (
+      rawType === "transfer" ? "transportation" : rawType
+    ) as ActivityType;
     context.activityTypes.add(activityType);
-    if (activityType === "transfer") {
+    if (rawType === "transfer" || rawType === "transportation") {
       context.transferCount += 1;
     }
   }
