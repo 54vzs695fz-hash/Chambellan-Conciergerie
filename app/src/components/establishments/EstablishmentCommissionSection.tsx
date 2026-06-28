@@ -13,6 +13,7 @@ import {
   type CommissionCalculationType,
   type CommissionEligibility,
 } from "@/lib/establishments/commission";
+import { formatSeasonalCommissionSummary } from "@/lib/establishments/seasonal-commission";
 
 interface Props {
   form: EstablishmentInput;
@@ -24,6 +25,7 @@ interface Props {
 
 export function EstablishmentCommissionSection({ form, onChange }: Props) {
   const summary = formatEstablishmentCommissionSummary(form);
+  const seasonalSummary = formatSeasonalCommissionSummary(form);
 
   return (
     <section className="est-commission-section space-y-5">
@@ -236,12 +238,113 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
               />
             </div>
           ) : null}
+
+          <div className="est-seasonal-commission">
+            <h3 className="adm-subsection-title">Seasonal commission</h3>
+            <p className="text-sm text-muted mb-3">
+              Optional rule for partners that only pay commission after reaching
+              a seasonal client spend target.
+            </p>
+
+            <fieldset className="est-commission-fieldset">
+              <legend className="field-label">Seasonal commission enabled</legend>
+              <div className="est-commission-radio-group">
+                <label className="est-commission-radio min-h-[44px]">
+                  <input
+                    type="radio"
+                    name="seasonal_commission_enabled"
+                    checked={form.seasonal_commission_enabled === true}
+                    onChange={() => onChange("seasonal_commission_enabled", true)}
+                  />
+                  <span>Yes</span>
+                </label>
+                <label className="est-commission-radio min-h-[44px]">
+                  <input
+                    type="radio"
+                    name="seasonal_commission_enabled"
+                    checked={form.seasonal_commission_enabled === false}
+                    onChange={() => onChange("seasonal_commission_enabled", false)}
+                  />
+                  <span>No</span>
+                </label>
+              </div>
+            </fieldset>
+
+            {form.seasonal_commission_enabled ? (
+              <>
+                <div className="adm-grid adm-grid--2 adm-grid--spaced">
+                  <div>
+                    <label className="field-label" htmlFor="est-season-start">
+                      Season starts
+                    </label>
+                    <input
+                      id="est-season-start"
+                      type="date"
+                      className="field-input min-h-[44px]"
+                      value={form.seasonal_commission_start}
+                      onChange={(event) =>
+                        onChange("seasonal_commission_start", event.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor="est-season-end">
+                      Season ends
+                    </label>
+                    <input
+                      id="est-season-end"
+                      type="date"
+                      className="field-input min-h-[44px]"
+                      value={form.seasonal_commission_end}
+                      onChange={(event) =>
+                        onChange("seasonal_commission_end", event.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="field-label" htmlFor="est-season-target">
+                    Season target
+                  </label>
+                  <input
+                    id="est-season-target"
+                    className="field-input min-h-[44px]"
+                    value={form.seasonal_commission_target}
+                    onChange={(event) =>
+                      onChange("seasonal_commission_target", event.target.value)
+                    }
+                    placeholder="e.g. 250000 or €250,000"
+                  />
+                </div>
+
+                <label className="est-commission-radio min-h-[44px]">
+                  <input
+                    type="checkbox"
+                    checked={form.seasonal_commission_after_target}
+                    onChange={(event) =>
+                      onChange(
+                        "seasonal_commission_after_target",
+                        event.target.checked
+                      )
+                    }
+                  />
+                  <span>Commission starts after target reached</span>
+                </label>
+              </>
+            ) : null}
+          </div>
         </>
       ) : null}
 
       <p className="est-commission-summary" aria-live="polite">
         {summary}
       </p>
+      {seasonalSummary ? (
+        <p className="est-commission-summary text-sm text-muted" aria-live="polite">
+          {seasonalSummary}
+        </p>
+      ) : null}
     </section>
   );
 }

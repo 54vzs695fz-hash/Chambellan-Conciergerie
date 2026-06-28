@@ -183,7 +183,77 @@ export function DashboardBusinessSection({ embedded = false }: Props) {
               <span className="dash-business-metric-label">Received</span>
               <strong>{summary.metrics_labels.received}</strong>
             </div>
+            <div className="dash-business-metric dash-card dash-card--urgent">
+              <span className="dash-business-metric-label">Pending season target</span>
+              <strong>{summary.metrics_labels.pending_season_target}</strong>
+            </div>
           </div>
+
+          {summary.seasonal_partners.length > 0 ? (
+            <div className="dash-business-seasonal">
+              <h3 className="dash-business-rank-title">Seasonal commission targets</h3>
+              <div className="dash-business-seasonal-list">
+                {summary.seasonal_partners.map((partner) => (
+                  <article
+                    key={partner.establishment_id}
+                    className="dash-business-seasonal-card"
+                  >
+                    <div className="dash-business-seasonal-head">
+                      <div>
+                        <strong>{partner.establishment_name}</strong>
+                        <p className="text-sm text-muted">
+                          {partner.season_start} – {partner.season_end}
+                        </p>
+                      </div>
+                      {partner.target_reached ? (
+                        <span className="dash-business-target-badge">
+                          Target reached
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="dash-business-seasonal-target">
+                      <span className="text-sm text-muted">Season target</span>
+                      <strong>{partner.season_target_label}</strong>
+                    </div>
+
+                    <div
+                      className="dash-business-progress"
+                      role="progressbar"
+                      aria-valuenow={partner.progress_percent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label={`${partner.establishment_name} season progress`}
+                    >
+                      <div
+                        className="dash-business-progress-bar"
+                        style={{ width: `${partner.progress_percent}%` }}
+                      />
+                    </div>
+
+                    <div className="dash-business-seasonal-stats">
+                      <div>
+                        <span className="dash-business-metric-label">Current spend</span>
+                        <strong>{partner.current_spend_label}</strong>
+                      </div>
+                      <div>
+                        <span className="dash-business-metric-label">Remaining</span>
+                        <strong>{partner.remaining_label}</strong>
+                      </div>
+                      <div>
+                        <span className="dash-business-metric-label">Expected</span>
+                        <strong>{partner.expected_commission_label}</strong>
+                      </div>
+                      <div>
+                        <span className="dash-business-metric-label">Received</span>
+                        <strong>{partner.received_commission_label}</strong>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="dash-business-ranks">
             <RankList
@@ -223,16 +293,27 @@ export function DashboardBusinessSection({ embedded = false }: Props) {
                     </div>
                     <div className="dash-business-outstanding-actions">
                       <span>{entry.commission_label}</span>
-                      <button
-                        type="button"
-                        className="dash-business-received-btn min-h-[44px]"
-                        onClick={() => void markReceived(entry.entry_id)}
-                        disabled={updatingEntryId === entry.entry_id}
+                      <span
+                        className={
+                          entry.commission_status === "pending_season_target"
+                            ? "dash-business-status-badge dash-business-status-badge--pending"
+                            : "dash-business-status-badge"
+                        }
                       >
-                        {updatingEntryId === entry.entry_id
-                          ? "Saving…"
-                          : "Mark received"}
-                      </button>
+                        {entry.status_label}
+                      </span>
+                      {entry.commission_status === "payable" ? (
+                        <button
+                          type="button"
+                          className="dash-business-received-btn min-h-[44px]"
+                          onClick={() => void markReceived(entry.entry_id)}
+                          disabled={updatingEntryId === entry.entry_id}
+                        >
+                          {updatingEntryId === entry.entry_id
+                            ? "Saving…"
+                            : "Mark received"}
+                        </button>
+                      ) : null}
                     </div>
                   </li>
                 ))}

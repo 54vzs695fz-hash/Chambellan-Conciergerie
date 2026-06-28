@@ -1624,3 +1624,120 @@
 .dash-business-received-btn:disabled {
   opacity: 0.6;
 }
+
+.dash-business-seasonal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dash-business-seasonal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dash-business-seasonal-card {
+  padding: 0.95rem 1rem;
+  background: #fff;
+  border: 1px solid rgba(229, 221, 210, 0.95);
+  border-radius: 8px;
+}
+
+.dash-business-seasonal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.dash-business-target-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #3a7350;
+  background: rgba(58, 115, 80, 0.1);
+  border-radius: 999px;
+}
+
+.dash-business-seasonal-target {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.dash-business-progress {
+  height: 0.55rem;
+  background: #f3ede4;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+
+.dash-business-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #b89b6a, #3a7350);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.dash-business-seasonal-stats {
+  display: grid;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .dash-business-seasonal-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .dash-business-metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .dash-business-seasonal-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.dash-business-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5c564f;
+  background: #f3ede4;
+  border-radius: 999px;
+}
+
+.dash-business-status-badge--pending {
+  color: #8a3340;
+  background: rgba(138, 51, 64, 0.08);
+}
+
+.stay-closing-season-pending {
+  flex-basis: 100%;
+  color: #8a3340;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.est-seasonal-commission {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(229, 221, 210, 0.95);
+}

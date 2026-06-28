@@ -267,6 +267,7 @@ export interface StayClosingEntry {
   commission_applied: boolean;
   commission_received: boolean;
   commission_received_at: string;
+  commission_pending_season_target: boolean;
   commission_summary: string;
   created_at: string;
   updated_at: string;
@@ -345,6 +346,11 @@ export interface Establishment {
   commission_eligibility: CommissionEligibility;
   commission_eligibility_custom: string;
   commission_threshold_amount: string;
+  seasonal_commission_enabled: boolean;
+  seasonal_commission_start: string;
+  seasonal_commission_end: string;
+  seasonal_commission_target: string;
+  seasonal_commission_after_target: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -427,6 +433,11 @@ export const EMPTY_ESTABLISHMENT: EstablishmentInput = {
   commission_eligibility: "none",
   commission_eligibility_custom: "",
   commission_threshold_amount: "",
+  seasonal_commission_enabled: false,
+  seasonal_commission_start: "",
+  seasonal_commission_end: "",
+  seasonal_commission_target: "",
+  seasonal_commission_after_target: true,
 };
 
 export const EMPTY_EVENT: ConciergeEventInput = {

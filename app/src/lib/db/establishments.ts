@@ -2,6 +2,7 @@ import type { Establishment as PrismaEstablishment } from "@/generated/prisma/cl
 import { prisma } from "@/lib/prisma";
 import type { Establishment } from "@/lib/types";
 import { normalizeEstablishmentCommission } from "@/lib/establishments/commission";
+import { normalizeSeasonalCommission } from "@/lib/establishments/seasonal-commission";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
 import { establishmentDedupKey } from "@/lib/establishments/destinations";
 import {
@@ -38,6 +39,13 @@ function mapEstablishment(row: PrismaEstablishment): Establishment {
       commission_eligibility: row.commission_eligibility,
       commission_eligibility_custom: row.commission_eligibility_custom,
       commission_threshold_amount: row.commission_threshold_amount,
+    }),
+    ...normalizeSeasonalCommission({
+      seasonal_commission_enabled: row.seasonal_commission_enabled,
+      seasonal_commission_start: row.seasonal_commission_start,
+      seasonal_commission_end: row.seasonal_commission_end,
+      seasonal_commission_target: row.seasonal_commission_target,
+      seasonal_commission_after_target: row.seasonal_commission_after_target,
     }),
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
@@ -104,8 +112,9 @@ export async function createEstablishment(
   data: Omit<Establishment, "id" | "created_at" | "updated_at">
 ): Promise<Establishment> {
   const commission = normalizeEstablishmentCommission(data);
+  const seasonal = normalizeSeasonalCommission(data);
   const row = await prisma.establishment.create({
-    data: { ...data, ...commission, city: data.city.trim() },
+    data: { ...data, ...commission, ...seasonal, city: data.city.trim() },
   });
   return mapEstablishment(row);
 }
@@ -116,9 +125,10 @@ export async function updateEstablishment(
 ): Promise<Establishment | undefined> {
   try {
     const commission = normalizeEstablishmentCommission(data);
+    const seasonal = normalizeSeasonalCommission(data);
     const row = await prisma.establishment.update({
       where: { id },
-      data: { ...data, ...commission, city: data.city.trim() },
+      data: { ...data, ...commission, ...seasonal, city: data.city.trim() },
     });
     return mapEstablishment(row);
   } catch {

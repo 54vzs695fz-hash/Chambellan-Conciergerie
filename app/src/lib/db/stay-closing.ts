@@ -10,6 +10,7 @@ import {
   type VisitedEstablishment,
 } from "@/lib/stay-closing/visited-establishments";
 import { listEstablishments } from "@/lib/db/establishments";
+import { applySeasonalCommissionPendingFlags } from "@/lib/stay-closing/seasonal-status";
 import { getTrip } from "@/lib/db/trips";
 import type {
   StayClosing,
@@ -39,6 +40,7 @@ function mapEntry(row: PrismaStayClosingEntry): StayClosingEntry {
     commission_applied: row.commission_applied,
     commission_received: row.commission_received,
     commission_received_at: row.commission_received_at,
+    commission_pending_season_target: row.commission_pending_season_target,
     commission_summary: row.commission_summary,
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
@@ -126,7 +128,10 @@ export async function saveStayClosing(
     });
   }
 
-  const payloadEntries = entries
+  const trip = await getTrip(tripId);
+  if (!trip) return null;
+
+  const draftEntries = entries
     .filter((entry) => visitedByKey.has(entry.key))
     .map((entry) => {
       const visited = visitedByKey.get(entry.key)!;
@@ -156,8 +161,40 @@ export async function saveStayClosing(
         commission_received: prior?.received ?? false,
         commission_received_at: prior?.receivedAt ?? "",
         commission_summary: commissionResult.summary,
+        departure_date: trip.departure_date,
       };
     });
+
+  const closedAtIso = new Date().toISOString();
+  const pendingFlags = await applySeasonalCommissionPendingFlags(
+    draftEntries.map((entry) => ({
+      establishment_id: entry.establishment_id,
+      establishment_name: entry.establishment_name,
+      approximate_total_bill: entry.approximate_total_bill,
+      commission_applied: entry.commission_applied,
+      departure_date: entry.departure_date,
+      closed_at: closedAtIso,
+    })),
+    trip.departure_date,
+    closedAtIso,
+    preview.closing?.id
+  );
+
+  const payloadEntries = draftEntries.map((entry, index) => ({
+    establishment_id: entry.establishment_id,
+    establishment_name: entry.establishment_name,
+    activity_ids: entry.activity_ids,
+    approximate_total_bill: entry.approximate_total_bill,
+    food_amount: entry.food_amount,
+    premium_drinks_amount: entry.premium_drinks_amount,
+    internal_notes: entry.internal_notes,
+    calculated_commission: entry.calculated_commission,
+    commission_applied: entry.commission_applied,
+    commission_received: entry.commission_received,
+    commission_received_at: entry.commission_received_at,
+    commission_pending_season_target: pendingFlags[index] ?? false,
+    commission_summary: entry.commission_summary,
+  }));
 
   const closing = await prisma.$transaction(async (tx) => {
     const existing = await tx.stayClosing.findUnique({

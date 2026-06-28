@@ -74,7 +74,7 @@ export function resolveBusinessDateRange(
 
 export function isDateWithinRange(
   date: string,
-  range: BusinessDateRange
+  range: { start: string; end: string }
 ): boolean {
   const value = date.trim();
   if (!value) return false;

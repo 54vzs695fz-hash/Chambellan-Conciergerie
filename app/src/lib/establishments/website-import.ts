@@ -6,6 +6,7 @@ import {
   type LibraryDestination,
 } from "@/lib/establishments/destinations";
 import { DEFAULT_ESTABLISHMENT_COMMISSION } from "@/lib/establishments/commission";
+import { DEFAULT_SEASONAL_COMMISSION } from "@/lib/establishments/seasonal-commission";
 import type { EstablishmentInput } from "@/lib/types";
 
 const WEBSITE_BASE = "https://www.chambellan-conciergerie.fr";
@@ -157,6 +158,7 @@ function toPayload(
     internal_notes: row.internal_notes,
     is_favorite: false,
     ...DEFAULT_ESTABLISHMENT_COMMISSION,
+    ...DEFAULT_SEASONAL_COMMISSION,
   };
 }
 

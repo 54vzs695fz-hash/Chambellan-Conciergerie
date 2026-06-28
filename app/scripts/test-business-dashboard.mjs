@@ -85,6 +85,7 @@ const records = buildBusinessCommissionRecords([
 const summary = computeBusinessDashboardSummary(
   records,
   { start: "2026-04-01", end: "2026-10-31", label: "Season 2026" },
+  [],
   new Date("2026-06-11")
 );
 
@@ -92,6 +93,7 @@ assert(summary.metrics.season_total === 700, "season total");
 assert(summary.metrics.outstanding === 500, "outstanding");
 assert(summary.metrics.received === 200, "received");
 assert(summary.metrics.todays_expected === 0, "today expected when none due today");
+assert(summary.metrics.pending_season_target === 0, "no seasonal pending in legacy test");
 assert(summary.top_clients[0].label === "Alice", "top client");
 
 console.log("test-business-dashboard: ok");

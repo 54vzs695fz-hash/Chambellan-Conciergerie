@@ -29,6 +29,7 @@ interface FormRow {
   premium_drinks_amount: string;
   internal_notes: string;
   commission_result: ReturnType<typeof calculateStayClosingCommission>;
+  commission_pending_season_target: boolean;
 }
 
 interface PreviewResponse {
@@ -93,6 +94,8 @@ function buildFormRows(preview: PreviewResponse): FormRow[] {
         visited.commission,
         amounts
       ),
+      commission_pending_season_target:
+        saved?.commission_pending_season_target ?? false,
     };
   });
 }
@@ -353,6 +356,11 @@ export function StayClosingDialog({ tripId, open, onClose, onSaved }: Props) {
                     >
                       {row.commission_result.amountLabel}
                     </span>
+                    {row.commission_pending_season_target ? (
+                      <span className="stay-closing-season-pending text-sm">
+                        Pending Season Target
+                      </span>
+                    ) : null}
                     {row.commission_result.reason ? (
                       <span className="stay-closing-commission-reason text-sm text-muted">
                         {row.commission_result.reason}

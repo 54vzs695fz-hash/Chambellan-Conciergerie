@@ -88,6 +88,7 @@ function mapClosingEntry(row: PrismaStayClosingEntry): StayClosingEntry {
     commission_applied: row.commission_applied,
     commission_received: row.commission_received,
     commission_received_at: row.commission_received_at,
+    commission_pending_season_target: row.commission_pending_season_target,
     commission_summary: row.commission_summary,
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),

@@ -5,6 +5,7 @@ import {
 } from "@/lib/db/establishments";
 import { bulkImportEvents, validateEventInput } from "@/lib/db/events";
 import { DEFAULT_ESTABLISHMENT_COMMISSION } from "@/lib/establishments/commission";
+import { DEFAULT_SEASONAL_COMMISSION } from "@/lib/establishments/seasonal-commission";
 import type { EstablishmentInput } from "@/lib/types";
 import { isEstablishmentCategory } from "@/lib/establishments/categories";
 import { isEventCategory } from "@/lib/events/categories";
@@ -48,6 +49,7 @@ function sanitizeEstablishment(raw: ImportItemBody): EstablishmentInput | null {
     internal_notes: raw.internal_notes?.trim() ?? "",
     is_favorite: false,
     ...DEFAULT_ESTABLISHMENT_COMMISSION,
+    ...DEFAULT_SEASONAL_COMMISSION,
   };
 
   return validateEstablishmentInput(item) ? null : item;

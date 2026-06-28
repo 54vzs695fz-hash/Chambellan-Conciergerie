@@ -177,6 +177,11 @@ model Establishment {
   commission_eligibility           String  @default("none")
   commission_eligibility_custom    String  @default("")
   commission_threshold_amount      String  @default("")
+  seasonal_commission_enabled      Boolean @default(false)
+  seasonal_commission_start        String  @default("")
+  seasonal_commission_end          String  @default("")
+  seasonal_commission_target       String  @default("")
+  seasonal_commission_after_target Boolean @default(true)
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
   stay_closing_entries StayClosingEntry[]
@@ -213,9 +218,10 @@ model StayClosingEntry {
   internal_notes          String         @default("")
   calculated_commission   String         @default("")
   commission_applied      Boolean        @default(false)
-  commission_received     Boolean        @default(false)
-  commission_received_at  String         @default("")
-  commission_summary      String         @default("")
+  commission_received              Boolean        @default(false)
+  commission_received_at           String         @default("")
+  commission_pending_season_target Boolean        @default(false)
+  commission_summary               String         @default("")
   created_at              DateTime       @default(now())
   updated_at              DateTime       @updatedAt
   stay_closing            StayClosing    @relation(fields: [stay_closing_id], references: [id], onDelete: Cascade)
