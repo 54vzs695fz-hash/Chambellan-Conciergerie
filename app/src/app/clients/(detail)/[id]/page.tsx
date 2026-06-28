@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ClientMobileHub } from "@/components/crm/ClientMobileHub";
 import { ClientProfileTabs } from "@/components/crm/ClientProfileTabs";
 import { ClientDeleteButton } from "@/components/crm/ClientDeleteButton";
 import { ClientForm } from "@/components/crm/ClientForm";
@@ -71,6 +72,35 @@ export default async function ClientDetailPage({
 
   return (
     <div className="page-shell max-w-4xl">
+      <div className="md:hidden">
+        <ClientMobileHub
+          client={client}
+          stayHistory={stayHistory}
+          businessStays={businessStays}
+          activeTrips={activeTrips}
+          relationships={relationships}
+          allClients={allClients.map(({ id, full_name }) => ({ id, full_name }))}
+          createPlannerForm={
+            <form
+              action={async () => {
+                "use server";
+                const tripId = await createPlannerForClient(
+                  client.id,
+                  client.full_name
+                );
+                const { redirect } = await import("next/navigation");
+                redirect(`/planner/${tripId}`);
+              }}
+            >
+              <button type="submit" className="client-mobile-sheet-primary">
+                New planner
+              </button>
+            </form>
+          }
+        />
+      </div>
+
+      <div className="hidden md:block">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
           <h1 className="font-serif text-2xl tracking-wide">{client.full_name}</h1>
@@ -190,6 +220,7 @@ export default async function ClientDetailPage({
           </div>
         }
       />
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import type { ClientBusinessStay, CommissionDisplayStatus } from "@/lib/types";
 
 interface Props {
   initialStays: ClientBusinessStay[];
+  variant?: "default" | "compact";
 }
 
 const STATUS_OPTIONS: CommissionDisplayStatus[] = [
@@ -26,7 +27,11 @@ function statusClass(status: CommissionDisplayStatus): string {
   }
 }
 
-export function ClientBusinessTab({ initialStays }: Props) {
+export function ClientBusinessTab({
+  initialStays,
+  variant = "default",
+}: Props) {
+  const compact = variant === "compact";
   const [stays, setStays] = useState(initialStays);
   const [savingEntryId, setSavingEntryId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +97,7 @@ export function ClientBusinessTab({ initialStays }: Props) {
   if (stays.length === 0) {
     return (
       <section className="client-business">
-        <p className="text-sm text-muted">
+        <p className={compact ? "client-mobile-sheet-empty" : "text-sm text-muted"}>
           Completed stays with billing appear here after closing a stay in the
           planner.
         </p>
@@ -102,12 +107,14 @@ export function ClientBusinessTab({ initialStays }: Props) {
 
   return (
     <section className="client-business">
-      <div className="mb-4">
-        <h2 className="section-title mb-1">Business</h2>
-        <p className="text-sm text-muted">
-          Internal only — never included in client PDFs.
-        </p>
-      </div>
+      {!compact ? (
+        <div className="mb-4">
+          <h2 className="section-title mb-1">Business</h2>
+          <p className="text-sm text-muted">
+            Internal only — never included in client PDFs.
+          </p>
+        </div>
+      ) : null}
 
       {error ? (
         <p className="text-sm text-red-700 mb-3" role="alert">
@@ -139,138 +146,140 @@ export function ClientBusinessTab({ initialStays }: Props) {
 
             {stay.has_closing_data ? (
               <>
-                <div className="client-business-summary">
-                  <div>
-                    <span className="client-business-metric-label">
-                      Approx. stay spend
-                    </span>
-                    <strong>{stay.approximate_stay_spend_label}</strong>
+                {!compact ? (
+                  <div className="client-business-summary">
+                    <div>
+                      <span className="client-business-metric-label">
+                        Approx. stay spend
+                      </span>
+                      <strong>{stay.approximate_stay_spend_label}</strong>
+                    </div>
+                    <div>
+                      <span className="client-business-metric-label">
+                        Expected commission
+                      </span>
+                      <strong>{stay.expected_commission_label}</strong>
+                    </div>
+                    <div>
+                      <span className="client-business-metric-label">
+                        Received commission
+                      </span>
+                      <strong>{stay.received_commission_label}</strong>
+                    </div>
+                    <div>
+                      <span className="client-business-metric-label">
+                        Outstanding commission
+                      </span>
+                      <strong>{stay.outstanding_commission_label}</strong>
+                    </div>
                   </div>
-                  <div>
-                    <span className="client-business-metric-label">
-                      Expected commission
-                    </span>
-                    <strong>{stay.expected_commission_label}</strong>
-                  </div>
-                  <div>
-                    <span className="client-business-metric-label">
-                      Received commission
-                    </span>
-                    <strong>{stay.received_commission_label}</strong>
-                  </div>
-                  <div>
-                    <span className="client-business-metric-label">
-                      Outstanding commission
-                    </span>
-                    <strong>{stay.outstanding_commission_label}</strong>
-                  </div>
-                </div>
+                ) : null}
 
                 <ul className="client-business-establishments">
-                  {stay.establishments.map((est) => (
-                    <li key={`${stay.trip_id}-${est.establishment_name}`}>
-                      <div className="client-business-est-head">
-                        <h3 className="client-business-est-name">
-                          {est.establishment_name}
-                        </h3>
-                        <span className={statusClass(est.status)}>
-                          {est.status_label}
-                        </span>
+                {stay.establishments.map((est) => (
+                  <li key={`${stay.trip_id}-${est.establishment_name}`}>
+                    <div className="client-business-est-head">
+                      <h3 className="client-business-est-name">
+                        {est.establishment_name}
+                      </h3>
+                      <span className={statusClass(est.status)}>
+                        {est.status_label}
+                      </span>
+                    </div>
+
+                    <dl className="client-business-est-details">
+                      <div>
+                        <dt>Bill</dt>
+                        <dd>{est.approximate_bill}</dd>
                       </div>
-
-                      <dl className="client-business-est-details">
+                      {!compact && est.show_premium_drinks ? (
                         <div>
-                          <dt>Bill</dt>
-                          <dd>{est.approximate_bill}</dd>
-                        </div>
-                        {est.show_premium_drinks ? (
-                          <div>
-                            <dt>Premium drinks</dt>
-                            <dd>{est.premium_drinks_amount}</dd>
-                          </div>
-                        ) : null}
-                        <div>
-                          <dt>Commission</dt>
-                          <dd>{est.commission_label}</dd>
-                        </div>
-                      </dl>
-
-                      {est.pending_season_target ? (
-                        <p className="client-business-season-note text-xs text-muted">
-                          Pending season target
-                        </p>
-                      ) : null}
-
-                      {est.entry_id !== null &&
-                      est.status !== "not_eligible" ? (
-                        <div className="client-business-est-actions">
-                          <label className="client-business-status-field">
-                            <span className="field-label">Status</span>
-                            <select
-                              className="field-input min-h-[44px]"
-                              value={est.status}
-                              disabled={savingEntryId === est.entry_id}
-                              onChange={(event) => {
-                                const value = event.target
-                                  .value as CommissionDisplayStatus;
-                                if (value === "not_eligible") return;
-                                void updateEntry(est.entry_id!, {
-                                  status: value,
-                                });
-                              }}
-                            >
-                              {STATUS_OPTIONS.filter(
-                                (option) => option !== "not_eligible"
-                              ).map((option) => (
-                                <option key={option} value={option}>
-                                  {option === "received"
-                                    ? "Received"
-                                    : "Pending"}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                          <dt>Premium drinks</dt>
+                          <dd>{est.premium_drinks_amount}</dd>
                         </div>
                       ) : null}
+                      <div>
+                        <dt>Commission</dt>
+                        <dd>{est.commission_label}</dd>
+                      </div>
+                    </dl>
 
-                      {est.entry_id !== null ? (
-                        <label className="client-business-notes-field">
-                          <span className="field-label">Notes</span>
-                          <textarea
-                            className="field-input"
-                            value={est.notes}
-                            rows={2}
+                    {!compact && est.pending_season_target ? (
+                      <p className="client-business-season-note text-xs text-muted">
+                        Pending season target
+                      </p>
+                    ) : null}
+
+                    {est.entry_id !== null &&
+                    est.status !== "not_eligible" ? (
+                      <div className="client-business-est-actions">
+                        <label className="client-business-status-field">
+                          <span className="field-label">Status</span>
+                          <select
+                            className="field-input min-h-[44px]"
+                            value={est.status}
                             disabled={savingEntryId === est.entry_id}
                             onChange={(event) => {
-                              const notes = event.target.value;
-                              setStays((prev) =>
-                                prev.map((item) =>
-                                  item.trip_id === stay.trip_id
-                                    ? {
-                                        ...item,
-                                        establishments: item.establishments.map(
-                                          (row) =>
-                                            row.entry_id === est.entry_id
-                                              ? { ...row, notes }
-                                              : row
-                                        ),
-                                      }
-                                    : item
-                                )
-                              );
-                            }}
-                            onBlur={(event) => {
+                              const value = event.target
+                                .value as CommissionDisplayStatus;
+                              if (value === "not_eligible") return;
                               void updateEntry(est.entry_id!, {
-                                notes: event.target.value,
+                                status: value,
                               });
                             }}
-                            placeholder="Internal notes for this visit…"
-                          />
+                          >
+                            {STATUS_OPTIONS.filter(
+                              (option) => option !== "not_eligible"
+                            ).map((option) => (
+                              <option key={option} value={option}>
+                                {option === "received"
+                                  ? "Received"
+                                  : "Pending"}
+                              </option>
+                            ))}
+                          </select>
                         </label>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
+                      </div>
+                    ) : null}
+
+                    {est.entry_id !== null ? (
+                      <label className="client-business-notes-field">
+                        <span className="field-label">Notes</span>
+                        <textarea
+                          className="field-input"
+                          value={est.notes}
+                          rows={2}
+                          disabled={savingEntryId === est.entry_id}
+                          onChange={(event) => {
+                            const notes = event.target.value;
+                            setStays((prev) =>
+                              prev.map((item) =>
+                                item.trip_id === stay.trip_id
+                                  ? {
+                                      ...item,
+                                      establishments: item.establishments.map(
+                                        (row) =>
+                                          row.entry_id === est.entry_id
+                                            ? { ...row, notes }
+                                            : row
+                                      ),
+                                    }
+                                  : item
+                              )
+                            );
+                          }}
+                          onBlur={(event) => {
+                            void updateEntry(est.entry_id!, {
+                              notes: event.target.value,
+                            });
+                          }}
+                          placeholder="Internal notes for this visit…"
+                        />
+                      </label>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
               </>
             ) : (
               <ul className="client-stay-history-tags">

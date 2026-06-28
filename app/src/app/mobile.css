@@ -2252,3 +2252,233 @@
     letter-spacing: 0.02em;
   }
 }
+
+/* Client profile — mobile action hub + bottom sheets (desktop unchanged) */
+
+@media (max-width: 767px) {
+  .client-mobile-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-height: calc(100dvh - var(--mobile-nav-h) - var(--mobile-fab-clearance) - 2rem);
+  }
+
+  .client-mobile-head {
+    padding-top: 0.25rem;
+  }
+
+  .client-mobile-name {
+    margin: 0;
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: clamp(2rem, 9vw, 2.65rem);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: var(--ink, #2c2825);
+  }
+
+  .client-mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .client-mobile-action {
+    min-height: 52px;
+    padding: 0.75rem 1rem;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-align: left;
+    color: var(--ink, #2c2825);
+    background: #fff;
+    border: 1px solid rgba(184, 149, 106, 0.28);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(28, 28, 28, 0.04);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .client-mobile-action:active {
+    transform: scale(0.985);
+  }
+
+  .client-sheet-root {
+    position: fixed;
+    inset: 0;
+    z-index: 58;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .client-sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    border: none;
+    background: rgba(17, 17, 17, 0.42);
+    cursor: pointer;
+  }
+
+  .client-sheet-panel {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-height: min(58vh, 420px);
+    display: flex;
+    flex-direction: column;
+    background: var(--shell-card-bg, #fff);
+    border: 1px solid var(--shell-card-border, #e5e7eb);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -10px 40px rgba(17, 17, 17, 0.14);
+    margin-bottom: var(--mobile-nav-h);
+  }
+
+  .client-sheet-panel--tall {
+    max-height: min(82vh, 680px);
+  }
+
+  .client-sheet-head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 0.875rem 0.65rem;
+    border-bottom: 1px solid var(--shell-card-border, #e5e7eb);
+  }
+
+  .client-sheet-title {
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--shell-text-muted, #6b6560);
+  }
+
+  .client-sheet-close {
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    line-height: 1;
+    color: var(--shell-text-muted, #6b6560);
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .client-sheet-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 0.85rem 0.875rem calc(0.85rem + env(safe-area-inset-bottom, 0));
+  }
+
+  .client-sheet-body .client-stay-history,
+  .client-sheet-body .client-business,
+  .client-sheet-body .crm-relationships {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+
+  .client-mobile-sheet-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .client-mobile-sheet-lead {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--ink, #2c2825);
+  }
+
+  .client-mobile-sheet-empty {
+    margin: 0;
+    padding: 0.85rem 1rem;
+    font-size: 0.88rem;
+    color: var(--shell-text-muted, #6b6560);
+    background: rgba(184, 149, 106, 0.08);
+    border: 1px solid rgba(184, 149, 106, 0.18);
+    border-radius: 12px;
+  }
+
+  .client-mobile-sheet-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.65rem 1rem;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: #fff;
+    background: linear-gradient(145deg, #c4a574 0%, #9a7b4f 100%);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .client-mobile-planner-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .client-mobile-planner-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-height: 44px;
+    padding: 0.85rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    border: 1px solid rgba(184, 149, 106, 0.22);
+    border-radius: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .client-mobile-planner-destination {
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 1rem;
+    color: var(--gold, #b8956a);
+  }
+
+  .client-mobile-planner-dates {
+    font-size: 0.78rem;
+    color: var(--shell-text-muted, #6b6560);
+  }
+
+  .crm-relationships--sheet .crm-relationships-head {
+    margin-bottom: 0.65rem;
+  }
+
+  body.client-sheet-open {
+    overflow: hidden;
+  }
+
+  body.client-sheet-open .mobile-fab-root {
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+  }
+}

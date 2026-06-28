@@ -16,12 +16,14 @@ interface Props {
   clientId: number;
   initialRelationships: ClientRelationshipWithClient[];
   allClients: Pick<Client, "id" | "full_name">[];
+  variant?: "default" | "sheet";
 }
 
 export function ClientRelationshipsSection({
   clientId,
   initialRelationships,
   allClients,
+  variant = "default",
 }: Props) {
   const [relationships, setRelationships] =
     useState<ClientRelationshipWithClient[]>(initialRelationships);
@@ -156,9 +158,11 @@ export function ClientRelationshipsSection({
   };
 
   return (
-    <section className="crm-relationships">
+    <section className={`crm-relationships${variant === "sheet" ? " crm-relationships--sheet" : ""}`}>
       <div className="crm-relationships-head">
-        <h2 className="section-title">Relationship tags</h2>
+        {variant === "default" ? (
+          <h2 className="section-title">Relationship tags</h2>
+        ) : null}
         {!adding && availableClients.length > 0 ? (
           <button
             type="button"
