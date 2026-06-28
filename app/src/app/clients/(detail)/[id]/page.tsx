@@ -78,8 +78,10 @@ export default async function ClientDetailPage({
           stayHistory={stayHistory}
           businessStays={businessStays}
           activeTrips={activeTrips}
+          allTrips={trips}
           relationships={relationships}
           allClients={allClients.map(({ id, full_name }) => ({ id, full_name }))}
+          linkedPlannerCount={linkedPlannerCount}
           createPlannerForm={
             <form
               action={async () => {
@@ -92,8 +94,8 @@ export default async function ClientDetailPage({
                 redirect(`/planner/${tripId}`);
               }}
             >
-              <button type="submit" className="client-mobile-sheet-primary">
-                New planner
+              <button type="submit" className="client-mobile-card-cta">
+                Create first planner
               </button>
             </form>
           }

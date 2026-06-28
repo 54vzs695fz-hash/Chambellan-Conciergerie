@@ -7,12 +7,14 @@ interface Props {
   clientId: number;
   clientName: string;
   linkedPlannerCount: number;
+  variant?: "default" | "mobile-menu";
 }
 
 export function ClientDeleteButton({
   clientId,
   clientName,
   linkedPlannerCount,
+  variant = "default",
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -50,10 +52,23 @@ export function ClientDeleteButton({
     <>
       <button
         type="button"
-        className="crm-delete-btn min-h-[44px]"
+        className={
+          variant === "mobile-menu"
+            ? "client-mobile-more-item client-mobile-more-item--danger"
+            : "crm-delete-btn min-h-[44px]"
+        }
         onClick={() => setOpen(true)}
       >
-        Delete client
+        {variant === "mobile-menu" ? (
+          <>
+            <span className="client-mobile-more-label">Delete client</span>
+            <span className="client-mobile-more-subtitle">
+              Permanently remove this profile
+            </span>
+          </>
+        ) : (
+          "Delete client"
+        )}
       </button>
 
       {open ? (
