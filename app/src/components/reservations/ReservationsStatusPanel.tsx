@@ -16,9 +16,9 @@ interface Props {
   items?: ReservationStatusItem[];
   summary?: string;
   loading?: boolean;
-  updatingId?: number | null;
+  updatingId?: string | null;
   onPatchBookingStatus: (
-    activityId: number,
+    item: ReservationStatusItem,
     booking_status: BookingStatus
   ) => void | Promise<void>;
   variant?: "calendar" | "planner";
@@ -82,19 +82,23 @@ export function ReservationsStatusPanel({
       ) : (
         <ul className="rs-list">
           {items.map((item) => (
-            <li key={item.activityId} className="rs-item">
+            <li key={item.itemKey} className="rs-item">
               <div className="rs-item-main">
                 <select
                   className="rs-status"
                   value={item.booking_status}
-                  disabled={updatingId === item.activityId}
+                  disabled={updatingId === item.itemKey}
                   onChange={(e) =>
                     void onPatchBookingStatus(
-                      item.activityId,
+                      item,
                       e.target.value as BookingStatus
                     )
                   }
-                  aria-label={`Booking status for ${item.venue}`}
+                  aria-label={`Booking status for ${item.venue}${
+                    item.beachClubPart
+                      ? ` · ${item.beachClubPart === "sunbeds" ? "Sunbeds" : "Lunch"}`
+                      : ""
+                  }`}
                 >
                   {BOOKING_STATUS_OPTIONS.map((status) => (
                     <option key={status} value={status}>
@@ -106,6 +110,14 @@ export function ReservationsStatusPanel({
                   <span className="rs-venue">{item.venue}</span>
                   <span className="rs-meta">
                     {formatReservationDate(item.date)}
+                    {item.beachClubPart ? (
+                      <>
+                        {" · "}
+                        <span className="rs-beach-part">
+                          {item.beachClubPart === "sunbeds" ? "Sunbeds" : "Lunch"}
+                        </span>
+                      </>
+                    ) : null}
                     {" · "}
                     {formatReservationTime(item.time)}
                     {" · "}

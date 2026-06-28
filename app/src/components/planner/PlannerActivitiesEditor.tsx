@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef, useState, type DragEvent } from "react";
 import type { CSSProperties } from "react";
-import type { Activity, ActivityType, DaySection, Establishment, TripDay } from "@/lib/types";
+import type { Activity, ActivityType, BookingStatus, DaySection, Establishment, TripDay } from "@/lib/types";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/types";
 import {
   ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY,
@@ -27,6 +27,10 @@ import {
   isReservationActivityType,
   normalizeBookingStatus,
 } from "@/lib/reservations/reservation-status";
+import {
+  normalizeBeachClubActivity,
+  syncBeachClubPersistedFields,
+} from "@/lib/planner/beach-club";
 
 function reorderItems<T>(items: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= items.length) return items;
@@ -86,6 +90,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
   onDragOver?: (e: DragEvent) => void;
   onDrop?: (e: DragEvent) => void;
 }) {
+  const initialBeach = normalizeBeachClubActivity(activity);
   const [time, setTime] = useState(activity.time);
   const [title, setTitle] = useState(activity.title);
   const [details, setDetails] = useState(activity.details);
@@ -93,6 +98,14 @@ const ActivityEditRow = memo(function ActivityEditRow({
   const [bookingStatus, setBookingStatus] = useState(
     normalizeBookingStatus(activity.booking_status)
   );
+  const [beachSunbeds, setBeachSunbeds] = useState(initialBeach.sunbedsEnabled);
+  const [beachSunbedsTime, setBeachSunbedsTime] = useState(initialBeach.sunbedsTime);
+  const [beachLunch, setBeachLunch] = useState(initialBeach.lunchEnabled);
+  const [beachLunchTime, setBeachLunchTime] = useState(initialBeach.lunchTime);
+  const [beachSunbedsStatus, setBeachSunbedsStatus] = useState(
+    initialBeach.sunbedsStatus
+  );
+  const [beachLunchStatus, setBeachLunchStatus] = useState(initialBeach.lunchStatus);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const draftRef = useRef({
     time,
@@ -101,14 +114,27 @@ const ActivityEditRow = memo(function ActivityEditRow({
     activity_type: activityType,
     booking_status: bookingStatus,
     establishment_city: activity.establishment_city ?? "",
+    beach_sunbeds: beachSunbeds,
+    beach_sunbeds_time: beachSunbedsTime,
+    beach_lunch: beachLunch,
+    beach_lunch_time: beachLunchTime,
+    beach_sunbeds_status: beachSunbedsStatus,
+    beach_lunch_status: beachLunchStatus,
   });
 
   useEffect(() => {
+    const nextBeach = normalizeBeachClubActivity(activity);
     setTime(activity.time);
     setTitle(activity.title);
     setDetails(activity.details);
     setActivityType(activity.activity_type);
     setBookingStatus(normalizeBookingStatus(activity.booking_status));
+    setBeachSunbeds(nextBeach.sunbedsEnabled);
+    setBeachSunbedsTime(nextBeach.sunbedsTime);
+    setBeachLunch(nextBeach.lunchEnabled);
+    setBeachLunchTime(nextBeach.lunchTime);
+    setBeachSunbedsStatus(nextBeach.sunbedsStatus);
+    setBeachLunchStatus(nextBeach.lunchStatus);
     draftRef.current = {
       time: activity.time,
       title: activity.title,
@@ -116,8 +142,28 @@ const ActivityEditRow = memo(function ActivityEditRow({
       activity_type: activity.activity_type,
       booking_status: normalizeBookingStatus(activity.booking_status),
       establishment_city: activity.establishment_city ?? "",
+      beach_sunbeds: nextBeach.sunbedsEnabled,
+      beach_sunbeds_time: nextBeach.sunbedsTime,
+      beach_lunch: nextBeach.lunchEnabled,
+      beach_lunch_time: nextBeach.lunchTime,
+      beach_sunbeds_status: nextBeach.sunbedsStatus,
+      beach_lunch_status: nextBeach.lunchStatus,
     };
-  }, [activity.id, activity.time, activity.title, activity.details, activity.activity_type, activity.booking_status, activity.establishment_city]);
+  }, [
+    activity.id,
+    activity.time,
+    activity.title,
+    activity.details,
+    activity.activity_type,
+    activity.booking_status,
+    activity.establishment_city,
+    activity.beach_sunbeds,
+    activity.beach_sunbeds_time,
+    activity.beach_lunch,
+    activity.beach_lunch_time,
+    activity.beach_sunbeds_status,
+    activity.beach_lunch_status,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -131,16 +177,27 @@ const ActivityEditRow = memo(function ActivityEditRow({
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      const payload = draftRef.current;
+      const payload = syncBeachClubPersistedFields({
+        ...draftRef.current,
+        activity_type: draftRef.current.activity_type,
+      });
       onPatch(
         activity.id,
         {
-          time: payload.time,
-          title: payload.title,
-          details: payload.details,
-          activity_type: payload.activity_type,
-          booking_status: payload.booking_status,
-          establishment_city: payload.establishment_city,
+          time: payload.time ?? draftRef.current.time,
+          title: payload.title ?? draftRef.current.title,
+          details: payload.details ?? draftRef.current.details,
+          activity_type: payload.activity_type ?? draftRef.current.activity_type,
+          booking_status: payload.booking_status ?? draftRef.current.booking_status,
+          establishment_city: payload.establishment_city ?? draftRef.current.establishment_city,
+          beach_sunbeds: payload.beach_sunbeds ?? draftRef.current.beach_sunbeds,
+          beach_sunbeds_time: payload.beach_sunbeds_time ?? draftRef.current.beach_sunbeds_time,
+          beach_lunch: payload.beach_lunch ?? draftRef.current.beach_lunch,
+          beach_lunch_time: payload.beach_lunch_time ?? draftRef.current.beach_lunch_time,
+          beach_sunbeds_status:
+            payload.beach_sunbeds_status ?? draftRef.current.beach_sunbeds_status,
+          beach_lunch_status:
+            payload.beach_lunch_status ?? draftRef.current.beach_lunch_status,
         },
         { immediate }
       );
@@ -163,16 +220,57 @@ const ActivityEditRow = memo(function ActivityEditRow({
         | "activity_type"
         | "booking_status"
         | "establishment_city"
+        | "beach_sunbeds"
+        | "beach_sunbeds_time"
+        | "beach_lunch"
+        | "beach_lunch_time"
+        | "beach_sunbeds_status"
+        | "beach_lunch_status"
       >
     >,
     immediate = false
   ) => {
+    if (patch.beach_sunbeds !== undefined) setBeachSunbeds(patch.beach_sunbeds);
+    if (patch.beach_sunbeds_time !== undefined) {
+      setBeachSunbedsTime(patch.beach_sunbeds_time);
+    }
+    if (patch.beach_lunch !== undefined) setBeachLunch(patch.beach_lunch);
+    if (patch.beach_lunch_time !== undefined) setBeachLunchTime(patch.beach_lunch_time);
+    if (patch.beach_sunbeds_status !== undefined) {
+      setBeachSunbedsStatus(patch.beach_sunbeds_status);
+    }
+    if (patch.beach_lunch_status !== undefined) {
+      setBeachLunchStatus(patch.beach_lunch_status);
+    }
     draftRef.current = { ...draftRef.current, ...patch };
     if (immediate) flush(true);
     else schedule();
   };
 
   const category = ACTIVITY_TYPE_ESTABLISHMENT_CATEGORY[activityType];
+  const isBeachClub = activityType === "beach_club";
+
+  const bookingStatusSelect = (
+    value: BookingStatus,
+    onChange: (next: BookingStatus) => void,
+    label: string
+  ) => (
+    <label className="adm-booking-status adm-booking-status--inline">
+      <span className="adm-booking-status-label">{label}</span>
+      <select
+        className="adm-input adm-input--booking-status"
+        value={value}
+        onChange={(e) => onChange(normalizeBookingStatus(e.target.value))}
+        aria-label={`${label} for ${title || "activity"}`}
+      >
+        {BOOKING_STATUS_OPTIONS.map((status) => (
+          <option key={status} value={status}>
+            {BOOKING_STATUS_LABELS[status]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 
   return (
     <div
@@ -186,21 +284,37 @@ const ActivityEditRow = memo(function ActivityEditRow({
         <span className="adm-drag-handle" aria-hidden title="Drag to reorder">
           ⠿
         </span>
-        <input
-          type="time"
-          value={time}
-          onChange={(e) => {
-            setTime(e.target.value);
-            updateDraft({ time: e.target.value });
-          }}
-          onBlur={() => flush(true)}
-          className="adm-input adm-input--time"
-        />
+        {!isBeachClub ? (
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => {
+              setTime(e.target.value);
+              updateDraft({ time: e.target.value });
+            }}
+            onBlur={() => flush(true)}
+            className="adm-input adm-input--time"
+          />
+        ) : null}
         <select
           value={activityType}
           onChange={(e) => {
             const activity_type = e.target.value as ActivityType;
             setActivityType(activity_type);
+            if (activity_type === "beach_club" && time.trim()) {
+              updateDraft(
+                {
+                  activity_type,
+                  beach_lunch: true,
+                  beach_lunch_time: time,
+                  beach_lunch_status: bookingStatus,
+                },
+                true
+              );
+              setBeachLunch(true);
+              setBeachLunchTime(time);
+              return;
+            }
             updateDraft({ activity_type }, true);
           }}
           className="adm-input adm-input--type"
@@ -317,6 +431,76 @@ const ActivityEditRow = memo(function ActivityEditRow({
           className="adm-input adm-input--venue"
         />
       )}
+      {isBeachClub ? (
+        <div className="adm-beach-club-options">
+          <div className="adm-beach-club-option">
+            <label className="adm-checkbox adm-checkbox--inline">
+              <input
+                type="checkbox"
+                checked={beachSunbeds}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setBeachSunbeds(checked);
+                  updateDraft({ beach_sunbeds: checked }, true);
+                }}
+              />
+              <span>Sunbeds</span>
+            </label>
+            {beachSunbeds ? (
+              <input
+                type="time"
+                className="adm-input adm-input--time"
+                value={beachSunbedsTime}
+                onChange={(event) => {
+                  setBeachSunbedsTime(event.target.value);
+                  updateDraft({ beach_sunbeds_time: event.target.value });
+                }}
+                onBlur={() => flush(true)}
+                aria-label="Sunbeds time"
+              />
+            ) : null}
+            {beachSunbeds
+              ? bookingStatusSelect(beachSunbedsStatus, (next) => {
+                  setBeachSunbedsStatus(next);
+                  updateDraft({ beach_sunbeds_status: next }, true);
+                }, "Sunbeds status")
+              : null}
+          </div>
+          <div className="adm-beach-club-option">
+            <label className="adm-checkbox adm-checkbox--inline">
+              <input
+                type="checkbox"
+                checked={beachLunch}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setBeachLunch(checked);
+                  updateDraft({ beach_lunch: checked }, true);
+                }}
+              />
+              <span>Lunch</span>
+            </label>
+            {beachLunch ? (
+              <input
+                type="time"
+                className="adm-input adm-input--time"
+                value={beachLunchTime}
+                onChange={(event) => {
+                  setBeachLunchTime(event.target.value);
+                  updateDraft({ beach_lunch_time: event.target.value });
+                }}
+                onBlur={() => flush(true)}
+                aria-label="Lunch time"
+              />
+            ) : null}
+            {beachLunch
+              ? bookingStatusSelect(beachLunchStatus, (next) => {
+                  setBeachLunchStatus(next);
+                  updateDraft({ beach_lunch_status: next }, true);
+                }, "Lunch status")
+              : null}
+          </div>
+        </div>
+      ) : null}
       <input
         value={details}
         placeholder="Notes (optional)"
@@ -327,7 +511,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
         onBlur={() => flush(true)}
         className="adm-input adm-input--detail"
       />
-      {isReservationActivityType(activityType) ? (
+      {isReservationActivityType(activityType) && !isBeachClub ? (
         <label className="adm-booking-status">
           <span className="adm-booking-status-label">Booking status</span>
           <select

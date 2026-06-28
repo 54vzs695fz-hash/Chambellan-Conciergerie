@@ -1,5 +1,11 @@
 import type { Activity, ActivityType, BookingStatus, TripDay } from "@/lib/types";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/types";
+import {
+  beachClubCategoryLabel,
+  isBeachClubActivity,
+  normalizeBeachClubActivity,
+  reservationItemKey,
+} from "@/lib/planner/beach-club";
 
 export type { BookingStatus };
 
@@ -267,14 +273,19 @@ export function computePlannerBookingSummary(
 }
 
 export function isTrackableReservationActivity(activity: Activity): boolean {
-  return (
-    isReservationActivityType(activity.activity_type) &&
-    activity.title.trim().length > 0
-  );
+  if (!isReservationActivityType(activity.activity_type)) return false;
+  if (!activity.title.trim().length) return false;
+  if (isBeachClubActivity(activity)) {
+    const options = normalizeBeachClubActivity(activity);
+    return options.sunbedsEnabled || options.lunchEnabled;
+  }
+  return true;
 }
 
 export interface ReservationStatusItem {
   activityId: number;
+  itemKey: string;
+  beachClubPart: "sunbeds" | "lunch" | null;
   venue: string;
   date: string;
   time: string;
@@ -285,6 +296,32 @@ export interface ReservationStatusItem {
   booking_notes: string;
 }
 
+function pushReservationItem(
+  items: ReservationStatusItem[],
+  day: TripDay,
+  activity: Activity,
+  config: {
+    part: "sunbeds" | "lunch" | null;
+    time: string;
+    booking_status: BookingStatus;
+    categoryLabel: string;
+  }
+) {
+  items.push({
+    activityId: activity.id,
+    itemKey: reservationItemKey(activity.id, config.part),
+    beachClubPart: config.part,
+    venue: activity.title.trim(),
+    date: day.date,
+    time: config.time.trim(),
+    category: activity.activity_type,
+    categoryLabel: config.categoryLabel,
+    booking_status: normalizeBookingStatus(config.booking_status),
+    assigned_to: normalizeBookingAssignee(activity.assigned_to),
+    booking_notes: activity.booking_notes?.trim() ?? "",
+  });
+}
+
 export function buildReservationStatusItems(
   days: TripDay[]
 ): ReservationStatusItem[] {
@@ -293,16 +330,33 @@ export function buildReservationStatusItems(
   for (const day of days) {
     for (const activity of day.activities) {
       if (!isTrackableReservationActivity(activity)) continue;
-      items.push({
-        activityId: activity.id,
-        venue: activity.title.trim(),
-        date: day.date,
+
+      if (isBeachClubActivity(activity)) {
+        const options = normalizeBeachClubActivity(activity);
+        if (options.sunbedsEnabled) {
+          pushReservationItem(items, day, activity, {
+            part: "sunbeds",
+            time: options.sunbedsTime,
+            booking_status: options.sunbedsStatus,
+            categoryLabel: beachClubCategoryLabel("sunbeds"),
+          });
+        }
+        if (options.lunchEnabled) {
+          pushReservationItem(items, day, activity, {
+            part: "lunch",
+            time: options.lunchTime,
+            booking_status: options.lunchStatus,
+            categoryLabel: beachClubCategoryLabel("lunch"),
+          });
+        }
+        continue;
+      }
+
+      pushReservationItem(items, day, activity, {
+        part: null,
         time: activity.time.trim(),
-        category: activity.activity_type,
+        booking_status: activity.booking_status,
         categoryLabel: ACTIVITY_TYPE_LABELS[activity.activity_type],
-        booking_status: normalizeBookingStatus(activity.booking_status),
-        assigned_to: normalizeBookingAssignee(activity.assigned_to),
-        booking_notes: activity.booking_notes?.trim() ?? "",
       });
     }
   }

@@ -916,6 +916,12 @@
   word-break: break-word;
 }
 
+.dash-bp-beach-part {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #9a7b4f;
+}
+
 .dash-booking-progress-item-controls {
   display: grid;
   grid-template-columns: 1fr;

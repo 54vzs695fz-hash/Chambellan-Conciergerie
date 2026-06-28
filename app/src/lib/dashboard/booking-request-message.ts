@@ -60,6 +60,52 @@ export interface BookingRequestMessageInput {
   clientEmail: string;
 }
 
+export interface BeachClubBookingRequestMessageInput {
+  establishmentName: string;
+  date: string;
+  sunbedsTime?: string | null;
+  lunchTime?: string | null;
+  clientName: string;
+  guestCount: string | null;
+  clientPhone: string;
+  clientEmail: string;
+}
+
+function formatBeachClubTimeLine(time: string): string {
+  const trimmed = time.trim();
+  if (!trimmed) return "";
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})/);
+  if (match) {
+    return `${String(Number(match[1])).padStart(2, "0")}:${match[2]}`;
+  }
+  return trimmed;
+}
+
+export function buildBeachClubBookingRequestMessage(
+  input: BeachClubBookingRequestMessageInput
+): string {
+  const datePart = formatGridDayDate(input.date) || "—";
+  const lines = [
+    input.establishmentName.trim() || "Beach Club",
+    datePart,
+  ];
+
+  const sunbedsTime = formatBeachClubTimeLine(String(input.sunbedsTime ?? ""));
+  const lunchTime = formatBeachClubTimeLine(String(input.lunchTime ?? ""));
+
+  if (sunbedsTime) lines.push(`Sunbeds: ${sunbedsTime}`);
+  if (lunchTime) lines.push(`Lunch: ${lunchTime}`);
+
+  lines.push(
+    input.clientName.trim() || "Client",
+    formatBookingRequestPax(input.guestCount),
+    formatBookingRequestContactPhone(input.clientPhone),
+    formatBookingRequestContactEmail(input.clientEmail)
+  );
+
+  return lines.join("\n");
+}
+
 export function buildBookingRequestMessage(
   input: BookingRequestMessageInput
 ): string {

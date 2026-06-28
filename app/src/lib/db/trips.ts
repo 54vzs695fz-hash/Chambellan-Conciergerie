@@ -34,6 +34,7 @@ import {
   buildEstablishmentCityLookup,
   syncTripDestinationsFromItinerary,
 } from "../planner/itinerary-destinations";
+import { syncBeachClubPersistedFields } from "../planner/beach-club";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -80,6 +81,14 @@ function mapActivity(row: PrismaActivity): Activity {
     booking_notes: row.booking_notes ?? "",
     sort_order: row.sort_order,
     establishment_city: row.establishment_city ?? "",
+    beach_sunbeds: row.beach_sunbeds ?? false,
+    beach_sunbeds_time: row.beach_sunbeds_time ?? "",
+    beach_lunch: row.beach_lunch ?? false,
+    beach_lunch_time: row.beach_lunch_time ?? "",
+    beach_sunbeds_status: (row.beach_sunbeds_status ??
+      "to_request") as Activity["beach_sunbeds_status"],
+    beach_lunch_status: (row.beach_lunch_status ??
+      "to_request") as Activity["beach_lunch_status"],
   };
 }
 
@@ -520,17 +529,29 @@ export async function updateActivity(
       | "booking_notes"
       | "sort_order"
       | "establishment_city"
+      | "beach_sunbeds"
+      | "beach_sunbeds_time"
+      | "beach_lunch"
+      | "beach_lunch_time"
+      | "beach_sunbeds_status"
+      | "beach_lunch_status"
     >
   >
 ): Promise<Activity | undefined> {
   try {
+    const syncedFields = syncBeachClubPersistedFields(fields);
     const row = await prisma.activity.update({
       where: { id },
-      data: fields,
+      data: syncedFields,
     });
     const activity = mapActivity(row);
 
-    if (fields.establishment_city !== undefined || fields.title !== undefined) {
+    if (
+      fields.establishment_city !== undefined ||
+      fields.title !== undefined ||
+      fields.beach_sunbeds !== undefined ||
+      fields.beach_lunch !== undefined
+    ) {
       const day = await prisma.tripDay.findUnique({
         where: { id: row.trip_day_id },
         select: { trip_id: true },
@@ -600,6 +621,12 @@ export async function duplicateTrip(tripId: number): Promise<TripWithDays | unde
           status: act.status,
           sort_order: act.sort_order,
           establishment_city: act.establishment_city ?? "",
+          beach_sunbeds: act.beach_sunbeds ?? false,
+          beach_sunbeds_time: act.beach_sunbeds_time ?? "",
+          beach_lunch: act.beach_lunch ?? false,
+          beach_lunch_time: act.beach_lunch_time ?? "",
+          beach_sunbeds_status: act.beach_sunbeds_status ?? "to_request",
+          beach_lunch_status: act.beach_lunch_status ?? "to_request",
         },
       });
     }

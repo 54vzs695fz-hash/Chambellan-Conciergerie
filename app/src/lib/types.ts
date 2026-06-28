@@ -197,6 +197,12 @@ export interface Activity {
   booking_notes: string;
   sort_order: number;
   establishment_city: string;
+  beach_sunbeds: boolean;
+  beach_sunbeds_time: string;
+  beach_lunch: boolean;
+  beach_lunch_time: string;
+  beach_sunbeds_status: BookingStatus;
+  beach_lunch_status: BookingStatus;
 }
 
 export interface TripDay {

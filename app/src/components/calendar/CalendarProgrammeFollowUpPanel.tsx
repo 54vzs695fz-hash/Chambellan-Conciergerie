@@ -32,6 +32,7 @@ import type {
   Trip,
   TripPaymentStatus,
 } from "@/lib/types";
+import { buildActivityPatchFromReservationItem } from "@/lib/planner/beach-club";
 import { ReservationsStatusPanel } from "@/components/reservations/ReservationsStatusPanel";
 import {
   formatBookingStatusSummary,
@@ -310,7 +311,7 @@ export function CalendarProgrammeFollowUpPanel({
   const [reservationSummary, setReservationSummary] = useState("");
   const [reservationsLoading, setReservationsLoading] = useState(true);
   const [updatingReservationId, setUpdatingReservationId] = useState<
-    number | null
+    string | null
   >(null);
 
   const todayStr = useMemo(() => todayIsoDate(today), [today]);
@@ -529,25 +530,26 @@ export function CalendarProgrammeFollowUpPanel({
   };
 
   const handlePatchBookingStatus = async (
-    activityId: number,
+    item: ReservationStatusItem,
     booking_status: BookingStatus
   ) => {
-    setUpdatingReservationId(activityId);
+    setUpdatingReservationId(item.itemKey);
     setReservationItems((current) =>
-      current.map((item) =>
-        item.activityId === activityId ? { ...item, booking_status } : item
+      current.map((row) =>
+        row.itemKey === item.itemKey ? { ...row, booking_status } : row
       )
     );
     try {
-      const res = await fetch(`/api/activities/${activityId}`, {
+      const body = buildActivityPatchFromReservationItem(item, { booking_status });
+      const res = await fetch(`/api/activities/${item.activityId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ booking_status }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) return;
       setReservationItems((current) => {
-        const next = current.map((item) =>
-          item.activityId === activityId ? { ...item, booking_status } : item
+        const next = current.map((row) =>
+          row.itemKey === item.itemKey ? { ...row, booking_status } : row
         );
         setReservationSummary(formatBookingStatusSummary(next));
         return next;

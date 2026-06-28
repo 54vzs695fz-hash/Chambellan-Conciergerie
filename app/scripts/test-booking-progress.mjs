@@ -157,6 +157,8 @@ assert(
 const sorted = sortBookingProgressItems([
   {
     activityId: 1,
+    itemKey: "1",
+    beachClubPart: null,
     venue: "B",
     date: "2026-07-03",
     time: "12:00",
@@ -168,6 +170,8 @@ const sorted = sortBookingProgressItems([
   },
   {
     activityId: 2,
+    itemKey: "2",
+    beachClubPart: null,
     venue: "A",
     date: "2026-07-02",
     time: "20:00",
@@ -182,6 +186,7 @@ assert(sorted[0]?.booking_status === "to_request", "actionable booking first");
 
 const {
   buildBookingRequestMessage,
+  buildBeachClubBookingRequestMessage,
   formatBookingRequestContactEmail,
   formatBookingRequestContactPhone,
   formatBookingRequestPax,
@@ -213,5 +218,21 @@ assert(message.includes("Verde Beach"), "message venue");
 assert(message.includes("28/07 à 15h30"), "message date time");
 assert(message.includes("4 pax"), "message pax");
 assert(message.includes("+1 (718) 724-4554"), "message phone");
+
+const beachMessage = buildBeachClubBookingRequestMessage({
+  establishmentName: "Shellona",
+  date: "2026-07-28",
+  sunbedsTime: "12:00",
+  lunchTime: "15:30",
+  clientName: "Alex Borovskoy",
+  guestCount: "4",
+  clientPhone: "+1 555",
+  clientEmail: "alex@email.com",
+});
+assert(beachMessage.includes("Shellona"), "beach club venue");
+assert(beachMessage.includes("28/07"), "beach club date");
+assert(beachMessage.includes("Sunbeds: 12:00"), "beach club sunbeds");
+assert(beachMessage.includes("Lunch: 15:30"), "beach club lunch");
+assert(beachMessage.includes("Alex Borovskoy"), "beach club client");
 
 console.log("booking-progress tests passed");

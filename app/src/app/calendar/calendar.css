@@ -1820,6 +1820,12 @@
   line-height: 1.35;
 }
 
+.rs-beach-part {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #9a7b4f;
+}
+
 @media (min-width: 640px) {
   .rs-item-main {
     flex-direction: row;

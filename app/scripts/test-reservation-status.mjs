@@ -106,6 +106,57 @@ async function main() {
     `Unexpected summary: ${formatBookingStatusSummary(items)}`
   );
 
+  const beachItems = buildReservationStatusItems([
+    makeDay([
+      makeActivity({
+        id: 10,
+        title: "Shellona",
+        activity_type: "beach_club",
+        time: "15:30",
+        beach_lunch: false,
+        beach_sunbeds: false,
+      }),
+    ]),
+  ]);
+  assert(beachItems.length === 1, "legacy beach club time becomes lunch");
+  assert(beachItems[0]?.beachClubPart === "lunch", "legacy defaults to lunch");
+  assert(beachItems[0]?.time === "15:30", "legacy lunch time preserved");
+
+  const splitBeach = buildReservationStatusItems([
+    makeDay([
+      makeActivity({
+        id: 11,
+        title: "Shellona",
+        activity_type: "beach_club",
+        beach_sunbeds: true,
+        beach_sunbeds_time: "12:00",
+        beach_sunbeds_status: "to_request",
+        beach_lunch: true,
+        beach_lunch_time: "15:30",
+        beach_lunch_status: "confirmed",
+      }),
+    ]),
+  ]);
+  assert(splitBeach.length === 2, "sunbeds and lunch are separate items");
+  assert(
+    splitBeach.some(
+      (item) =>
+        item.itemKey === "11:sunbeds" &&
+        item.beachClubPart === "sunbeds" &&
+        item.booking_status === "to_request"
+    ),
+    "sunbeds item tracked separately"
+  );
+  assert(
+    splitBeach.some(
+      (item) =>
+        item.itemKey === "11:lunch" &&
+        item.beachClubPart === "lunch" &&
+        item.booking_status === "confirmed"
+    ),
+    "lunch item tracked separately"
+  );
+
   console.log("test-reservation-status: ok");
 }
 

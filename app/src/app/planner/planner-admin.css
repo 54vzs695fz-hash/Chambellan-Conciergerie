@@ -1357,3 +1357,46 @@ body.lux-pdf-export-open {
   line-height: 1.45;
   color: #7a736c;
 }
+
+.adm-beach-club-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.adm-beach-club-option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.adm-beach-club-option .adm-checkbox--inline {
+  margin-bottom: 0;
+  min-height: 44px;
+  padding-right: 0.25rem;
+}
+
+.adm-beach-club-option .adm-checkbox--inline input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.adm-beach-club-option .adm-input--time {
+  min-width: 7.5rem;
+  min-height: 44px;
+}
+
+@media (max-width: 639px) {
+  .adm-beach-club-option {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adm-beach-club-option .adm-input--time,
+  .adm-beach-club-option .adm-status-select {
+    width: 100%;
+  }
+}

@@ -115,6 +115,12 @@ model Activity {
   booking_notes      String  @default("")
   sort_order         Int     @default(0)
   establishment_city String  @default("")
+  beach_sunbeds      Boolean @default(false)
+  beach_sunbeds_time String  @default("")
+  beach_lunch        Boolean @default(false)
+  beach_lunch_time   String  @default("")
+  beach_sunbeds_status String @default("to_request")
+  beach_lunch_status   String @default("to_request")
   trip_day           TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
 
   @@index([trip_day_id], map: "idx_activities_day")

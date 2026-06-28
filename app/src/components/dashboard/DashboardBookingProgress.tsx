@@ -5,10 +5,12 @@ import { useCallback, useId, useState } from "react";
 import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import {
+  buildBeachClubBookingRequestMessage,
   buildBookingRequestMessage,
   copyTextToClipboard,
   showsBookingRequestMessage,
 } from "@/lib/dashboard/booking-request-message";
+import { buildActivityPatchFromReservationItem } from "@/lib/planner/beach-club";
 import {
   reconcileBookingProgressPlanner,
   sortBookingProgressPlanners,
@@ -98,22 +100,23 @@ function BookingProgressItemRow({
   item: ReservationStatusItem;
   planner: BookingProgressPlanner;
   tripId: number;
-  updatingId: number | null;
+  updatingId: string | null;
   copied: boolean;
   onCopyMessage: () => void;
   onOpenClientFile: () => void;
   onPatch: (
     tripId: number,
-    activityId: number,
+    item: ReservationStatusItem,
     patch: Partial<
       Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
     >
   ) => void;
-  onNotesChange: (tripId: number, activityId: number, value: string) => void;
+  onNotesChange: (tripId: number, item: ReservationStatusItem, value: string) => void;
 }) {
   const progressStatus = toBookingProgressStatus(item.booking_status);
   const statusClass = bookingProgressStatusClass(item.booking_status);
   const showRequestActions = showsBookingRequestMessage(item.booking_status);
+  const itemUpdating = updatingId === item.itemKey;
 
   return (
     <li className={`dash-booking-progress-item ${statusClass}`}>
@@ -124,6 +127,14 @@ function BookingProgressItemRow({
         </p>
         <p className="dash-booking-progress-item-meta">
           {formatItemDate(item.date)}
+          {item.beachClubPart ? (
+            <>
+              {" · "}
+              <span className="dash-bp-beach-part">
+                {item.beachClubPart === "sunbeds" ? "Sunbeds" : "Lunch"}
+              </span>
+            </>
+          ) : null}
           {" · "}
           {formatItemTime(item.time)}
           {" · "}
@@ -155,11 +166,11 @@ function BookingProgressItemRow({
           <select
             className={`dash-booking-progress-select ${statusClass}`}
             value={progressStatus}
-            disabled={updatingId === item.activityId}
+            disabled={itemUpdating}
             onChange={(event) => {
               const next = event.target
                 .value as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number];
-              onPatch(tripId, item.activityId, {
+              onPatch(tripId, item, {
                 booking_status: next as BookingStatus,
               });
             }}
@@ -177,9 +188,9 @@ function BookingProgressItemRow({
           <select
             className="dash-booking-progress-select"
             value={item.assigned_to}
-            disabled={updatingId === item.activityId}
+            disabled={itemUpdating}
             onChange={(event) => {
-              onPatch(tripId, item.activityId, {
+              onPatch(tripId, item, {
                 assigned_to: event.target.value,
               });
             }}
@@ -199,14 +210,14 @@ function BookingProgressItemRow({
             className="dash-booking-progress-notes"
             value={item.booking_notes}
             placeholder="Internal booking notes"
-            disabled={updatingId === item.activityId}
+            disabled={itemUpdating}
             onChange={(event) => {
-              onNotesChange(tripId, item.activityId, event.target.value);
+              onNotesChange(tripId, item, event.target.value);
             }}
             onBlur={(event) => {
               const value = event.target.value.trim();
               if (value === item.booking_notes) return;
-              onPatch(tripId, item.activityId, { booking_notes: value });
+              onPatch(tripId, item, { booking_notes: value });
             }}
           />
         </label>
@@ -264,7 +275,7 @@ function BookingProgressPlannerCard({
   onToggle,
   onToggleClientFile,
   onOpenClientFile,
-  copiedActivityId,
+  copiedItemKey,
   onCopyMessage,
   updatingId,
   onPatch,
@@ -276,17 +287,17 @@ function BookingProgressPlannerCard({
   onToggle: () => void;
   onToggleClientFile: () => void;
   onOpenClientFile: () => void;
-  copiedActivityId: number | null;
-  onCopyMessage: (activityId: number) => void;
-  updatingId: number | null;
+  copiedItemKey: string | null;
+  onCopyMessage: (itemKey: string) => void;
+  updatingId: string | null;
   onPatch: (
     tripId: number,
-    activityId: number,
+    item: ReservationStatusItem,
     patch: Partial<
       Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
     >
   ) => void;
-  onNotesChange: (tripId: number, activityId: number, value: string) => void;
+  onNotesChange: (tripId: number, item: ReservationStatusItem, value: string) => void;
 }) {
   const panelId = useId();
   const listTone = plannerListTone(planner);
@@ -367,13 +378,13 @@ function BookingProgressPlannerCard({
           <ul className="dash-booking-progress-items">
             {planner.items.map((item) => (
               <BookingProgressItemRow
-                key={item.activityId}
+                key={item.itemKey}
                 item={item}
                 planner={planner}
                 tripId={planner.tripId}
                 updatingId={updatingId}
-                copied={copiedActivityId === item.activityId}
-                onCopyMessage={() => onCopyMessage(item.activityId)}
+                copied={copiedItemKey === item.itemKey}
+                onCopyMessage={() => onCopyMessage(item.itemKey)}
                 onOpenClientFile={onOpenClientFile}
                 onPatch={onPatch}
                 onNotesChange={onNotesChange}
@@ -393,8 +404,8 @@ export function DashboardBookingProgress({
   const [planners, setPlanners] = useState(initialPlanners);
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const [clientFileTripId, setClientFileTripId] = useState<number | null>(null);
-  const [copiedActivityId, setCopiedActivityId] = useState<number | null>(null);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [copiedItemKey, setCopiedItemKey] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const applyPlannerUpdate = useCallback(
     (tripId: number, updater: (items: ReservationStatusItem[]) => ReservationStatusItem[]) => {
@@ -425,7 +436,7 @@ export function DashboardBookingProgress({
   );
 
   const handleNotesChange = useCallback(
-    (tripId: number, activityId: number, value: string) => {
+    (tripId: number, item: ReservationStatusItem, value: string) => {
       setPlanners((current) =>
         current.map((planner) =>
           planner.tripId !== tripId
@@ -434,7 +445,7 @@ export function DashboardBookingProgress({
                 ...planner,
                 items: sortBookingProgressItems(
                   planner.items.map((row) =>
-                    row.activityId === activityId
+                    row.itemKey === item.itemKey
                       ? { ...row, booking_notes: value }
                       : row
                   )
@@ -449,23 +460,24 @@ export function DashboardBookingProgress({
   const patchItem = useCallback(
     async (
       tripId: number,
-      activityId: number,
+      item: ReservationStatusItem,
       patch: Partial<
         Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
       >
     ) => {
-      setUpdatingId(activityId);
+      setUpdatingId(item.itemKey);
       try {
-        const res = await fetch(`/api/activities/${activityId}`, {
+        const body = buildActivityPatchFromReservationItem(item, patch);
+        const res = await fetch(`/api/activities/${item.activityId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(patch),
+          body: JSON.stringify(body),
         });
         if (!res.ok) return;
 
         applyPlannerUpdate(tripId, (items) =>
-          items.map((item) =>
-            item.activityId === activityId ? { ...item, ...patch } : item
+          items.map((row) =>
+            row.itemKey === item.itemKey ? { ...row, ...patch } : row
           )
         );
       } finally {
@@ -489,27 +501,44 @@ export function DashboardBookingProgress({
   }, []);
 
   const handleCopyMessage = useCallback(
-    (planner: BookingProgressPlanner, activityId: number) => {
-      const item = planner.items.find((row) => row.activityId === activityId);
+    (planner: BookingProgressPlanner, itemKey: string) => {
+      const item = planner.items.find((row) => row.itemKey === itemKey);
       if (!item) return;
 
-      const message = buildBookingRequestMessage({
-        establishmentName: item.venue,
-        date: item.date,
-        time: item.time,
-        clientName: planner.client_name,
-        guestCount: planner.guest_count,
-        clientPhone: planner.client_file.phone,
-        clientEmail: planner.client_file.email,
-      });
+      const message = item.beachClubPart
+        ? buildBeachClubBookingRequestMessage({
+            establishmentName: item.venue,
+            date: item.date,
+            sunbedsTime: planner.items.find(
+              (row) =>
+                row.activityId === item.activityId &&
+                row.beachClubPart === "sunbeds"
+            )?.time,
+            lunchTime: planner.items.find(
+              (row) =>
+                row.activityId === item.activityId &&
+                row.beachClubPart === "lunch"
+            )?.time,
+            clientName: planner.client_name,
+            guestCount: planner.guest_count,
+            clientPhone: planner.client_file.phone,
+            clientEmail: planner.client_file.email,
+          })
+        : buildBookingRequestMessage({
+            establishmentName: item.venue,
+            date: item.date,
+            time: item.time,
+            clientName: planner.client_name,
+            guestCount: planner.guest_count,
+            clientPhone: planner.client_file.phone,
+            clientEmail: planner.client_file.email,
+          });
 
       void copyTextToClipboard(message).then((ok) => {
         if (!ok) return;
-        setCopiedActivityId(activityId);
+        setCopiedItemKey(itemKey);
         window.setTimeout(() => {
-          setCopiedActivityId((current) =>
-            current === activityId ? null : current
-          );
+          setCopiedItemKey((current) => (current === itemKey ? null : current));
         }, 2000);
       });
     },
@@ -534,11 +563,11 @@ export function DashboardBookingProgress({
             onToggle={() => togglePlanner(planner.tripId)}
             onToggleClientFile={() => toggleClientFile(planner.tripId)}
             onOpenClientFile={() => openClientFile(planner.tripId)}
-            copiedActivityId={copiedActivityId}
-            onCopyMessage={(activityId) => handleCopyMessage(planner, activityId)}
+            copiedItemKey={copiedItemKey}
+            onCopyMessage={(itemKey) => handleCopyMessage(planner, itemKey)}
             updatingId={updatingId}
-            onPatch={(tripId, activityId, patch) => {
-              void patchItem(tripId, activityId, patch);
+            onPatch={(tripId, item, patch) => {
+              void patchItem(tripId, item, patch);
             }}
             onNotesChange={handleNotesChange}
           />

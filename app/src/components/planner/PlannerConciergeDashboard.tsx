@@ -45,6 +45,7 @@ import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
 import { PlannerCollapsibleSection } from "./PlannerCollapsibleSection";
 import { TripDestinationFields } from "./TripDestinationFields";
+import { buildActivityPatchFromReservationItem } from "@/lib/planner/beach-club";
 import { ReservationsStatusPanel } from "@/components/reservations/ReservationsStatusPanel";
 
 interface DashboardProps {
@@ -402,8 +403,12 @@ export function PlannerConciergeDashboard({
         <PlannerCollapsibleSection title="Reservations Status" defaultOpen>
           <ReservationsStatusPanel
             days={trip.days}
-            onPatchBookingStatus={(activityId, booking_status) =>
-              onPatchActivity(activityId, { booking_status }, { immediate: true })
+            onPatchBookingStatus={(item, booking_status) =>
+              onPatchActivity(
+                item.activityId,
+                buildActivityPatchFromReservationItem(item, { booking_status }),
+                { immediate: true }
+              )
             }
             variant="planner"
           />

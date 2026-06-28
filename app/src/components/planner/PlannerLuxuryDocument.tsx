@@ -17,7 +17,14 @@ import {
   type PlannerExportVariant,
 } from "@/lib/planner/planner-sheet-model";
 import { GuestNameDisplay } from "@/components/planner/GuestNameDisplay";
-import { applyPlannerHeaderFit } from "@/lib/planner/fit-planner-header";
+import {
+  applyPlannerHeaderFit,
+} from "@/lib/planner/fit-planner-header";
+import {
+  activityHasDisplayContent,
+  getBeachClubDisplayEntries,
+  isBeachClubActivity,
+} from "@/lib/planner/beach-club";
 import {
   dayDestinationLabelMap,
   resolveAutoPlannerDestinationHeader,
@@ -48,8 +55,31 @@ export interface PlannerLuxuryDocumentProps {
 }
 
 function activityHasVisibleContent(activity: Activity): boolean {
-  return Boolean(
-    activity.time || activity.title?.trim() || activity.details?.trim()
+  return activityHasDisplayContent(activity);
+}
+
+function BeachClubSchedule({ activity }: { activity: Activity }) {
+  const entries = getBeachClubDisplayEntries(activity);
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="lux-beach-club-schedule">
+      {entries.map((entry) => (
+        <div key={entry.part} className="lux-beach-club-entry">
+          <span className="lux-beach-club-part">
+            <span className="lux-beach-club-part-icon" aria-hidden>
+              {entry.icon}
+            </span>
+            {entry.label}
+          </span>
+          {entry.time ? (
+            <time className="lux-beach-club-time">
+              {formatTimeDisplay(entry.time)}
+            </time>
+          ) : null}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -101,17 +131,17 @@ function ClientTravelCard({
   activity: Activity;
   sectionLabel: string;
 }) {
-  const hasContent =
-    activity.time || activity.title?.trim() || activity.details?.trim();
-  if (!hasContent) return null;
+  if (!activityHasVisibleContent(activity)) return null;
 
   const detail = activity.details?.trim() || "";
   const showDetail = detail && !isGenericActivityNote(detail);
   const category = getLuxuryCategoryDisplay(sectionLabel);
+  const beachClub = isBeachClubActivity(activity);
+  const beachEntries = beachClub ? getBeachClubDisplayEntries(activity) : [];
 
   return (
     <article className="lux-travel-card">
-      {activity.time ? (
+      {!beachClub && activity.time ? (
         <time className="lux-travel-time">
           {formatTimeDisplay(activity.time)}
         </time>
@@ -119,7 +149,18 @@ function ClientTravelCard({
       {activity.title?.trim() ? (
         <LuxuryVenueName name={activity.title.trim()} />
       ) : null}
-      {category.label ? (
+      {beachClub ? <BeachClubSchedule activity={activity} /> : null}
+      {!beachClub && category.label ? (
+        <span className="lux-travel-category">
+          {category.icon ? (
+            <span className="lux-travel-category-icon" aria-hidden>
+              {category.icon}
+            </span>
+          ) : null}
+          {category.label}
+        </span>
+      ) : null}
+      {beachClub && beachEntries.length === 0 && category.label ? (
         <span className="lux-travel-category">
           {category.icon ? (
             <span className="lux-travel-category-icon" aria-hidden>
@@ -259,16 +300,15 @@ function ConciergeActivityCard({
   activity: Activity;
   sectionLabel?: string;
 }) {
-  const hasContent =
-    activity.time || activity.title?.trim() || activity.details?.trim();
-  if (!hasContent) return null;
+  if (!activityHasVisibleContent(activity)) return null;
 
   const detail = activity.details?.trim() || "";
   const showDetail = detail && !/^confirmed$/i.test(detail);
+  const beachClub = isBeachClubActivity(activity);
 
   return (
     <div className="lux-activity-card lux-activity-card--itinerary">
-      {activity.time ? (
+      {!beachClub && activity.time ? (
         <span className="lux-activity-time">
           {formatTimeDisplay(activity.time)}
         </span>
@@ -276,7 +316,8 @@ function ConciergeActivityCard({
       {activity.title?.trim() ? (
         <p className="lux-activity-venue">{activity.title}</p>
       ) : null}
-      {sectionLabel?.trim() ? (
+      {beachClub ? <BeachClubSchedule activity={activity} /> : null}
+      {!beachClub && sectionLabel?.trim() ? (
         <p className="lux-activity-category">{sectionLabel}</p>
       ) : null}
       {showDetail ? (
