@@ -85,6 +85,7 @@ model Trip {
   client                   Client?   @relation(fields: [client_id], references: [id], onDelete: SetNull)
   days                     TripDay[]
   checklist_items          TripChecklistItem[]
+  stay_closing             StayClosing?
 
   @@index([client_id], map: "idx_trips_client")
   @@map("trips")
@@ -178,11 +179,48 @@ model Establishment {
   commission_threshold_amount      String  @default("")
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
+  stay_closing_entries StayClosingEntry[]
 
   @@index([category], map: "idx_establishments_category")
   @@index([city], map: "idx_establishments_city")
   @@index([name], map: "idx_establishments_name")
   @@map("establishments")
+}
+
+model StayClosing {
+  id         Int                @id @default(autoincrement())
+  trip_id    Int                @unique
+  closed_at  DateTime           @default(now())
+  created_at DateTime           @default(now())
+  updated_at DateTime           @updatedAt
+  trip       Trip               @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+  entries    StayClosingEntry[]
+
+  @@index([trip_id], map: "idx_stay_closings_trip")
+  @@map("stay_closings")
+}
+
+model StayClosingEntry {
+  id                      Int            @id @default(autoincrement())
+  stay_closing_id         Int
+  establishment_id        Int?
+  establishment_name      String
+  activity_ids            Json           @default("[]")
+  approximate_total_bill  String         @default("")
+  food_amount             String         @default("")
+  premium_drinks_amount   String         @default("")
+  internal_notes          String         @default("")
+  calculated_commission   String         @default("")
+  commission_applied      Boolean        @default(false)
+  commission_summary      String         @default("")
+  created_at              DateTime       @default(now())
+  updated_at              DateTime       @updatedAt
+  stay_closing            StayClosing    @relation(fields: [stay_closing_id], references: [id], onDelete: Cascade)
+  establishment           Establishment? @relation(fields: [establishment_id], references: [id], onDelete: SetNull)
+
+  @@unique([stay_closing_id, establishment_name], map: "stay_closing_entries_closing_name_key")
+  @@index([stay_closing_id], map: "idx_stay_closing_entries_closing")
+  @@map("stay_closing_entries")
 }
 
 model ConciergeEvent {

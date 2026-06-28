@@ -253,6 +253,43 @@ export interface TripWithDays extends Trip {
   checklist: ChecklistItem[];
 }
 
+export interface StayClosingEntry {
+  id: number;
+  stay_closing_id: number;
+  establishment_id: number | null;
+  establishment_name: string;
+  activity_ids: number[];
+  approximate_total_bill: string;
+  food_amount: string;
+  premium_drinks_amount: string;
+  internal_notes: string;
+  calculated_commission: string;
+  commission_applied: boolean;
+  commission_summary: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StayClosing {
+  id: number;
+  trip_id: number;
+  closed_at: string;
+  created_at: string;
+  updated_at: string;
+  entries: StayClosingEntry[];
+}
+
+export interface StayClosingEntryInput {
+  key: string;
+  establishment_id: number | null;
+  establishment_name: string;
+  activity_ids: number[];
+  approximate_total_bill: string;
+  food_amount: string;
+  premium_drinks_amount: string;
+  internal_notes: string;
+}
+
 export interface Establishment {
   id: number;
   name: string;

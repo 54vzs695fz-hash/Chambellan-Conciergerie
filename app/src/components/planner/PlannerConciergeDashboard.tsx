@@ -47,6 +47,7 @@ import { PlannerCollapsibleSection } from "./PlannerCollapsibleSection";
 import { TripDestinationFields } from "./TripDestinationFields";
 import { buildActivityPatchFromReservationItem } from "@/lib/planner/beach-club";
 import { ReservationsStatusPanel } from "@/components/reservations/ReservationsStatusPanel";
+import { CloseStayButton } from "@/components/stay-closing/CloseStayButton";
 
 interface DashboardProps {
   trip: TripWithDays;
@@ -209,6 +210,10 @@ export function PlannerConciergeDashboard({
                 ))}
               </select>
             </Field>
+            <div className="adm-field">
+              <span className="adm-field-label">Stay closing</span>
+              <CloseStayButton tripId={trip.id} />
+            </div>
           </div>
 
           <div className="adm-subsection">
