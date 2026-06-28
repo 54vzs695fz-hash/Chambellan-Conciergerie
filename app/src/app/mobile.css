@@ -2165,6 +2165,7 @@
     align-items: flex-end;
     gap: 0.55rem;
     pointer-events: none;
+    isolation: isolate;
   }
 
   .mobile-fab-root--planner {
@@ -2174,32 +2175,38 @@
   .mobile-fab-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 48;
+    z-index: 0;
     border: none;
-    background: rgba(17, 17, 17, 0.28);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.25);
     cursor: pointer;
     pointer-events: auto;
-    animation: mobile-fab-backdrop-in 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+    opacity: 0;
+    animation: mobile-fab-backdrop-in 0.18s ease-out forwards;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-fab-stack {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     pointer-events: none;
     opacity: 0;
-    transform: translateY(10px) scale(0.96);
+    transform: scale(0.88) translate3d(0, 6px, 0);
+    transform-origin: bottom right;
     transition:
-      opacity 0.24s cubic-bezier(0.32, 0.72, 0, 1),
-      transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+      opacity 0.18s cubic-bezier(0.2, 0.85, 0.25, 1),
+      transform 0.18s cubic-bezier(0.2, 0.85, 0.25, 1);
+    will-change: opacity, transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   .mobile-fab-stack--open {
     pointer-events: auto;
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1) translate3d(0, 0, 0);
   }
 
   .mobile-fab-menu {
@@ -2213,13 +2220,8 @@
   }
 
   .mobile-fab-menu-item {
-    opacity: 0;
-    transform: translateY(8px) scale(0.94);
-  }
-
-  .mobile-fab-stack--open .mobile-fab-menu-item {
-    animation: mobile-fab-item-in 0.34s cubic-bezier(0.32, 0.72, 0, 1) both;
-    animation-delay: calc(var(--fab-index, 0) * 40ms);
+    opacity: 1;
+    transform: none;
   }
 
   .mobile-fab-action {
@@ -2250,11 +2252,12 @@
     font-weight: 500;
     letter-spacing: 0.01em;
     color: var(--ink, #2c2825);
-    background: rgba(255, 255, 255, 0.96);
+    background: #fff;
     border: 1px solid rgba(184, 149, 106, 0.28);
     border-radius: 999px;
     box-shadow: 0 4px 18px rgba(28, 28, 28, 0.1);
     white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
   }
 
   .mobile-fab-action-dot {
@@ -2262,12 +2265,14 @@
     height: 44px;
     flex-shrink: 0;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.96);
+    background: #fff;
     border: 1px solid rgba(184, 149, 106, 0.28);
     box-shadow: 0 4px 14px rgba(28, 28, 28, 0.08);
   }
 
   .mobile-fab-trigger {
+    position: relative;
+    z-index: 2;
     width: var(--mobile-fab-size);
     height: var(--mobile-fab-size);
     min-width: 44px;
@@ -2285,24 +2290,23 @@
     cursor: pointer;
     pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
-    transition:
-      transform 0.28s cubic-bezier(0.32, 0.72, 0, 1),
-      box-shadow 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.18s cubic-bezier(0.2, 0.85, 0.25, 1);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   .mobile-fab-trigger:active {
-    transform: scale(0.96);
+    transform: scale(0.94);
   }
 
   .mobile-fab-trigger.is-open {
-    transform: rotate(0deg);
     box-shadow:
       0 6px 18px rgba(154, 123, 79, 0.32),
       0 2px 4px rgba(28, 28, 28, 0.1);
   }
 
   .mobile-fab-plus {
-    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.18s cubic-bezier(0.2, 0.85, 0.25, 1);
   }
 
   .mobile-fab-plus--open {
@@ -2318,14 +2322,24 @@
     }
   }
 
-  @keyframes mobile-fab-item-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px) scale(0.94);
-    }
-    to {
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-fab-backdrop {
+      animation: none;
       opacity: 1;
-      transform: translateY(0) scale(1);
+    }
+
+    .mobile-fab-stack {
+      transition: none;
+      transform: none;
+    }
+
+    .mobile-fab-stack--open {
+      opacity: 1;
+      transform: none;
+    }
+
+    .mobile-fab-plus {
+      transition: none;
     }
   }
 

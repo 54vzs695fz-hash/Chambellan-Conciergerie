@@ -144,11 +144,10 @@ export function MobileFab() {
         aria-hidden={!open}
       >
         <ul className="mobile-fab-menu" role="menu">
-          {FAB_ACTIONS.map((action, index) => (
+          {FAB_ACTIONS.map((action) => (
             <li
               key={action.id}
               className="mobile-fab-menu-item"
-              style={{ "--fab-index": index } as React.CSSProperties}
               role="none"
             >
               {action.href ? (
