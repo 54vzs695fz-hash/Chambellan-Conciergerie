@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DashboardMobileBookingProgress } from "@/components/dashboard/DashboardMobileBookingProgress";
+import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
 import { DashboardMobileToday } from "@/components/dashboard/DashboardMobileToday";
 import { DashboardRecentPlanners } from "@/components/dashboard/DashboardRecentPlanners";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
@@ -31,7 +31,17 @@ export function DashboardMobileHome({
     <div className="dash-mobile-home md:hidden">
       <DashboardMobileToday groups={todayGroups} />
 
-      <DashboardMobileBookingProgress planners={bookingProgress} />
+      <section className="dash-mobile-section" data-section="planner">
+        <header className="dash-mobile-section-head">
+          <h2 className="dash-mobile-section-title">Booking progress</h2>
+          {bookingProgress.length > 0 ? (
+            <span className="dash-mobile-section-count">
+              {bookingProgress.length}
+            </span>
+          ) : null}
+        </header>
+        <DashboardBookingProgress embedded initialPlanners={bookingProgress} />
+      </section>
 
       <section className="dash-mobile-section" data-section="planner">
         <header className="dash-mobile-section-head">

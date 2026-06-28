@@ -6,11 +6,17 @@ import {
   type PlannerBookingSummary,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
+import {
+  buildEstablishmentContactLookup,
+  enrichReservationItemsWithContacts,
+  type EstablishmentContactLookup,
+} from "@/lib/dashboard/booking-progress-contacts";
 import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
 import { paymentRemainingBadgeLabel } from "@/lib/planner/payment-summary";
 import { formatDateRange, isUntitledDestination } from "@/lib/planner-utils";
 import type { TripPaymentStatus, TripWithDays } from "@/lib/types";
+import type { Establishment } from "@/lib/types";
 
 export interface BookingProgressClientFile {
   client_id: number | null;
@@ -107,10 +113,14 @@ function buildBookingProgressClientFile(
 }
 
 export function buildBookingProgressPlanner(
-  trip: TripWithDays
+  trip: TripWithDays,
+  establishmentLookup?: Map<string, EstablishmentContactLookup>
 ): BookingProgressPlanner {
   const paymentStatus = normalizeTripPaymentStatus(trip.payment_status);
-  const items = buildReservationStatusItems(trip.days);
+  const rawItems = buildReservationStatusItems(trip.days);
+  const items = establishmentLookup
+    ? enrichReservationItemsWithContacts(rawItems, establishmentLookup)
+    : rawItems;
   const destinationDisplay = resolveDashboardDestinationDisplay(trip, "Untitled");
 
   return {
@@ -153,9 +163,15 @@ export function sortBookingProgressPlanners(
 }
 
 export function listBookingProgressPlanners(
-  trips: TripWithDays[]
+  trips: TripWithDays[],
+  establishments: Establishment[] = []
 ): BookingProgressPlanner[] {
+  const lookup = buildEstablishmentContactLookup(establishments);
   return sortBookingProgressPlanners(
-    trips.filter(qualifiesForBookingProgress).map(buildBookingProgressPlanner)
+    trips
+      .filter(qualifiesForBookingProgress)
+      .map((trip) => buildBookingProgressPlanner(trip, lookup))
   );
 }
+
+export { buildEstablishmentContactLookup };

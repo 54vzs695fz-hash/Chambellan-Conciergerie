@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useId, useState } from "react";
-import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import {
   buildBeachClubBookingRequestMessage,
   buildBookingRequestMessage,
+  buildWhatsAppRequestUrl,
   copyTextToClipboard,
   showsBookingRequestMessage,
 } from "@/lib/dashboard/booking-request-message";
@@ -16,18 +16,11 @@ import {
   sortBookingProgressPlanners,
 } from "@/lib/dashboard/booking-progress";
 import {
-  TRANSPORTATION_BOOKING_STATUS_OPTIONS,
-  transportationBookingStatusLabel,
-} from "@/lib/planner/transportation";
-import {
-  BOOKING_ASSIGNEE_LABELS,
-  BOOKING_ASSIGNEE_OPTIONS,
   BOOKING_PROGRESS_STATUS_LABELS,
   BOOKING_PROGRESS_STATUS_OPTIONS,
-  PLANNER_BOOKING_PRIORITY_LABELS,
+  bookingProgressSelectValue,
   bookingProgressStatusClass,
   sortBookingProgressItems,
-  toBookingProgressStatus,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
 import type { BookingStatus } from "@/lib/types";
@@ -38,20 +31,22 @@ interface Props {
   embedded?: boolean;
 }
 
-function formatItemDate(date: string): string {
-  if (!date) return "";
-  return `${formatGridDayName(date)} ${formatGridDayDate(date)}`;
-}
-
-function formatItemTime(time: string): string {
-  if (!time) return "—";
-  return time.slice(0, 5);
+function formatItemMeta(item: ReservationStatusItem): string {
+  const parts: string[] = [];
+  if (item.date) {
+    parts.push(`${formatGridDayName(item.date)} ${formatGridDayDate(item.date)}`);
+  }
+  if (item.time) parts.push(item.time.slice(0, 5));
+  if (item.beachClubPart) {
+    parts.push(item.beachClubPart === "sunbeds" ? "Sunbeds" : "Lunch");
+  }
+  return parts.join(" · ");
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
   return (
     <svg
-      className={`dash-bp-planner-chevron${open ? " is-open" : ""}`}
+      className={`bp-card-chevron${open ? " is-open" : ""}`}
       width="14"
       height="14"
       viewBox="0 0 14 14"
@@ -69,350 +64,219 @@ function ChevronIcon({ open }: { open: boolean }) {
   );
 }
 
-function plannerListTone(
-  planner: BookingProgressPlanner
-): "urgent" | "pending" | "confirmed" {
-  if (planner.summary.priority === "high") return "urgent";
-  if (planner.summary.remaining > 0) return "pending";
-  return "confirmed";
+function buildRequestMessage(
+  planner: BookingProgressPlanner,
+  item: ReservationStatusItem
+): string {
+  if (item.beachClubPart) {
+    return buildBeachClubBookingRequestMessage({
+      establishmentName: item.venue,
+      date: item.date,
+      sunbedsTime: planner.items.find(
+        (row) =>
+          row.activityId === item.activityId && row.beachClubPart === "sunbeds"
+      )?.time,
+      lunchTime: planner.items.find(
+        (row) =>
+          row.activityId === item.activityId && row.beachClubPart === "lunch"
+      )?.time,
+      clientName: planner.client_name,
+      guestCount: planner.guest_count,
+      clientPhone: planner.client_file.phone,
+      clientEmail: planner.client_file.email,
+    });
+  }
+
+  return buildBookingRequestMessage({
+    establishmentName: item.venue,
+    date: item.date,
+    time: item.time,
+    clientName: planner.client_name,
+    guestCount: planner.guest_count,
+    clientPhone: planner.client_file.phone,
+    clientEmail: planner.client_file.email,
+  });
 }
 
-function PlannerPriorityBadge({
-  priority,
+function ProgressBar({
+  percent,
+  tone,
 }: {
-  priority: BookingProgressPlanner["summary"]["priority"];
+  percent: number;
+  tone: BookingProgressPlanner["summary"]["progressTone"];
 }) {
   return (
-    <span className={`dash-booking-progress-priority bp-priority--${priority}`}>
-      <span className="dash-booking-progress-priority-dot" aria-hidden />
-      {PLANNER_BOOKING_PRIORITY_LABELS[priority]}
-    </span>
-  );
-}
-
-function BookingProgressItemRow({
-  item,
-  planner,
-  tripId,
-  updatingId,
-  copied,
-  onCopyMessage,
-  onOpenClientFile,
-  onPatch,
-  onNotesChange,
-}: {
-  item: ReservationStatusItem;
-  planner: BookingProgressPlanner;
-  tripId: number;
-  updatingId: string | null;
-  copied: boolean;
-  onCopyMessage: () => void;
-  onOpenClientFile: () => void;
-  onPatch: (
-    tripId: number,
-    item: ReservationStatusItem,
-    patch: Partial<
-      Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
+    <div
+      className="bp-card-progress-track"
+      role="progressbar"
+      aria-valuenow={percent}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`${percent}% confirmed`}
     >
-  ) => void;
-  onNotesChange: (tripId: number, item: ReservationStatusItem, value: string) => void;
-}) {
-  const isTransportation = item.category === "transportation";
-  const progressStatus = isTransportation
-    ? TRANSPORTATION_BOOKING_STATUS_OPTIONS.includes(
-        item.booking_status as (typeof TRANSPORTATION_BOOKING_STATUS_OPTIONS)[number]
-      )
-      ? item.booking_status
-      : "to_request"
-    : toBookingProgressStatus(item.booking_status);
-  const statusClass = bookingProgressStatusClass(item.booking_status);
-  const showRequestActions = showsBookingRequestMessage(item.booking_status);
-  const itemUpdating = updatingId === item.itemKey;
-  const statusOptions = isTransportation
-    ? TRANSPORTATION_BOOKING_STATUS_OPTIONS
-    : BOOKING_PROGRESS_STATUS_OPTIONS;
-  const statusLabel = (status: BookingStatus) =>
-    isTransportation
-      ? transportationBookingStatusLabel(status)
-      : BOOKING_PROGRESS_STATUS_LABELS[
-          toBookingProgressStatus(status) as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number]
-        ];
-
-  return (
-    <li className={`dash-booking-progress-item ${statusClass}`}>
-      <div className="dash-booking-progress-item-main">
-        <p className="dash-booking-progress-venue">
-          <span className="dash-booking-progress-status-dot" aria-hidden />
-          {item.venue}
-        </p>
-        <p className="dash-booking-progress-item-meta">
-          {formatItemDate(item.date)}
-          {item.beachClubPart ? (
-            <>
-              {" · "}
-              <span className="dash-bp-beach-part">
-                {item.beachClubPart === "sunbeds" ? "Sunbeds" : "Lunch"}
-              </span>
-            </>
-          ) : item.category === "transportation" ? (
-            <>
-              {" · "}
-              <span className="dash-bp-transport-category">Transportation</span>
-            </>
-          ) : null}
-          {" · "}
-          {formatItemTime(item.time)}
-          {" · "}
-          {item.categoryLabel}
-        </p>
-        {showRequestActions ? (
-          <div className="dash-bp-request-actions">
-            <button
-              type="button"
-              className={`dash-bp-copy-message-btn${copied ? " is-copied" : ""}`}
-              onClick={onCopyMessage}
-            >
-              {copied ? "Copied" : "Copy message"}
-            </button>
-            <button
-              type="button"
-              className="dash-bp-client-file-btn dash-bp-client-file-btn--inline"
-              onClick={onOpenClientFile}
-            >
-              Open client file
-            </button>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="dash-booking-progress-item-controls">
-        <label className="dash-booking-progress-field">
-          <span className="dash-booking-progress-label">Status</span>
-          <select
-            className={`dash-booking-progress-select ${statusClass}`}
-            value={progressStatus}
-            disabled={itemUpdating}
-            onChange={(event) => {
-              const next = event.target
-                .value as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number];
-              onPatch(tripId, item, {
-                booking_status: next as BookingStatus,
-              });
-            }}
-          >
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {statusLabel(status)}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="dash-booking-progress-field">
-          <span className="dash-booking-progress-label">Assigned</span>
-          <select
-            className="dash-booking-progress-select"
-            value={item.assigned_to}
-            disabled={itemUpdating}
-            onChange={(event) => {
-              onPatch(tripId, item, {
-                assigned_to: event.target.value,
-              });
-            }}
-          >
-            {BOOKING_ASSIGNEE_OPTIONS.map((assignee) => (
-              <option key={assignee || "none"} value={assignee}>
-                {BOOKING_ASSIGNEE_LABELS[assignee]}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="dash-booking-progress-field dash-booking-progress-field--notes">
-          <span className="dash-booking-progress-label">Notes</span>
-          <input
-            type="text"
-            className="dash-booking-progress-notes"
-            value={item.booking_notes}
-            placeholder="Internal booking notes"
-            disabled={itemUpdating}
-            onChange={(event) => {
-              onNotesChange(tripId, item, event.target.value);
-            }}
-            onBlur={(event) => {
-              const value = event.target.value.trim();
-              if (value === item.booking_notes) return;
-              onPatch(tripId, item, { booking_notes: value });
-            }}
-          />
-        </label>
-      </div>
-    </li>
-  );
-}
-
-function ClientFilePanel({
-  planner,
-}: {
-  planner: BookingProgressPlanner;
-}) {
-  const { client_file: file } = planner;
-  const emailMissing = file.email === "Missing email";
-  const phoneMissing = file.phone === "Missing phone";
-
-  return (
-    <div className="dash-bp-client-file-panel">
-      <dl className="dash-bp-client-file-list">
-        <div className="dash-bp-client-file-row">
-          <dt>Email</dt>
-          <dd className={emailMissing ? "is-missing" : undefined}>{file.email}</dd>
-        </div>
-        <div className="dash-bp-client-file-row">
-          <dt>Phone</dt>
-          <dd className={phoneMissing ? "is-missing" : undefined}>{file.phone}</dd>
-        </div>
-        {file.nationality ? (
-          <div className="dash-bp-client-file-row">
-            <dt>Nationality</dt>
-            <dd>{file.nationality}</dd>
-          </div>
-        ) : null}
-        {file.notes ? (
-          <div className="dash-bp-client-file-row dash-bp-client-file-row--notes">
-            <dt>Notes</dt>
-            <dd>{file.notes}</dd>
-          </div>
-        ) : null}
-      </dl>
-      {file.profile_href ? (
-        <Link href={file.profile_href} className="dash-bp-client-file-link btn-ghost">
-          Open client profile
-        </Link>
-      ) : null}
+      <div
+        className={`bp-card-progress-bar bp-card-progress-bar--${tone}`}
+        style={{ width: `${percent}%` }}
+      />
     </div>
   );
 }
 
-function BookingProgressPlannerCard({
+function BookingRow({
+  item,
+  planner,
+  copied,
+  onCopyRequest,
+  onOpenWhatsApp,
+  onStatusChange,
+}: {
+  item: ReservationStatusItem;
+  planner: BookingProgressPlanner;
+  copied: boolean;
+  onCopyRequest: () => void;
+  onOpenWhatsApp: () => void;
+  onStatusChange: (status: BookingStatus) => void;
+}) {
+  const statusValue = bookingProgressSelectValue(item.booking_status);
+  const statusClass = bookingProgressStatusClass(item.booking_status);
+  const showRequestActions = showsBookingRequestMessage(item.booking_status);
+  const meta = formatItemMeta(item);
+  const whatsappAvailable = Boolean(item.venue_whatsapp.trim());
+
+  return (
+    <li className={`bp-booking ${statusClass}`}>
+      <div className="bp-booking-head">
+        <p className="bp-booking-venue">{item.venue}</p>
+        {meta ? <p className="bp-booking-meta">{meta}</p> : null}
+      </div>
+
+      {showRequestActions ? (
+        <div className="bp-booking-actions">
+          <button
+            type="button"
+            className={`bp-booking-action bp-booking-action--copy${
+              copied ? " is-copied" : ""
+            }`}
+            onClick={onCopyRequest}
+          >
+            {copied ? "Copied" : "Copy Request"}
+          </button>
+          <button
+            type="button"
+            className="bp-booking-action bp-booking-action--whatsapp"
+            disabled={!whatsappAvailable}
+            onClick={onOpenWhatsApp}
+          >
+            Open WhatsApp
+          </button>
+        </div>
+      ) : null}
+
+      <label className="bp-booking-status-field">
+        <span className="bp-booking-status-label">Status</span>
+        <select
+          className={`bp-booking-status-select ${statusClass}`}
+          value={statusValue}
+          onChange={(event) => {
+            onStatusChange(event.target.value as BookingStatus);
+          }}
+        >
+          {BOOKING_PROGRESS_STATUS_OPTIONS.map((status) => (
+            <option key={status} value={status}>
+              {BOOKING_PROGRESS_STATUS_LABELS[status]}
+            </option>
+          ))}
+        </select>
+      </label>
+    </li>
+  );
+}
+
+function PlannerCard({
   planner,
   isOpen,
-  isClientFileOpen,
   onToggle,
-  onToggleClientFile,
-  onOpenClientFile,
   copiedItemKey,
-  onCopyMessage,
-  updatingId,
-  onPatch,
-  onNotesChange,
+  onCopyRequest,
+  onOpenWhatsApp,
+  onStatusChange,
 }: {
   planner: BookingProgressPlanner;
   isOpen: boolean;
-  isClientFileOpen: boolean;
   onToggle: () => void;
-  onToggleClientFile: () => void;
-  onOpenClientFile: () => void;
   copiedItemKey: string | null;
-  onCopyMessage: (itemKey: string) => void;
-  updatingId: string | null;
-  onPatch: (
+  onCopyRequest: (itemKey: string) => void;
+  onOpenWhatsApp: (item: ReservationStatusItem) => void;
+  onStatusChange: (
     tripId: number,
     item: ReservationStatusItem,
-    patch: Partial<
-      Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
-    >
+    status: BookingStatus
   ) => void;
-  onNotesChange: (tripId: number, item: ReservationStatusItem, value: string) => void;
 }) {
   const panelId = useId();
-  const listTone = plannerListTone(planner);
   const remainingLabel = `${planner.summary.remaining} booking${
     planner.summary.remaining === 1 ? "" : "s"
   } remaining`;
 
   return (
-    <li
-      className={`dash-bp-planner-section bp-list-tone--${listTone}${
-        isOpen ? " is-open" : ""
-      }${isClientFileOpen ? " is-client-file-open" : ""}`}
-    >
-      <div className="dash-bp-planner-card-top">
-        <button
-          type="button"
-          className="dash-bp-planner-trigger"
-          aria-expanded={isOpen}
-          aria-controls={panelId}
-          onClick={onToggle}
-        >
-          <span className="dash-bp-planner-trigger-main">
-            <ChevronIcon open={isOpen} />
-            <span className="dash-bp-planner-trigger-copy">
-              <span className="dash-booking-progress-client">
-                {planner.client_name}
-                <span className="dash-booking-progress-sep">·</span>
-                {planner.destination}
+    <li className={`bp-card${isOpen ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="bp-card-trigger"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={onToggle}
+      >
+        <span className="bp-card-trigger-main">
+          <ChevronIcon open={isOpen} />
+          <span className="bp-card-copy">
+            <span className="bp-card-client">{planner.client_name}</span>
+            <span className="bp-card-destination">{planner.destination}</span>
+            {planner.destination_subtitle ? (
+              <span className="bp-card-destination-sub">
+                {planner.destination_subtitle}
               </span>
-              {planner.destination_subtitle ? (
-                <span className="dash-booking-progress-destination-sub">
-                  {planner.destination_subtitle}
-                </span>
-              ) : null}
-              <span className="dash-booking-progress-dates">{planner.dates}</span>
-              {planner.guest_count ? (
-                <span className="dash-bp-planner-guests">{planner.guest_count}</span>
-              ) : null}
-              <span className="dash-bp-planner-remaining">{remainingLabel}</span>
-            </span>
+            ) : null}
+            <span className="bp-card-dates">{planner.dates}</span>
+            {planner.guest_count ? (
+              <span className="bp-card-guests">{planner.guest_count}</span>
+            ) : null}
           </span>
-          <PlannerPriorityBadge priority={planner.summary.priority} />
-        </button>
+        </span>
+      </button>
 
-        <button
-          type="button"
-          className={`dash-bp-client-file-btn${isClientFileOpen ? " is-active" : ""}`}
-          aria-expanded={isClientFileOpen}
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleClientFile();
-          }}
-        >
-          Client file
-        </button>
+      <div className="bp-card-summary">
+        <ProgressBar
+          percent={planner.summary.percent}
+          tone={planner.summary.progressTone}
+        />
+        <p className="bp-card-remaining">{remainingLabel}</p>
       </div>
-
-      {isClientFileOpen ? <ClientFilePanel planner={planner} /> : null}
 
       <div
         id={panelId}
-        className={`dash-bp-planner-panel${isOpen ? " is-open" : ""}`}
+        className={`bp-card-panel${isOpen ? " is-open" : ""}`}
         aria-hidden={!isOpen}
         {...(!isOpen ? { inert: true } : {})}
       >
-        <div className="dash-bp-planner-panel-inner">
-          <div className="dash-bp-planner-panel-head">
-            <PaymentStatusBadge
-              status={planner.payment_status}
-              arrivalDate={planner.arrival_date}
-              detail={planner.payment_detail}
-            />
-            <Link href={planner.href} className="btn-ghost dash-booking-progress-open">
+        <div className="bp-card-panel-inner">
+          <div className="bp-card-panel-head">
+            <Link href={planner.href} className="bp-card-planner-link btn-ghost">
               Open planner
             </Link>
           </div>
-
-          <ul className="dash-booking-progress-items">
+          <ul className="bp-booking-list">
             {planner.items.map((item) => (
-              <BookingProgressItemRow
+              <BookingRow
                 key={item.itemKey}
                 item={item}
                 planner={planner}
-                tripId={planner.tripId}
-                updatingId={updatingId}
                 copied={copiedItemKey === item.itemKey}
-                onCopyMessage={() => onCopyMessage(item.itemKey)}
-                onOpenClientFile={onOpenClientFile}
-                onPatch={onPatch}
-                onNotesChange={onNotesChange}
+                onCopyRequest={() => onCopyRequest(item.itemKey)}
+                onOpenWhatsApp={() => onOpenWhatsApp(item)}
+                onStatusChange={(status) => {
+                  onStatusChange(planner.tripId, item, status);
+                }}
               />
             ))}
           </ul>
@@ -428,9 +292,7 @@ export function DashboardBookingProgress({
 }: Props) {
   const [planners, setPlanners] = useState(initialPlanners);
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
-  const [clientFileTripId, setClientFileTripId] = useState<number | null>(null);
   const [copiedItemKey, setCopiedItemKey] = useState<string | null>(null);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const applyPlannerUpdate = useCallback(
     (tripId: number, updater: (items: ReservationStatusItem[]) => ReservationStatusItem[]) => {
@@ -450,36 +312,11 @@ export function DashboardBookingProgress({
         if (expandedTripId !== null && !next.some((p) => p.tripId === expandedTripId)) {
           setExpandedTripId(null);
         }
-        if (clientFileTripId !== null && !next.some((p) => p.tripId === clientFileTripId)) {
-          setClientFileTripId(null);
-        }
 
         return next;
       });
     },
-    [expandedTripId, clientFileTripId]
-  );
-
-  const handleNotesChange = useCallback(
-    (tripId: number, item: ReservationStatusItem, value: string) => {
-      setPlanners((current) =>
-        current.map((planner) =>
-          planner.tripId !== tripId
-            ? planner
-            : {
-                ...planner,
-                items: sortBookingProgressItems(
-                  planner.items.map((row) =>
-                    row.itemKey === item.itemKey
-                      ? { ...row, booking_notes: value }
-                      : row
-                  )
-                ),
-              }
-        )
-      );
-    },
-    []
+    [expandedTripId]
   );
 
   const patchItem = useCallback(
@@ -490,7 +327,14 @@ export function DashboardBookingProgress({
         Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
       >
     ) => {
-      setUpdatingId(item.itemKey);
+      const previousStatus = item.booking_status;
+
+      applyPlannerUpdate(tripId, (items) =>
+        items.map((row) =>
+          row.itemKey === item.itemKey ? { ...row, ...patch } : row
+        )
+      );
+
       try {
         const body = buildActivityPatchFromReservationItem(item, patch);
         const res = await fetch(`/api/activities/${item.activityId}`, {
@@ -498,15 +342,23 @@ export function DashboardBookingProgress({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        if (!res.ok) return;
-
+        if (!res.ok) {
+          applyPlannerUpdate(tripId, (items) =>
+            items.map((row) =>
+              row.itemKey === item.itemKey
+                ? { ...row, booking_status: previousStatus }
+                : row
+            )
+          );
+        }
+      } catch {
         applyPlannerUpdate(tripId, (items) =>
           items.map((row) =>
-            row.itemKey === item.itemKey ? { ...row, ...patch } : row
+            row.itemKey === item.itemKey
+              ? { ...row, booking_status: previousStatus }
+              : row
           )
         );
-      } finally {
-        setUpdatingId(null);
       }
     },
     [applyPlannerUpdate]
@@ -516,56 +368,28 @@ export function DashboardBookingProgress({
     setExpandedTripId((current) => (current === tripId ? null : tripId));
   }, []);
 
-  const toggleClientFile = useCallback((tripId: number) => {
-    setClientFileTripId((current) => (current === tripId ? null : tripId));
-  }, []);
-
-  const openClientFile = useCallback((tripId: number) => {
-    setExpandedTripId(tripId);
-    setClientFileTripId(tripId);
-  }, []);
-
-  const handleCopyMessage = useCallback(
+  const handleCopyRequest = useCallback(
     (planner: BookingProgressPlanner, itemKey: string) => {
       const item = planner.items.find((row) => row.itemKey === itemKey);
       if (!item) return;
 
-      const message = item.beachClubPart
-        ? buildBeachClubBookingRequestMessage({
-            establishmentName: item.venue,
-            date: item.date,
-            sunbedsTime: planner.items.find(
-              (row) =>
-                row.activityId === item.activityId &&
-                row.beachClubPart === "sunbeds"
-            )?.time,
-            lunchTime: planner.items.find(
-              (row) =>
-                row.activityId === item.activityId &&
-                row.beachClubPart === "lunch"
-            )?.time,
-            clientName: planner.client_name,
-            guestCount: planner.guest_count,
-            clientPhone: planner.client_file.phone,
-            clientEmail: planner.client_file.email,
-          })
-        : buildBookingRequestMessage({
-            establishmentName: item.venue,
-            date: item.date,
-            time: item.time,
-            clientName: planner.client_name,
-            guestCount: planner.guest_count,
-            clientPhone: planner.client_file.phone,
-            clientEmail: planner.client_file.email,
-          });
-
-      void copyTextToClipboard(message).then((ok) => {
+      void copyTextToClipboard(buildRequestMessage(planner, item)).then((ok) => {
         if (!ok) return;
         setCopiedItemKey(itemKey);
         window.setTimeout(() => {
           setCopiedItemKey((current) => (current === itemKey ? null : current));
         }, 2000);
       });
+    },
+    []
+  );
+
+  const handleOpenWhatsApp = useCallback(
+    (planner: BookingProgressPlanner, item: ReservationStatusItem) => {
+      const message = buildRequestMessage(planner, item);
+      const url = buildWhatsAppRequestUrl(item.venue_whatsapp, message);
+      if (!url) return;
+      window.open(url, "_blank", "noopener,noreferrer");
     },
     []
   );
@@ -578,23 +402,19 @@ export function DashboardBookingProgress({
         No active planners with bookings to complete.
       </p>
     ) : (
-      <ul className="dash-bp-planner-list">
+      <ul className="bp-list">
         {planners.map((planner) => (
-          <BookingProgressPlannerCard
+          <PlannerCard
             key={planner.tripId}
             planner={planner}
             isOpen={expandedTripId === planner.tripId}
-            isClientFileOpen={clientFileTripId === planner.tripId}
             onToggle={() => togglePlanner(planner.tripId)}
-            onToggleClientFile={() => toggleClientFile(planner.tripId)}
-            onOpenClientFile={() => openClientFile(planner.tripId)}
             copiedItemKey={copiedItemKey}
-            onCopyMessage={(itemKey) => handleCopyMessage(planner, itemKey)}
-            updatingId={updatingId}
-            onPatch={(tripId, item, patch) => {
-              void patchItem(tripId, item, patch);
+            onCopyRequest={(itemKey) => handleCopyRequest(planner, itemKey)}
+            onOpenWhatsApp={(item) => handleOpenWhatsApp(planner, item)}
+            onStatusChange={(tripId, item, status) => {
+              void patchItem(tripId, item, { booking_status: status });
             }}
-            onNotesChange={handleNotesChange}
           />
         ))}
       </ul>
@@ -603,9 +423,6 @@ export function DashboardBookingProgress({
   if (embedded) {
     return (
       <div className="dash-embedded-section dash-booking-progress-embedded">
-        <p className="dash-booking-progress-lead dash-booking-progress-lead--embedded">
-          Select a client to view and update their reservations.
-        </p>
         {content}
       </div>
     );
@@ -617,7 +434,7 @@ export function DashboardBookingProgress({
         <div>
           <h2 className="section-title">Bookings Progress</h2>
           <p className="dash-booking-progress-lead">
-            Select a client to view and update their reservations.
+            Manage live booking requests for confirmed programmes.
           </p>
         </div>
         <Link href="/calendar" className="btn-ghost">

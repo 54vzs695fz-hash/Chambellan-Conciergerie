@@ -34,12 +34,11 @@ export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   cancelled: "Cancelled",
 };
 
-/** Simplified labels for the internal Booking Progress dashboard. */
+/** Operational statuses shown in Booking Progress. */
 export const BOOKING_PROGRESS_STATUS_OPTIONS = [
   "to_request",
   "request_sent",
   "waiting_confirmation",
-  "paid",
   "confirmed",
   "cancelled",
 ] as const satisfies readonly BookingStatus[];
@@ -48,10 +47,9 @@ export const BOOKING_PROGRESS_STATUS_LABELS: Record<
   (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number],
   string
 > = {
-  to_request: "To book",
-  request_sent: "Requested",
-  waiting_confirmation: "Pending confirmation",
-  paid: "Paid",
+  to_request: "To request",
+  request_sent: "Request sent",
+  waiting_confirmation: "Waiting confirmation",
   confirmed: "Confirmed",
   cancelled: "Cancelled",
 };
@@ -138,7 +136,7 @@ export function toBookingProgressStatus(
   status: BookingStatus
 ): (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number] {
   if (status === "rejected") return "cancelled";
-  if (status === "waiting_confirmation") return "waiting_confirmation";
+  if (status === "paid") return "waiting_confirmation";
   if (
     BOOKING_PROGRESS_STATUS_OPTIONS.includes(
       status as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number]
@@ -147,6 +145,12 @@ export function toBookingProgressStatus(
     return status as (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number];
   }
   return "to_request";
+}
+
+export function bookingProgressSelectValue(
+  status: BookingStatus
+): (typeof BOOKING_PROGRESS_STATUS_OPTIONS)[number] {
+  return toBookingProgressStatus(status);
 }
 
 /** Reservation is handled — no longer blocks Booking Progress removal. */
@@ -184,14 +188,14 @@ export function sortBookingProgressItems(
 }
 
 export function bookingProgressTone(status: BookingStatus): BookingProgressTone {
+  if (status === "paid") return "paid";
+
   switch (toBookingProgressStatus(status)) {
     case "to_request":
       return "urgent";
     case "request_sent":
     case "waiting_confirmation":
       return "pending";
-    case "paid":
-      return "paid";
     case "confirmed":
       return "confirmed";
     case "cancelled":
@@ -304,6 +308,7 @@ export interface ReservationStatusItem {
   booking_status: BookingStatus;
   assigned_to: string;
   booking_notes: string;
+  venue_whatsapp: string;
 }
 
 function pushReservationItem(
@@ -330,6 +335,7 @@ function pushReservationItem(
     booking_status: normalizeBookingStatus(config.booking_status),
     assigned_to: normalizeBookingAssignee(activity.assigned_to),
     booking_notes: activity.booking_notes?.trim() ?? "",
+    venue_whatsapp: "",
   });
 }
 

@@ -1749,3 +1749,276 @@
   padding-top: 1rem;
   border-top: 1px dashed rgba(229, 221, 210, 0.95);
 }
+
+/* Booking Progress — operational tool (mobile first) */
+
+.bp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.bp-card {
+  border-radius: 14px;
+  border: 1px solid var(--shell-card-border, #e5e7eb);
+  background: var(--shell-card-bg, #fff);
+  box-shadow: var(--shell-card-shadow);
+  overflow: hidden;
+}
+
+.bp-card-trigger {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.9rem 0.95rem 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--shell-text, #111);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bp-card-trigger-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.bp-card-chevron {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+  color: var(--shell-text-muted, #6b7280);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bp-card-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.bp-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.bp-card-client {
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-serif, Georgia, serif);
+  color: var(--gold, #b8956a);
+}
+
+.bp-card-destination {
+  font-size: 0.92rem;
+  color: var(--shell-text, #111);
+}
+
+.bp-card-destination-sub {
+  font-size: 0.74rem;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.bp-card-dates,
+.bp-card-guests {
+  font-size: 0.78rem;
+  color: var(--shell-text-secondary, #374151);
+}
+
+.bp-card-summary {
+  padding: 0 0.95rem 0.85rem;
+}
+
+.bp-card-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(184, 149, 106, 0.16);
+  overflow: hidden;
+}
+
+.bp-card-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bp-card-progress-bar--urgent {
+  background: #8a3340;
+}
+
+.bp-card-progress-bar--pending {
+  background: #b86a18;
+}
+
+.bp-card-progress-bar--paid {
+  background: #2d5f94;
+}
+
+.bp-card-progress-bar--confirmed {
+  background: #3a7350;
+}
+
+.bp-card-progress-bar--cancelled {
+  background: #6b6560;
+}
+
+.bp-card-remaining {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--shell-text, #111);
+}
+
+.bp-card-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bp-card-panel.is-open {
+  grid-template-rows: 1fr;
+}
+
+.bp-card-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.bp-card-panel-head {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0.95rem 0.55rem;
+}
+
+.bp-card-planner-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp-booking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.95rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bp-booking {
+  padding: 0.85rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(184, 149, 106, 0.06);
+  border: 1px solid rgba(184, 149, 106, 0.16);
+}
+
+.bp-booking-venue {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--shell-text, #111);
+}
+
+.bp-booking-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.74rem;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.bp-booking-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.bp-booking-action {
+  min-height: 44px;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid rgba(184, 149, 106, 0.28);
+  background: #fff;
+  color: var(--shell-text, #111);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.16s cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 0.16s ease;
+}
+
+.bp-booking-action:active {
+  transform: scale(0.98);
+}
+
+.bp-booking-action--copy.is-copied {
+  color: #3a7350;
+  border-color: rgba(58, 115, 80, 0.35);
+  background: rgba(58, 115, 80, 0.08);
+}
+
+.bp-booking-action--whatsapp {
+  color: #1f7a43;
+  border-color: rgba(31, 122, 67, 0.28);
+  background: rgba(31, 122, 67, 0.06);
+}
+
+.bp-booking-action--whatsapp:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.bp-booking-status-field {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+.bp-booking-status-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted, #6b7280);
+}
+
+.bp-booking-status-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+  border-radius: 10px;
+  border: 1px solid rgba(184, 149, 106, 0.28);
+  background: #fff;
+  color: var(--shell-text, #111);
+}
+
+.bp-booking.bp-tone--urgent {
+  border-left: 3px solid #8a3340;
+}
+
+.bp-booking.bp-tone--pending {
+  border-left: 3px solid #b86a18;
+}
+
+.bp-booking.bp-tone--confirmed,
+.bp-booking.bp-tone--paid {
+  border-left: 3px solid #3a7350;
+}
+
+.bp-booking.bp-tone--cancelled {
+  border-left: 3px solid #6b6560;
+}
+
+@media (min-width: 768px) {
+  .bp-booking-actions {
+    max-width: 28rem;
+  }
+}

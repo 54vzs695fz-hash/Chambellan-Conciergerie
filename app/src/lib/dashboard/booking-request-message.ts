@@ -122,6 +122,21 @@ export function buildBookingRequestMessage(
   ].join("\n");
 }
 
+export function normalizeWhatsAppNumber(input: string): string | null {
+  const digits = input.replace(/\D/g, "");
+  if (!digits) return null;
+  return digits;
+}
+
+export function buildWhatsAppRequestUrl(
+  phone: string,
+  message: string
+): string | null {
+  const number = normalizeWhatsAppNumber(phone);
+  if (!number) return null;
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
 export async function copyTextToClipboard(text: string): Promise<boolean> {
   if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
     try {

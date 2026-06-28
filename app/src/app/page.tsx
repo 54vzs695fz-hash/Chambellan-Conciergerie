@@ -6,6 +6,7 @@ import { buildTodayActionGroups } from "@/lib/dashboard/home-today";
 import { listBookingProgressPlanners } from "@/lib/dashboard/booking-progress";
 import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
+import { listEstablishments } from "@/lib/db/establishments";
 import { listConfirmedTripsWithDays, listTrips } from "@/lib/db/trips";
 import "@/app/calendar/calendar.css";
 import "@/app/dashboard.css";
@@ -19,7 +20,11 @@ export default async function DashboardPage() {
   const clients = allClients.slice(0, 5);
   const pendingFollowUp = await listDashboardFollowUpItems();
   const confirmedTrips = await listConfirmedTripsWithDays();
-  const bookingProgress = listBookingProgressPlanners(confirmedTrips);
+  const establishments = await listEstablishments({ limit: 500 });
+  const bookingProgress = listBookingProgressPlanners(
+    confirmedTrips,
+    establishments
+  );
   const todayGroups = buildTodayActionGroups(allTrips, confirmedTrips);
   const counts = computeHomeSectionCounts({
     trips: allTrips,

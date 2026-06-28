@@ -167,6 +167,7 @@ const sorted = sortBookingProgressItems([
     booking_status: "confirmed",
     assigned_to: "",
     booking_notes: "",
+    venue_whatsapp: "",
   },
   {
     activityId: 2,
@@ -180,6 +181,7 @@ const sorted = sortBookingProgressItems([
     booking_status: "to_request",
     assigned_to: "",
     booking_notes: "",
+    venue_whatsapp: "",
   },
 ]);
 assert(sorted[0]?.booking_status === "to_request", "actionable booking first");
@@ -234,5 +236,13 @@ assert(beachMessage.includes("28/07"), "beach club date");
 assert(beachMessage.includes("Sunbeds: 12:00"), "beach club sunbeds");
 assert(beachMessage.includes("Lunch: 15:30"), "beach club lunch");
 assert(beachMessage.includes("Alex Borovskoy"), "beach club client");
+
+const { buildWhatsAppRequestUrl } = await loadModule(
+  "src/lib/dashboard/booking-request-message.ts"
+);
+assert(
+  buildWhatsAppRequestUrl("+33 6 12 34 56 78", "Hello")?.includes("wa.me/33612345678"),
+  "whatsapp url"
+);
 
 console.log("booking-progress tests passed");
