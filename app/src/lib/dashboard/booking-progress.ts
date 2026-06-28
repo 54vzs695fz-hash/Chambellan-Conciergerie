@@ -63,13 +63,37 @@ export function reconcileBookingProgressPlanner(
     items: ReservationStatusItem[];
   }
 ): BookingProgressPlanner | null {
-  const items = sortBookingProgressItems(planner.items);
-  if (!hasOpenReservationBookings(items)) return null;
+  const refreshed = refreshBookingProgressPlanner(planner);
+  if (!hasOpenReservationBookings(refreshed.items)) return null;
+  return refreshed;
+}
 
+/** Recompute summary without removing completed programmes (live UI updates). */
+export function refreshBookingProgressPlanner(
+  planner: Omit<BookingProgressPlanner, "items" | "summary"> & {
+    items: ReservationStatusItem[];
+  }
+): BookingProgressPlanner {
+  const items = sortBookingProgressItems(planner.items);
   return {
     ...planner,
     items,
     summary: computePlannerBookingSummary(items),
+  };
+}
+
+export function getBookingProgressDisplaySummary(
+  summary: PlannerBookingSummary
+): PlannerBookingSummary & { isReady: boolean } {
+  const isReady = summary.remaining === 0 && summary.total > 0;
+  if (!isReady) {
+    return { ...summary, isReady: false };
+  }
+  return {
+    ...summary,
+    isReady: true,
+    percent: 100,
+    progressTone: "confirmed",
   };
 }
 

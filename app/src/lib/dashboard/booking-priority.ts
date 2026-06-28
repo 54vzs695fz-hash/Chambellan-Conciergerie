@@ -1,6 +1,7 @@
 import {
   buildBookingProgressPlanner,
   buildEstablishmentContactLookup,
+  getBookingProgressDisplaySummary,
   isClientProgrammeConfirmed,
 } from "@/lib/dashboard/booking-progress";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
@@ -172,6 +173,63 @@ function buildBookingPriorityItem(
     pending_transfers: countPendingTransfers(planner.items),
     pending_payment: pendingPaymentWeight(planner.payment_status),
   };
+}
+
+export function syncBookingPriorityItem(
+  existing: BookingPriorityItem,
+  planner: BookingProgressPlanner
+): BookingPriorityItem {
+  const display = getBookingProgressDisplaySummary(planner.summary);
+  const priority = display.isReady
+    ? "ready"
+    : resolveBookingPriorityLevel(planner);
+  const meta = PRIORITY_META[priority];
+  const remaining = planner.summary.remaining;
+
+  return {
+    ...existing,
+    remaining,
+    percent: display.percent,
+    progressTone: display.progressTone,
+    priority,
+    priority_emoji: meta.emoji,
+    priority_label: meta.label,
+    remaining_label: display.isReady
+      ? "All bookings completed"
+      : `${remaining} booking${remaining === 1 ? "" : "s"} remaining`,
+  };
+}
+
+export function syncBookingPriorityWithPlanners(
+  priorityItems: BookingPriorityItem[],
+  planners: BookingProgressPlanner[]
+): BookingPriorityItem[] {
+  const plannerByTrip = new Map(planners.map((planner) => [planner.tripId, planner]));
+
+  return priorityItems
+    .map((item) => {
+      const planner = plannerByTrip.get(item.tripId);
+      if (!planner) return item;
+      return syncBookingPriorityItem(item, planner);
+    })
+    .sort((a, b) =>
+      compareBookingPrioritySortFields(
+        {
+          remaining: a.remaining,
+          arrival_date: a.arrival_date,
+          waiting_confirmations: 0,
+          pending_transfers: 0,
+          pending_payment: 0,
+        },
+        {
+          remaining: b.remaining,
+          arrival_date: b.arrival_date,
+          waiting_confirmations: 0,
+          pending_transfers: 0,
+          pending_payment: 0,
+        }
+      )
+    );
 }
 
 export function listBookingPriorityItems(

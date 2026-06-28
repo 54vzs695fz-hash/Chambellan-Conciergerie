@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
 import { DashboardMobileBookingPriority } from "@/components/dashboard/DashboardMobileBookingPriority";
 import { DashboardRecentPlanners } from "@/components/dashboard/DashboardRecentPlanners";
+import { syncBookingPriorityWithPlanners } from "@/lib/dashboard/booking-priority";
 import type { BookingPriorityItem } from "@/lib/dashboard/booking-priority";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import type { Trip } from "@/lib/types";
@@ -28,8 +29,18 @@ export function DashboardMobileHome({
   trips,
   clients,
 }: Props) {
+  const [priorityItems, setPriorityItems] = useState(bookingPriority);
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const bookingProgressRef = useRef<HTMLElement>(null);
+
+  const handlePlannersChange = useCallback(
+    (planners: BookingProgressPlanner[]) => {
+      setPriorityItems((current) =>
+        syncBookingPriorityWithPlanners(current, planners)
+      );
+    },
+    []
+  );
 
   const handlePrioritySelect = useCallback((tripId: number) => {
     setExpandedTripId(tripId);
@@ -44,7 +55,7 @@ export function DashboardMobileHome({
   return (
     <div className="dash-mobile-home md:hidden">
       <DashboardMobileBookingPriority
-        items={bookingPriority}
+        items={priorityItems}
         onSelect={handlePrioritySelect}
       />
 
@@ -66,6 +77,7 @@ export function DashboardMobileHome({
           initialPlanners={bookingProgress}
           expandedTripId={expandedTripId}
           onExpandedTripIdChange={setExpandedTripId}
+          onPlannersChange={handlePlannersChange}
         />
       </section>
 

@@ -1,17 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
+import {
+  getBookingProgressDisplaySummary,
+  refreshBookingProgressPlanner,
+  sortBookingProgressPlanners,
+} from "@/lib/dashboard/booking-progress";
 import {
   buildBeachClubBookingRequestMessage,
   buildBookingRequestMessage,
   copyTextToClipboard,
+  showsBookingRequestMessage,
 } from "@/lib/dashboard/booking-request-message";
+import { buildActivityPatchFromReservationItem } from "@/lib/planner/beach-club";
 import {
+  BOOKING_PROGRESS_TAP_OPTIONS,
+  bookingProgressTapStatusClass,
   isBookingRequiringAction,
+  sortBookingProgressItems,
+  toBookingProgressTapStatus,
+  type BookingProgressTapStatus,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
+import type { BookingStatus } from "@/lib/types";
 import { formatGridDayDate, formatGridDayName } from "@/lib/planner-utils";
 
 interface Props {
@@ -19,6 +32,7 @@ interface Props {
   embedded?: boolean;
   expandedTripId?: number | null;
   onExpandedTripIdChange?: (tripId: number | null) => void;
+  onPlannersChange?: (planners: BookingProgressPlanner[]) => void;
 }
 
 function formatItemMeta(item: ReservationStatusItem): string {
@@ -112,16 +126,56 @@ function ProgressBar({
   );
 }
 
+function BookingStatusTap({
+  value,
+  onChange,
+}: {
+  value: BookingProgressTapStatus;
+  onChange: (status: BookingProgressTapStatus) => void;
+}) {
+  return (
+    <div
+      className="bp-booking-status-tap"
+      role="group"
+      aria-label="Booking status"
+    >
+      {BOOKING_PROGRESS_TAP_OPTIONS.map((option) => {
+        const active = value === option.value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            className={`bp-status-tap${active ? " is-active" : ""} ${bookingProgressTapStatusClass(option.value)}`}
+            aria-pressed={active}
+            onClick={() => {
+              if (!active) onChange(option.value);
+            }}
+          >
+            <span className="bp-status-tap-emoji" aria-hidden>
+              {option.emoji}
+            </span>
+            <span className="bp-status-tap-label">{option.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function BookingRow({
   item,
   copied,
   onCopyRequest,
+  onStatusChange,
 }: {
   item: ReservationStatusItem;
   copied: boolean;
   onCopyRequest: () => void;
+  onStatusChange: (status: BookingProgressTapStatus) => void;
 }) {
   const meta = formatItemMeta(item);
+  const tapStatus = toBookingProgressTapStatus(item.booking_status);
+  const showCopy = showsBookingRequestMessage(item.booking_status);
 
   return (
     <li className="bp-booking">
@@ -130,13 +184,17 @@ function BookingRow({
         {meta ? <p className="bp-booking-meta">{meta}</p> : null}
       </div>
 
-      <button
-        type="button"
-        className={`bp-booking-copy${copied ? " is-copied" : ""}`}
-        onClick={onCopyRequest}
-      >
-        {copied ? "✓ Copied" : "📋 Copy Request"}
-      </button>
+      {showCopy ? (
+        <button
+          type="button"
+          className={`bp-booking-copy${copied ? " is-copied" : ""}`}
+          onClick={onCopyRequest}
+        >
+          {copied ? "✓ Copied" : "📋 Copy Request"}
+        </button>
+      ) : null}
+
+      <BookingStatusTap value={tapStatus} onChange={onStatusChange} />
     </li>
   );
 }
@@ -147,23 +205,32 @@ function PlannerCard({
   onToggle,
   copiedItemKey,
   onCopyRequest,
+  onStatusChange,
 }: {
   planner: BookingProgressPlanner;
   isOpen: boolean;
   onToggle: () => void;
   copiedItemKey: string | null;
   onCopyRequest: (itemKey: string) => void;
+  onStatusChange: (
+    tripId: number,
+    item: ReservationStatusItem,
+    status: BookingProgressTapStatus
+  ) => void;
 }) {
   const panelId = useId();
-  const remainingLabel = `${planner.summary.remaining} booking${
-    planner.summary.remaining === 1 ? "" : "s"
-  } remaining`;
+  const display = getBookingProgressDisplaySummary(planner.summary);
+  const remainingLabel = display.isReady
+    ? "🟢 READY"
+    : `${planner.summary.remaining} booking${
+        planner.summary.remaining === 1 ? "" : "s"
+      } remaining`;
   const visibleItems = planner.items.filter((item) =>
     isBookingRequiringAction(item.booking_status)
   );
 
   return (
-    <li className={`bp-card${isOpen ? " is-open" : ""}`}>
+    <li className={`bp-card${isOpen ? " is-open" : ""}${display.isReady ? " bp-card--ready" : ""}`}>
       <button
         type="button"
         className="bp-card-trigger"
@@ -190,11 +257,12 @@ function PlannerCard({
       </button>
 
       <div className="bp-card-summary">
-        <ProgressBar
-          percent={planner.summary.percent}
-          tone={planner.summary.progressTone}
-        />
-        <p className="bp-card-remaining">{remainingLabel}</p>
+        <ProgressBar percent={display.percent} tone={display.progressTone} />
+        <p
+          className={`bp-card-remaining${display.isReady ? " bp-card-remaining--ready" : ""}`}
+        >
+          {remainingLabel}
+        </p>
       </div>
 
       <div
@@ -209,16 +277,23 @@ function PlannerCard({
               Open planner
             </Link>
           </div>
-          <ul className="bp-booking-list">
-            {visibleItems.map((item) => (
-              <BookingRow
-                key={item.itemKey}
-                item={item}
-                copied={copiedItemKey === item.itemKey}
-                onCopyRequest={() => onCopyRequest(item.itemKey)}
-              />
-            ))}
-          </ul>
+          {visibleItems.length === 0 ? (
+            <p className="bp-booking-all-done">All bookings confirmed.</p>
+          ) : (
+            <ul className="bp-booking-list">
+              {visibleItems.map((item) => (
+                <BookingRow
+                  key={item.itemKey}
+                  item={item}
+                  copied={copiedItemKey === item.itemKey}
+                  onCopyRequest={() => onCopyRequest(item.itemKey)}
+                  onStatusChange={(status) => {
+                    onStatusChange(planner.tripId, item, status);
+                  }}
+                />
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </li>
@@ -230,7 +305,9 @@ export function DashboardBookingProgress({
   embedded = false,
   expandedTripId: expandedTripIdProp,
   onExpandedTripIdChange,
+  onPlannersChange,
 }: Props) {
+  const [planners, setPlanners] = useState(initialPlanners);
   const [internalExpandedTripId, setInternalExpandedTripId] = useState<
     number | null
   >(null);
@@ -239,7 +316,10 @@ export function DashboardBookingProgress({
       ? expandedTripIdProp
       : internalExpandedTripId;
   const [copiedItemKey, setCopiedItemKey] = useState<string | null>(null);
-  const planners = initialPlanners;
+
+  useEffect(() => {
+    setPlanners(initialPlanners);
+  }, [initialPlanners]);
 
   const setExpandedTripId = useCallback(
     (tripId: number | null) => {
@@ -250,6 +330,75 @@ export function DashboardBookingProgress({
       setInternalExpandedTripId(tripId);
     },
     [onExpandedTripIdChange]
+  );
+
+  const applyPlannerUpdate = useCallback(
+    (
+      tripId: number,
+      updater: (items: ReservationStatusItem[]) => ReservationStatusItem[]
+    ) => {
+      setPlanners((current) => {
+        const next = sortBookingProgressPlanners(
+          current.map((planner) => {
+            if (planner.tripId !== tripId) return planner;
+            return refreshBookingProgressPlanner({
+              ...planner,
+              items: sortBookingProgressItems(updater(planner.items)),
+            });
+          })
+        );
+        onPlannersChange?.(next);
+        return next;
+      });
+    },
+    [onPlannersChange]
+  );
+
+  const patchItem = useCallback(
+    async (
+      tripId: number,
+      item: ReservationStatusItem,
+      status: BookingStatus
+    ) => {
+      const previousStatus = item.booking_status;
+
+      applyPlannerUpdate(tripId, (items) =>
+        items.map((row) =>
+          row.itemKey === item.itemKey
+            ? { ...row, booking_status: status }
+            : row
+        )
+      );
+
+      try {
+        const body = buildActivityPatchFromReservationItem(item, {
+          booking_status: status,
+        });
+        const res = await fetch(`/api/activities/${item.activityId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          applyPlannerUpdate(tripId, (items) =>
+            items.map((row) =>
+              row.itemKey === item.itemKey
+                ? { ...row, booking_status: previousStatus }
+                : row
+            )
+          );
+        }
+      } catch {
+        applyPlannerUpdate(tripId, (items) =>
+          items.map((row) =>
+            row.itemKey === item.itemKey
+              ? { ...row, booking_status: previousStatus }
+              : row
+          )
+        );
+      }
+    },
+    [applyPlannerUpdate]
   );
 
   const togglePlanner = useCallback(
@@ -292,6 +441,9 @@ export function DashboardBookingProgress({
             onToggle={() => togglePlanner(planner.tripId)}
             copiedItemKey={copiedItemKey}
             onCopyRequest={(itemKey) => handleCopyRequest(planner, itemKey)}
+            onStatusChange={(tripId, item, status) => {
+              void patchItem(tripId, item, status);
+            }}
           />
         ))}
       </ul>

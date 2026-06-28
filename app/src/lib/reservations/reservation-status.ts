@@ -166,6 +166,45 @@ export function isBookingRequiringAction(status: BookingStatus): boolean {
   return !isBookingProgressComplete(status);
 }
 
+/** Four-tap statuses for Booking Progress mobile workflow. */
+export type BookingProgressTapStatus =
+  | "to_request"
+  | "request_sent"
+  | "confirmed"
+  | "cancelled";
+
+export const BOOKING_PROGRESS_TAP_OPTIONS: {
+  value: BookingProgressTapStatus;
+  label: string;
+  emoji: string;
+}[] = [
+  { value: "to_request", label: "To Request", emoji: "○" },
+  { value: "request_sent", label: "Requested", emoji: "🟡" },
+  { value: "confirmed", label: "Confirmed", emoji: "🟢" },
+  { value: "cancelled", label: "Cancelled", emoji: "🔴" },
+];
+
+export function toBookingProgressTapStatus(
+  status: BookingStatus
+): BookingProgressTapStatus {
+  if (status === "confirmed") return "confirmed";
+  if (status === "cancelled" || status === "rejected") return "cancelled";
+  if (
+    status === "request_sent" ||
+    status === "waiting_confirmation" ||
+    status === "paid"
+  ) {
+    return "request_sent";
+  }
+  return "to_request";
+}
+
+export function bookingProgressTapStatusClass(
+  status: BookingProgressTapStatus
+): string {
+  return `bp-status-tap--${status.replace(/_/g, "-")}`;
+}
+
 export function bookingProgressSortRank(status: BookingStatus): number {
   const index = BOOKING_PROGRESS_SORT_ORDER.indexOf(status);
   return index === -1 ? 0 : index;
