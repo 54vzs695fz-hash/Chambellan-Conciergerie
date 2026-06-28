@@ -37,6 +37,8 @@ function mapEntry(row: PrismaStayClosingEntry): StayClosingEntry {
     internal_notes: row.internal_notes,
     calculated_commission: row.calculated_commission,
     commission_applied: row.commission_applied,
+    commission_received: row.commission_received,
+    commission_received_at: row.commission_received_at,
     commission_summary: row.commission_summary,
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
@@ -115,6 +117,15 @@ export async function saveStayClosing(
   if (!preview) return null;
 
   const visitedByKey = new Map(preview.visited.map((row) => [row.key, row]));
+  const existingReceived = new Map<string, { received: boolean; receivedAt: string }>();
+  for (const entry of preview.closing?.entries ?? []) {
+    const key = entry.establishment_name.trim().toLowerCase();
+    existingReceived.set(key, {
+      received: entry.commission_received,
+      receivedAt: entry.commission_received_at,
+    });
+  }
+
   const payloadEntries = entries
     .filter((entry) => visitedByKey.has(entry.key))
     .map((entry) => {
@@ -128,6 +139,9 @@ export async function saveStayClosing(
         visited.commission,
         amounts
       );
+      const prior = existingReceived.get(
+        visited.establishment_name.trim().toLowerCase()
+      );
 
       return {
         establishment_id: visited.establishment_id,
@@ -139,6 +153,8 @@ export async function saveStayClosing(
         internal_notes: entry.internal_notes.trim(),
         calculated_commission: commissionResult.amountLabel,
         commission_applied: commissionResult.applied,
+        commission_received: prior?.received ?? false,
+        commission_received_at: prior?.receivedAt ?? "",
         commission_summary: commissionResult.summary,
       };
     });

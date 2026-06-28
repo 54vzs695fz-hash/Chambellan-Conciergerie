@@ -12,6 +12,7 @@ import type { TripWithDays } from "@/lib/types";
 
 export const HOME_SECTION_IDS = [
   "booking-progress",
+  "business-dashboard",
   "calendar-overview",
   "upcoming-arrivals",
   "clients-follow-up",
@@ -24,6 +25,7 @@ export type HomeSectionId = (typeof HOME_SECTION_IDS)[number];
 
 export interface HomeSectionCounts {
   bookingProgress: number;
+  businessDashboard: number;
   calendarOverview: number;
   upcomingArrivals: number;
   clientsToFollowUp: number;
@@ -37,11 +39,13 @@ export function computeHomeSectionCounts({
   confirmedTrips,
   followUpProgrammes,
   clientCount,
+  businessDashboard = 0,
 }: {
   trips: Trip[];
   confirmedTrips: TripWithDays[];
   followUpProgrammes: DashboardProgrammeFollowUpCard[];
   clientCount: number;
+  businessDashboard?: number;
 }): HomeSectionCounts {
   const programmes = tripsToCalendarProgrammes(trips);
   const today = new Date();
@@ -51,6 +55,7 @@ export function computeHomeSectionCounts({
 
   return {
     bookingProgress: listBookingProgressPlanners(confirmedTrips).length,
+    businessDashboard,
     calendarOverview: upcoming.length + followUpCalendar,
     upcomingArrivals: upcoming.length,
     clientsToFollowUp: followUpProgrammes.length,

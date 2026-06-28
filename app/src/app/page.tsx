@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DashboardHomeAccordion } from "@/components/dashboard/DashboardHomeAccordion";
 import { computeHomeSectionCounts } from "@/lib/dashboard/home-sections";
+import { getBusinessDashboardBadgeCount } from "@/lib/db/business-dashboard";
 import { listBookingProgressPlanners } from "@/lib/dashboard/booking-progress";
 import { listDashboardFollowUpItems } from "@/lib/db/checklist";
 import { listClients } from "@/lib/db/clients";
@@ -18,11 +19,13 @@ export default async function DashboardPage() {
   const pendingFollowUp = await listDashboardFollowUpItems();
   const confirmedTrips = await listConfirmedTripsWithDays();
   const bookingProgress = listBookingProgressPlanners(confirmedTrips);
+  const businessDashboardCount = await getBusinessDashboardBadgeCount();
   const counts = computeHomeSectionCounts({
     trips: allTrips,
     confirmedTrips,
     followUpProgrammes: pendingFollowUp,
     clientCount: clients.length,
+    businessDashboard: businessDashboardCount,
   });
 
   return (

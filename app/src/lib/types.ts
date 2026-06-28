@@ -265,6 +265,8 @@ export interface StayClosingEntry {
   internal_notes: string;
   calculated_commission: string;
   commission_applied: boolean;
+  commission_received: boolean;
+  commission_received_at: string;
   commission_summary: string;
   created_at: string;
   updated_at: string;

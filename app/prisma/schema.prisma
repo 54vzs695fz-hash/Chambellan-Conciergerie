@@ -213,6 +213,8 @@ model StayClosingEntry {
   internal_notes          String         @default("")
   calculated_commission   String         @default("")
   commission_applied      Boolean        @default(false)
+  commission_received     Boolean        @default(false)
+  commission_received_at  String         @default("")
   commission_summary      String         @default("")
   created_at              DateTime       @default(now())
   updated_at              DateTime       @updatedAt
