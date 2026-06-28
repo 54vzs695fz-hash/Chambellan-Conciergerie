@@ -2,9 +2,6 @@ import type { Trip } from "@/lib/types";
 
 export const DESTINATION_SEPARATOR = " · ";
 
-/** Safe single-line length for two destinations in the PDF main title. */
-const TWO_DEST_JOIN_MAX_LEN = 42;
-
 export type TripDestinationFields = Pick<
   Trip,
   "multi_destination" | "destinations" | "destination" | "destination_region"
@@ -25,32 +22,31 @@ export function formatDestinationsJoin(destinations: string[]): string {
     .join(DESTINATION_SEPARATOR);
 }
 
+/** Manual `destination` is always authoritative; auto-detection never overwrites it. */
 export function normalizeTripDestinations(
   trip: Partial<TripDestinationFields>
 ): TripDestinationFields {
+  const manualDestination = String(trip.destination ?? "").trim();
+  const multi_destination = Boolean(trip.multi_destination);
   const region = String(trip.destination_region ?? "").trim();
+
   let destinations = Array.isArray(trip.destinations)
     ? trip.destinations.map((item) => String(item).trim()).filter(Boolean)
     : parseDestinationsJson(trip.destinations);
 
-  if (destinations.length === 0) {
-    const single = String(trip.destination ?? "").trim();
-    if (single) destinations = [single];
-  }
-
-  const destination =
-    formatDestinationsJoin(destinations) ||
-    String(trip.destination ?? "").trim();
-
-  let multi_destination = Boolean(trip.multi_destination);
-  if (destinations.length <= 1 && !region) {
-    multi_destination = false;
+  if (!multi_destination) {
+    return {
+      multi_destination: false,
+      destination: manualDestination,
+      destinations: manualDestination ? [manualDestination] : [],
+      destination_region: "",
+    };
   }
 
   return {
-    multi_destination: multi_destination && destinations.length > 0,
+    multi_destination: true,
+    destination: manualDestination,
     destinations,
-    destination,
     destination_region: region,
   };
 }
@@ -67,42 +63,14 @@ export interface PlannerDestinationHeader {
   subtitle: string | null;
 }
 
+/** PDF and document headers — manual planner destination only. */
 export function resolvePlannerDestinationHeader(
   trip: Partial<TripDestinationFields>
 ): PlannerDestinationHeader {
   const normalized = normalizeTripDestinations(trip);
-  const { destinations, destination_region, multi_destination } = normalized;
-
-  if (destinations.length === 0) {
-    return { mainTitle: "", subtitle: null };
-  }
-
-  if (!multi_destination || destinations.length === 1) {
-    return { mainTitle: destinations[0], subtitle: null };
-  }
-
-  const region = destination_region.trim();
-  const joined = formatDestinationsJoin(destinations);
-
-  if (region) {
-    return { mainTitle: region, subtitle: joined };
-  }
-
-  if (destinations.length === 2 && joined.length <= TWO_DEST_JOIN_MAX_LEN) {
-    return { mainTitle: joined, subtitle: null };
-  }
-
-  if (destinations.length === 2) {
-    return {
-      mainTitle: destinations[0],
-      subtitle: destinations[1],
-    };
-  }
-
-  return {
-    mainTitle: destinations[0],
-    subtitle: formatDestinationsJoin(destinations.slice(1)),
-  };
+  const manual = normalized.destination.trim();
+  if (!manual) return { mainTitle: "", subtitle: null };
+  return { mainTitle: manual, subtitle: null };
 }
 
 export interface DashboardDestinationDisplay {
@@ -115,30 +83,16 @@ export function resolveDashboardDestinationDisplay(
   fallback = "Untitled destination"
 ): DashboardDestinationDisplay {
   const normalized = normalizeTripDestinations(trip);
-  const { destinations, destination_region, multi_destination, destination } =
-    normalized;
+  const manual = normalized.destination.trim() || fallback;
 
-  if (!multi_destination || destinations.length <= 1) {
-    return {
-      primary: destination.trim() || fallback,
-      secondary: null,
-    };
+  if (!normalized.multi_destination || normalized.destinations.length === 0) {
+    return { primary: manual, secondary: null };
   }
 
-  const region = destination_region.trim();
-  const joined = formatDestinationsJoin(destinations);
-
-  if (region) {
-    return { primary: region, secondary: joined };
-  }
-
-  if (destinations.length === 2) {
-    return { primary: joined, secondary: null };
-  }
-
+  const joined = formatDestinationsJoin(normalized.destinations);
   return {
-    primary: destinations[0],
-    secondary: formatDestinationsJoin(destinations.slice(1)),
+    primary: manual,
+    secondary: joined && joined !== manual ? joined : null,
   };
 }
 
@@ -162,5 +116,5 @@ export function resolveLibraryDestinationPrioritize(
   trip: Partial<TripDestinationFields>
 ): string {
   const normalized = normalizeTripDestinations(trip);
-  return normalized.destinations[0] ?? normalized.destination;
+  return normalized.destination.trim() || normalized.destinations[0] || "";
 }

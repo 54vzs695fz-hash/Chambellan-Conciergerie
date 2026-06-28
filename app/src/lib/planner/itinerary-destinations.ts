@@ -2,8 +2,8 @@ import { citiesMatch, normalizeCity } from "@/lib/establishments/group-by-city";
 import { normalizeDestination } from "@/lib/establishments/destinations";
 import type { Activity, ActivityType, TripDay, TripWithDays } from "@/lib/types";
 import {
-  formatDestinationsJoin,
   normalizeTripDestinations,
+  resolvePlannerDestinationHeader,
   type PlannerDestinationHeader,
   type TripDestinationFields,
 } from "@/lib/planner/trip-destinations";
@@ -161,85 +161,77 @@ export function inferDestinationRegion(destinations: string[]): string {
   return "";
 }
 
+/**
+ * When multi-destination is ON, merge newly detected cities into the list.
+ * Never modifies the manual planner destination.
+ */
+export function mergeDetectedDestinationsWhenMulti(
+  trip: Pick<
+    TripWithDays,
+    "days" | "destination" | "destination_region"
+  > &
+    Partial<Pick<TripWithDays, "multi_destination" | "destinations">>,
+  lookup?: EstablishmentCityLookup
+): TripDestinationFields {
+  const normalized = normalizeTripDestinations(trip);
+
+  if (!normalized.multi_destination) {
+    return normalized;
+  }
+
+  const detected = detectItineraryDestinations(trip.days, lookup);
+  const merged = [...normalized.destinations];
+
+  for (const city of detected) {
+    if (!merged.some((entry) => citiesMatch(entry, city))) {
+      merged.push(city);
+    }
+  }
+
+  return {
+    ...normalized,
+    destinations: merged,
+    destination_region:
+      inferDestinationRegion(merged) || normalized.destination_region,
+  };
+}
+
+/** Apply itinerary hints without overwriting the manual planner destination. */
+export function applyItineraryDestinationHints(
+  trip: TripWithDays,
+  lookup?: EstablishmentCityLookup
+): TripWithDays {
+  const hints = mergeDetectedDestinationsWhenMulti(trip, lookup);
+  return {
+    ...trip,
+    ...hints,
+    destination: String(trip.destination ?? "").trim(),
+  };
+}
+
+/** @deprecated Use mergeDetectedDestinationsWhenMulti — never overwrites manual destination. */
 export function syncTripDestinationsFromItinerary(
   trip: Pick<TripWithDays, "days" | "destination" | "destination_region"> &
     Partial<TripDestinationFields>,
   lookup?: EstablishmentCityLookup
 ): TripDestinationFields {
-  const detected = detectItineraryDestinations(trip.days, lookup);
-
-  if (detected.length === 0) {
-    return normalizeTripDestinations(trip);
-  }
-
-  if (detected.length === 1) {
-    return {
-      multi_destination: false,
-      destinations: detected,
-      destination: detected[0],
-      destination_region: "",
-    };
-  }
-
-  const region =
-    inferDestinationRegion(detected) ||
-    String(trip.destination_region ?? "").trim();
-
-  return {
-    multi_destination: true,
-    destinations: detected,
-    destination: formatDestinationsJoin(detected),
-    destination_region: region,
-  };
+  return mergeDetectedDestinationsWhenMulti(trip, lookup);
 }
 
+/** @deprecated Use applyItineraryDestinationHints */
 export function applyItineraryDestinationSync(
   trip: TripWithDays,
   lookup?: EstablishmentCityLookup
 ): TripWithDays {
-  return {
-    ...trip,
-    ...syncTripDestinationsFromItinerary(trip, lookup),
-  };
+  return applyItineraryDestinationHints(trip, lookup);
 }
 
+/** PDF header — manual planner destination only. */
 export function resolveAutoPlannerDestinationHeader(
   trip: TripWithDays,
-  lookup?: EstablishmentCityLookup
+  _lookup?: EstablishmentCityLookup
 ): PlannerDestinationHeader {
-  const detected = detectItineraryDestinations(trip.days, lookup);
-
-  if (detected.length === 0) {
-    const manual = normalizeTripDestinations(trip);
-    if (!manual.destination.trim()) {
-      return { mainTitle: "", subtitle: null };
-    }
-    if (!manual.multi_destination || manual.destinations.length <= 1) {
-      return { mainTitle: manual.destination.trim(), subtitle: null };
-    }
-    const region = manual.destination_region.trim();
-    const joined = formatDestinationsJoin(manual.destinations);
-    return region
-      ? { mainTitle: region, subtitle: joined }
-      : { mainTitle: joined, subtitle: null };
-  }
-
-  if (detected.length === 1) {
-    const fallback = trip.destination?.trim();
-    return {
-      mainTitle: fallback || detected[0],
-      subtitle: null,
-    };
-  }
-
-  const region = inferDestinationRegion(detected);
-  const joined = formatDestinationsJoin(detected);
-
-  if (region) {
-    return { mainTitle: region, subtitle: joined };
-  }
-
-  return { mainTitle: joined, subtitle: null };
+  return resolvePlannerDestinationHeader(trip);
 }
 
 export function buildEstablishmentCityLookup(

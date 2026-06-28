@@ -1336,6 +1336,88 @@ body.lux-pdf-export-open {
   margin-bottom: 0.65rem;
 }
 
+.adm-trip-destinations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.adm-trip-destinations-multi {
+  margin: 0;
+  min-height: 44px;
+}
+
+.adm-detected-destinations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.15rem;
+}
+
+.adm-detected-destinations-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.adm-detected-dest-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.adm-detected-dest-row .adm-input {
+  min-height: 44px;
+}
+
+.adm-detected-dest-remove,
+.adm-detected-dest-add {
+  min-height: 44px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.adm-detected-dest-remove {
+  align-self: flex-start;
+  border: 1px solid #d4cdc4;
+  background: #faf8f5;
+  color: #6b645c;
+}
+
+.adm-detected-dest-add {
+  align-self: stretch;
+  border: 1px dashed #c8bfb4;
+  background: transparent;
+  color: #5c554d;
+}
+
+@media (min-width: 480px) {
+  .adm-detected-dest-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .adm-detected-dest-row .adm-input {
+    flex: 1;
+  }
+
+  .adm-detected-dest-remove {
+    flex-shrink: 0;
+  }
+
+  .adm-detected-dest-add {
+    align-self: flex-start;
+  }
+}
+
 .adm-auto-destinations {
   display: flex;
   flex-direction: column;

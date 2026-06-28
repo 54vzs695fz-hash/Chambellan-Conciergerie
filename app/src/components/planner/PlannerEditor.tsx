@@ -25,7 +25,8 @@ import {
 } from "@/lib/planner/trip-days-sync";
 import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import type { TripDestinationFields as TripDestinationState } from "@/lib/planner/trip-destinations";
-import { applyItineraryDestinationSync } from "@/lib/planner/itinerary-destinations";
+import { applyItineraryDestinationHints } from "@/lib/planner/itinerary-destinations";
+import { syncTripDestinationFields } from "@/lib/planner/trip-destinations";
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPdfExportModal } from "./PlannerPdfExportModal";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
@@ -56,7 +57,7 @@ function patchActivityInTrip(
   activityId: number,
   fields: Partial<Activity>
 ): TripWithDays {
-  return applyItineraryDestinationSync({
+  return applyItineraryDestinationHints({
     ...prev,
     days: prev.days.map((day) => {
       const index = day.activities.findIndex((a) => a.id === activityId);
@@ -169,7 +170,10 @@ export function PlannerEditor({ initialTrip }: Props) {
   };
 
   const updateDestinationFields = (fields: TripDestinationState) => {
-    applyTripUpdate((prev) => applyItineraryDestinationSync({ ...prev, ...fields }));
+    applyTripUpdate((prev) => ({
+      ...prev,
+      ...syncTripDestinationFields(prev, fields),
+    }));
   };
 
   const pendingDayOverrideRef = useRef<{ dayId: number; value: string } | null>(
@@ -179,7 +183,7 @@ export function PlannerEditor({ initialTrip }: Props) {
   const updateDayDestinationOverride = (dayId: number, value: string) => {
     pendingDayOverrideRef.current = { dayId, value };
     setTrip((prev) =>
-      applyItineraryDestinationSync({
+      applyItineraryDestinationHints({
         ...prev,
         days: prev.days.map((day) =>
           day.id === dayId ? { ...day, destination_override: value } : day
@@ -206,7 +210,7 @@ export function PlannerEditor({ initialTrip }: Props) {
       return;
     }
     setTrip((prev) =>
-      applyItineraryDestinationSync({
+      applyItineraryDestinationHints({
         ...prev,
         days: prev.days.map((day) =>
           day.id === pending.dayId || day.id === resolvedId
@@ -304,7 +308,7 @@ export function PlannerEditor({ initialTrip }: Props) {
     if (!res.ok) return;
     const activity: Activity = await res.json();
     setTrip((prev) =>
-      applyItineraryDestinationSync({
+      applyItineraryDestinationHints({
         ...prev,
         days: prev.days.map((d) =>
           d.id === dayId || d.id === resolvedId
@@ -359,7 +363,7 @@ export function PlannerEditor({ initialTrip }: Props) {
 
       const activity: Activity = await res.json();
       setTrip((prev) =>
-        applyItineraryDestinationSync({
+        applyItineraryDestinationHints({
           ...prev,
           days: prev.days.map((d) =>
             d.id === target.dayId || d.id === resolvedId
@@ -422,7 +426,7 @@ export function PlannerEditor({ initialTrip }: Props) {
     const res = await fetch(`/api/activities/${id}`, { method: "DELETE" });
     if (!res.ok) return;
     setTrip((prev) =>
-      applyItineraryDestinationSync({
+      applyItineraryDestinationHints({
         ...prev,
         days: prev.days.map((d) => ({
           ...d,
@@ -547,7 +551,7 @@ export function PlannerEditor({ initialTrip }: Props) {
 
   const previewTrip = clientPreviewTrip ?? trip;
   const navDestination = resolveDashboardDestinationDisplay(
-    applyItineraryDestinationSync(trip),
+    trip,
     "Weekly planner"
   );
 

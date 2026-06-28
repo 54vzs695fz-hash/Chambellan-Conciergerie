@@ -32,7 +32,7 @@ import { isUntitledDestination } from "../planner-utils";
 import { normalizeTripDestinations, parseDestinationsJson } from "../planner/trip-destinations";
 import {
   buildEstablishmentCityLookup,
-  syncTripDestinationsFromItinerary,
+  mergeDetectedDestinationsWhenMulti,
 } from "../planner/itinerary-destinations";
 import { syncBeachClubPersistedFields } from "../planner/beach-club";
 import {
@@ -180,7 +180,7 @@ export async function getTrip(id: number): Promise<TripWithDays | undefined> {
   const checklist = await listChecklistItems(id);
   const days = await enrichTripDays(await loadDays(id));
   const lookup = await loadEstablishmentCityLookup();
-  const destinationFields = syncTripDestinationsFromItinerary(
+  const destinationFields = mergeDetectedDestinationsWhenMulti(
     { ...trip, days },
     lookup
   );
@@ -223,7 +223,7 @@ export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
         row.days.map((day) => mapDay(day, day.activities.map(mapActivity)))
       );
       const lookup = await loadEstablishmentCityLookup();
-      const destinationFields = syncTripDestinationsFromItinerary(
+      const destinationFields = mergeDetectedDestinationsWhenMulti(
         { ...trip, days },
         lookup
       );
@@ -302,16 +302,9 @@ export async function updateTrip(
   const payload = { ...EMPTY_TRIP_HEADER, ...data };
 
   try {
-    const lookup = await loadEstablishmentCityLookup();
-    const days = existing?.days ?? [];
-    const destinationFields = syncTripDestinationsFromItinerary(
-      { ...payload, days },
-      lookup
-    );
-
     await prisma.trip.update({
       where: { id },
-      data: tripDataFields({ ...payload, ...destinationFields }),
+      data: tripDataFields(payload),
     });
   } catch {
     return undefined;
@@ -573,9 +566,12 @@ export async function updateActivity(
       });
       if (day) {
         const trip = await getTrip(day.trip_id);
-        if (trip) {
+        if (trip?.multi_destination) {
           const lookup = await loadEstablishmentCityLookup();
-          const destinationFields = syncTripDestinationsFromItinerary(trip, lookup);
+          const destinationFields = mergeDetectedDestinationsWhenMulti(
+            trip,
+            lookup
+          );
           await prisma.trip.update({
             where: { id: day.trip_id },
             data: tripDataFields({ ...trip, ...destinationFields }),

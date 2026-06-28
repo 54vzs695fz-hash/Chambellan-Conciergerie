@@ -6,7 +6,6 @@ import {
   resolveDashboardDestinationDisplay,
   tripDestinationFilterValues,
 } from "@/lib/planner/trip-destinations";
-import { applyItineraryDestinationSync } from "@/lib/planner/itinerary-destinations";
 import type { Trip, TripFollowUpStatus, TripPaymentStatus, TripWithDays } from "@/lib/types";
 
 export type CalendarView = "agenda" | "month" | "list";
@@ -113,18 +112,14 @@ export function tripToCalendarProgramme(
   const departure = parseIsoDate(trip.departure_date);
   if (!arrival || !departure) return null;
 
-  const tripForDisplay =
-    "days" in trip && Array.isArray(trip.days)
-      ? applyItineraryDestinationSync(trip as TripWithDays)
-      : trip;
-  const destinationDisplay = resolveDashboardDestinationDisplay(tripForDisplay);
+  const destinationDisplay = resolveDashboardDestinationDisplay(trip);
 
   return {
     id: trip.id,
     clientName: trip.client_name.trim() || "Client",
     destination: destinationDisplay.primary,
     destinationSubtitle: destinationDisplay.secondary,
-    destinationPlaces: tripDestinationFilterValues(tripForDisplay),
+    destinationPlaces: tripDestinationFilterValues(trip),
     arrivalDate: trip.arrival_date,
     departureDate: trip.departure_date,
     guestCount: formatClientGuestCount(trip.tailored_for),
