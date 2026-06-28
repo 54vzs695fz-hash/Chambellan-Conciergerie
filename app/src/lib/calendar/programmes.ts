@@ -6,7 +6,8 @@ import {
   resolveDashboardDestinationDisplay,
   tripDestinationFilterValues,
 } from "@/lib/planner/trip-destinations";
-import type { Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
+import { applyItineraryDestinationSync } from "@/lib/planner/itinerary-destinations";
+import type { Trip, TripFollowUpStatus, TripPaymentStatus, TripWithDays } from "@/lib/types";
 
 export type CalendarView = "agenda" | "month" | "list";
 
@@ -104,20 +105,26 @@ export function daysBetweenInclusive(start: string, end: string): string[] {
   return out;
 }
 
-export function tripToCalendarProgramme(trip: Trip): CalendarProgramme | null {
+export function tripToCalendarProgramme(
+  trip: Trip | TripWithDays
+): CalendarProgramme | null {
   if (!trip.arrival_date || !trip.departure_date) return null;
   const arrival = parseIsoDate(trip.arrival_date);
   const departure = parseIsoDate(trip.departure_date);
   if (!arrival || !departure) return null;
 
-  const destinationDisplay = resolveDashboardDestinationDisplay(trip);
+  const tripForDisplay =
+    "days" in trip && Array.isArray(trip.days)
+      ? applyItineraryDestinationSync(trip as TripWithDays)
+      : trip;
+  const destinationDisplay = resolveDashboardDestinationDisplay(tripForDisplay);
 
   return {
     id: trip.id,
     clientName: trip.client_name.trim() || "Client",
     destination: destinationDisplay.primary,
     destinationSubtitle: destinationDisplay.secondary,
-    destinationPlaces: tripDestinationFilterValues(trip),
+    destinationPlaces: tripDestinationFilterValues(tripForDisplay),
     arrivalDate: trip.arrival_date,
     departureDate: trip.departure_date,
     guestCount: formatClientGuestCount(trip.tailored_for),

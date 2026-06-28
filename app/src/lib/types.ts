@@ -196,6 +196,7 @@ export interface Activity {
   assigned_to: BookingAssignee | string;
   booking_notes: string;
   sort_order: number;
+  establishment_city: string;
 }
 
 export interface TripDay {
@@ -203,6 +204,7 @@ export interface TripDay {
   trip_id: number;
   date: string;
   sections: DaySection[];
+  destination_override: string;
   activities: Activity[];
 }
 

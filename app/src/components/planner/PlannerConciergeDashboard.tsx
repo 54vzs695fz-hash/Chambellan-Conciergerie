@@ -55,6 +55,11 @@ interface DashboardProps {
     value: TripWithDays[K]
   ) => void;
   onDestinationFieldsChange: (fields: TripDestinationState) => void;
+  onDayDestinationOverrideChange: (
+    dayId: number,
+    destinationOverride: string
+  ) => void;
+  onDayDestinationOverrideBlur: () => void;
   onHostChange: (hostName: PlannerHostOption) => void;
   onFieldBlur: () => void;
   onDateFieldChange: (
@@ -143,6 +148,8 @@ export function PlannerConciergeDashboard({
   clients,
   onFieldChange,
   onDestinationFieldsChange,
+  onDayDestinationOverrideChange,
+  onDayDestinationOverrideBlur,
   onHostChange,
   onFieldBlur,
   onDateFieldChange,
@@ -387,6 +394,8 @@ export function PlannerConciergeDashboard({
             onRemoveActivity={onRemoveActivity}
             onUpdateSections={onUpdateSections}
             onReorderActivities={onReorderActivities}
+            onDayDestinationOverrideChange={onDayDestinationOverrideChange}
+            onDayDestinationOverrideBlur={onDayDestinationOverrideBlur}
           />
         </PlannerCollapsibleSection>
 

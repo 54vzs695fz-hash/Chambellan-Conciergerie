@@ -18,7 +18,10 @@ import {
 } from "@/lib/planner/planner-sheet-model";
 import { GuestNameDisplay } from "@/components/planner/GuestNameDisplay";
 import { applyPlannerHeaderFit } from "@/lib/planner/fit-planner-header";
-import { resolvePlannerDestinationHeader } from "@/lib/planner/trip-destinations";
+import {
+  dayDestinationLabelMap,
+  resolveAutoPlannerDestinationHeader,
+} from "@/lib/planner/itinerary-destinations";
 import {
   formatDateRange,
   formatHeaderTravelDates,
@@ -156,7 +159,17 @@ function ClientPeriodBlock({
   );
 }
 
-function ClientDayCard({ day }: { day: TripDay }) {
+function DayDestinationLabel({ label }: { label: string }) {
+  return <p className="lux-day-destination-label">{label}</p>;
+}
+
+function ClientDayCard({
+  day,
+  destinationLabel,
+}: {
+  day: TripDay;
+  destinationLabel?: string;
+}) {
   const sections = getVisibleSections(day);
 
   const orderedSections = sortSectionsByItineraryOrder(
@@ -207,6 +220,9 @@ function ClientDayCard({ day }: { day: TripDay }) {
       <header className="lux-day-card-head">
         <span className="lux-day-card-name">{formatGridDayName(day.date)}</span>
         <span className="lux-day-card-date">{formatLuxuryDayDate(day.date)}</span>
+        {destinationLabel ? (
+          <DayDestinationLabel label={destinationLabel} />
+        ) : null}
       </header>
       {splitTimeline ? (
         <div
@@ -298,7 +314,13 @@ function ConciergeSectionBlock({
   );
 }
 
-function ConciergeDayColumn({ day }: { day: TripDay }) {
+function ConciergeDayColumn({
+  day,
+  destinationLabel,
+}: {
+  day: TripDay;
+  destinationLabel?: string;
+}) {
   const sections = getVisibleSections(day);
 
   const orderedSections = sortSectionsByItineraryOrder(
@@ -340,6 +362,9 @@ function ConciergeDayColumn({ day }: { day: TripDay }) {
       <div className="lux-day-column-head">
         <span className="lux-day-name">{formatGridDayName(day.date)}</span>
         <span className="lux-day-date">{formatGridDayDate(day.date)}</span>
+        {destinationLabel ? (
+          <DayDestinationLabel label={destinationLabel} />
+        ) : null}
       </div>
 
       <div className={`lux-day-section${splitTimeline ? " lux-day-section--timeline" : ""}`}>
@@ -413,7 +438,8 @@ export function PlannerLuxuryDocument({
   const clientGuestCount = formatClientGuestCount(trip.tailored_for);
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
-  const destinationHeader = resolvePlannerDestinationHeader(trip);
+  const destinationHeader = resolveAutoPlannerDestinationHeader(trip);
+  const dayDestinationLabels = dayDestinationLabelMap(trip.days);
   const metaRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -440,10 +466,7 @@ export function PlannerLuxuryDocument({
     trip.tailored_for,
     trip.arrival_date,
     trip.departure_date,
-    trip.destination,
-    trip.multi_destination,
-    trip.destinations,
-    trip.destination_region,
+    trip.days,
     destinationHeader.mainTitle,
     destinationHeader.subtitle,
     variant,
@@ -545,7 +568,11 @@ export function PlannerLuxuryDocument({
                   style={{ "--lux-days": dayCount } as CSSProperties}
                 >
                   {trip.days.map((day) => (
-                    <ClientDayCard key={day.id} day={day} />
+                    <ClientDayCard
+                      key={day.id}
+                      day={day}
+                      destinationLabel={dayDestinationLabels.get(day.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -554,7 +581,11 @@ export function PlannerLuxuryDocument({
                   style={{ "--lux-days": dayCount } as CSSProperties}
                 >
                   {trip.days.map((day) => (
-                    <ConciergeDayColumn key={day.id} day={day} />
+                    <ConciergeDayColumn
+                      key={day.id}
+                      day={day}
+                      destinationLabel={dayDestinationLabels.get(day.id)}
+                    />
                   ))}
                 </div>
               )}

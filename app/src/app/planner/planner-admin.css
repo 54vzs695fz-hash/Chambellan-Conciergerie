@@ -1328,3 +1328,32 @@ body.lux-pdf-export-open {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.adm-day-override {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.adm-auto-destinations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.adm-auto-destinations-value {
+  margin: 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #2a2622;
+}
+
+.adm-auto-destinations-note {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #7a736c;
+}

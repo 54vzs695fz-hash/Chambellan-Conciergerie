@@ -24,6 +24,7 @@ import {
 } from "@/lib/planner/trip-days-sync";
 import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import type { TripDestinationFields as TripDestinationState } from "@/lib/planner/trip-destinations";
+import { applyItineraryDestinationSync } from "@/lib/planner/itinerary-destinations";
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPdfExportModal } from "./PlannerPdfExportModal";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
@@ -46,7 +47,7 @@ function patchActivityInTrip(
   activityId: number,
   fields: Partial<Activity>
 ): TripWithDays {
-  return {
+  return applyItineraryDestinationSync({
     ...prev,
     days: prev.days.map((day) => {
       const index = day.activities.findIndex((a) => a.id === activityId);
@@ -55,7 +56,7 @@ function patchActivityInTrip(
       activities[index] = { ...activities[index], ...fields };
       return { ...day, activities };
     }),
-  };
+  });
 }
 
 export function PlannerEditor({ initialTrip }: Props) {
@@ -156,7 +157,57 @@ export function PlannerEditor({ initialTrip }: Props) {
   };
 
   const updateDestinationFields = (fields: TripDestinationState) => {
-    applyTripUpdate((prev) => ({ ...prev, ...fields }));
+    applyTripUpdate((prev) => applyItineraryDestinationSync({ ...prev, ...fields }));
+  };
+
+  const pendingDayOverrideRef = useRef<{ dayId: number; value: string } | null>(
+    null
+  );
+
+  const updateDayDestinationOverride = (dayId: number, value: string) => {
+    pendingDayOverrideRef.current = { dayId, value };
+    setTrip((prev) =>
+      applyItineraryDestinationSync({
+        ...prev,
+        days: prev.days.map((day) =>
+          day.id === dayId ? { ...day, destination_override: value } : day
+        ),
+      })
+    );
+  };
+
+  const onDayDestinationOverrideBlur = async () => {
+    const pending = pendingDayOverrideRef.current;
+    if (!pending) return;
+    const resolvedId = await resolveDayId(pending.dayId, tripRef.current ?? trip);
+    if (!resolvedId) return;
+    const res = await fetch(`/api/trip-days/${resolvedId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ destination_override: pending.value }),
+    });
+    if (!res.ok) return;
+    const updatedDay = (await res.json()) as TripWithDays["days"][number];
+    const refreshed = await persistTrip(tripRef.current ?? trip);
+    if (refreshed) {
+      setTrip(refreshed);
+      return;
+    }
+    setTrip((prev) =>
+      applyItineraryDestinationSync({
+        ...prev,
+        days: prev.days.map((day) =>
+          day.id === pending.dayId || day.id === resolvedId
+            ? {
+                ...day,
+                id: resolvedId,
+                destination_override:
+                  updatedDay.destination_override ?? pending.value,
+              }
+            : day
+        ),
+      })
+    );
   };
 
   const updateHost = (hostName: PlannerHostOption) => {
@@ -240,18 +291,20 @@ export function PlannerEditor({ initialTrip }: Props) {
     });
     if (!res.ok) return;
     const activity: Activity = await res.json();
-    setTrip((prev) => ({
-      ...prev,
-      days: prev.days.map((d) =>
-        d.id === dayId || d.id === resolvedId
-          ? {
-              ...d,
-              id: resolvedId,
-              activities: [...d.activities, activity],
-            }
-          : d
-      ),
-    }));
+    setTrip((prev) =>
+      applyItineraryDestinationSync({
+        ...prev,
+        days: prev.days.map((d) =>
+          d.id === dayId || d.id === resolvedId
+            ? {
+                ...d,
+                id: resolvedId,
+                activities: [...d.activities, activity],
+              }
+            : d
+        ),
+      })
+    );
   };
 
   const patchActivity = useCallback(
@@ -270,13 +323,15 @@ export function PlannerEditor({ initialTrip }: Props) {
     if (id <= 0) return;
     const res = await fetch(`/api/activities/${id}`, { method: "DELETE" });
     if (!res.ok) return;
-    setTrip((prev) => ({
-      ...prev,
-      days: prev.days.map((d) => ({
-        ...d,
-        activities: d.activities.filter((a) => a.id !== id),
-      })),
-    }));
+    setTrip((prev) =>
+      applyItineraryDestinationSync({
+        ...prev,
+        days: prev.days.map((d) => ({
+          ...d,
+          activities: d.activities.filter((a) => a.id !== id),
+        })),
+      })
+    );
   };
 
   const reorderActivities = async (
@@ -393,7 +448,10 @@ export function PlannerEditor({ initialTrip }: Props) {
           : "";
 
   const previewTrip = clientPreviewTrip ?? trip;
-  const navDestination = resolveDashboardDestinationDisplay(trip, "Weekly planner");
+  const navDestination = resolveDashboardDestinationDisplay(
+    applyItineraryDestinationSync(trip),
+    "Weekly planner"
+  );
 
   return (
     <div className={`lux-studio has-mobile-nav${viewMode === "client" ? " lux-studio--client" : " lux-studio--concierge"}`}>
@@ -488,6 +546,8 @@ export function PlannerEditor({ initialTrip }: Props) {
           clients={clients}
           onFieldChange={updateField}
           onDestinationFieldsChange={updateDestinationFields}
+          onDayDestinationOverrideChange={updateDayDestinationOverride}
+          onDayDestinationOverrideBlur={() => void onDayDestinationOverrideBlur()}
           onHostChange={updateHost}
           onFieldBlur={onFieldBlur}
           onDateFieldChange={onDateFieldChange}

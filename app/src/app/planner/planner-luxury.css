@@ -684,6 +684,17 @@
   margin-top: 0.3rem;
 }
 
+.lux-day-destination-label {
+  margin: 0.28rem 0 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  line-height: 1.25;
+}
+
 .lux-day-section {
   background: rgba(250, 247, 242, 0.45);
   border-radius: 2px;
@@ -1612,6 +1623,11 @@
   text-transform: uppercase;
   color: #5c5650;
   margin-top: 0.1rem;
+}
+
+.lux-day-card-head .lux-day-destination-label {
+  margin-top: 0.22rem;
+  font-size: 0.56rem;
 }
 
 .lux-day-card-body {

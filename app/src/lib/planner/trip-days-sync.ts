@@ -50,6 +50,7 @@ export function syncTripDaysInState(trip: TripWithDays): TripWithDays {
       trip_id: trip.id,
       date,
       sections: DEFAULT_DAY_SECTIONS.map((section) => ({ ...section })),
+      destination_override: "",
       activities: [],
     };
   });

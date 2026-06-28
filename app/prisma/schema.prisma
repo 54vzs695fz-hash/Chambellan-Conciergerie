@@ -91,8 +91,9 @@ model TripDay {
   id         Int        @id @default(autoincrement())
   trip_id    Int
   date       String
-  sections   String     @default("[]")
-  trip       Trip       @relation(fields: [trip_id], references: [id], onDelete: Cascade)
+  sections              String     @default("[]")
+  destination_override  String     @default("")
+  trip                  Trip       @relation(fields: [trip_id], references: [id], onDelete: Cascade)
   activities Activity[]
 
   @@unique([trip_id, date])
@@ -111,9 +112,10 @@ model Activity {
   status         String  @default("confirmed")
   booking_status String  @default("to_request")
   assigned_to    String  @default("")
-  booking_notes  String  @default("")
-  sort_order     Int     @default(0)
-  trip_day       TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
+  booking_notes      String  @default("")
+  sort_order         Int     @default(0)
+  establishment_city String  @default("")
+  trip_day           TripDay @relation(fields: [trip_day_id], references: [id], onDelete: Cascade)
 
   @@index([trip_day_id], map: "idx_activities_day")
   @@map("activities")

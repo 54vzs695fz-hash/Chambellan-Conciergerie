@@ -20,6 +20,7 @@ import {
   formatGridDayName,
   sortActivitiesForSection,
 } from "@/lib/planner-utils";
+import { resolveDayEffectiveDestination } from "@/lib/planner/itinerary-destinations";
 import {
   BOOKING_STATUS_LABELS,
   BOOKING_STATUS_OPTIONS,
@@ -55,6 +56,11 @@ interface Props {
     sectionId: string,
     orderedIds: number[]
   ) => void;
+  onDayDestinationOverrideChange: (
+    dayId: number,
+    destinationOverride: string
+  ) => void;
+  onDayDestinationOverrideBlur: () => void;
 }
 
 const ActivityEditRow = memo(function ActivityEditRow({
@@ -94,6 +100,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
     details,
     activity_type: activityType,
     booking_status: bookingStatus,
+    establishment_city: activity.establishment_city ?? "",
   });
 
   useEffect(() => {
@@ -108,8 +115,9 @@ const ActivityEditRow = memo(function ActivityEditRow({
       details: activity.details,
       activity_type: activity.activity_type,
       booking_status: normalizeBookingStatus(activity.booking_status),
+      establishment_city: activity.establishment_city ?? "",
     };
-  }, [activity.id, activity.time, activity.title, activity.details, activity.activity_type, activity.booking_status]);
+  }, [activity.id, activity.time, activity.title, activity.details, activity.activity_type, activity.booking_status, activity.establishment_city]);
 
   useEffect(() => {
     return () => {
@@ -132,6 +140,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
           details: payload.details,
           activity_type: payload.activity_type,
           booking_status: payload.booking_status,
+          establishment_city: payload.establishment_city,
         },
         { immediate }
       );
@@ -148,7 +157,12 @@ const ActivityEditRow = memo(function ActivityEditRow({
     patch: Partial<
       Pick<
         Activity,
-        "time" | "title" | "details" | "activity_type" | "booking_status"
+        | "time"
+        | "title"
+        | "details"
+        | "activity_type"
+        | "booking_status"
+        | "establishment_city"
       >
     >,
     immediate = false
@@ -236,6 +250,16 @@ const ActivityEditRow = memo(function ActivityEditRow({
             updateDraft({ title: next });
           }}
           onBlur={() => flush(true)}
+          onSelect={({ name, city }) => {
+            setTitle(name);
+            updateDraft(
+              {
+                title: name,
+                establishment_city: city?.trim() ?? "",
+              },
+              true
+            );
+          }}
         />
       ) : category ? (
         <LibraryAutocomplete
@@ -250,7 +274,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
             updateDraft({ title: next });
           }}
           onBlur={() => flush(true)}
-          onSelect={({ name }) => {
+          onSelect={({ name, city }) => {
             void (async () => {
               const params = new URLSearchParams({
                 q: name,
@@ -259,20 +283,23 @@ const ActivityEditRow = memo(function ActivityEditRow({
               });
               const res = await fetch(`/api/establishments?${params}`);
               const data = (await res.json()) as Establishment[];
-              const est =
-                Array.isArray(data) &&
-                (data.find((row) => row.name === name) ?? data[0]);
-              if (!est) return;
-              const autofillDetails = formatEstablishmentDetails(est);
+              const est = Array.isArray(data)
+                ? data.find((row) => row.name === name) ?? data[0]
+                : undefined;
+              const autofillDetails = est
+                ? formatEstablishmentDetails(est)
+                : "";
               const nextDetails = details.trim() ? details : autofillDetails;
-              setTitle(est.name);
+              const nextCity = city?.trim() || est?.city?.trim() || "";
+              setTitle(name);
               if (!details.trim() && autofillDetails) {
                 setDetails(autofillDetails);
               }
               draftRef.current = {
                 ...draftRef.current,
-                title: est.name,
+                title: name,
                 details: nextDetails,
+                establishment_city: nextCity,
               };
               flush(true);
             })();
@@ -333,6 +360,8 @@ const DayEditor = memo(function DayEditor({
   onRemoveActivity,
   onUpdateSections,
   onReorderActivities,
+  onDayDestinationOverrideChange,
+  onDayDestinationOverrideBlur,
 }: {
   day: TripDay;
   destination?: string;
@@ -341,6 +370,8 @@ const DayEditor = memo(function DayEditor({
   onRemoveActivity: Props["onRemoveActivity"];
   onUpdateSections: Props["onUpdateSections"];
   onReorderActivities: Props["onReorderActivities"];
+  onDayDestinationOverrideChange: Props["onDayDestinationOverrideChange"];
+  onDayDestinationOverrideBlur: Props["onDayDestinationOverrideBlur"];
 }) {
   const [sections, setSections] = useState(() => getEditableSections(day));
   const labelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -439,12 +470,31 @@ const DayEditor = memo(function DayEditor({
     );
   };
 
+  const detectedDestination = resolveDayEffectiveDestination(day);
+
   return (
     <div className="adm-day">
       <div className="adm-day-head">
         <span className="adm-day-name">{formatGridDayName(day.date)}</span>
         <span className="adm-day-date">{formatGridDayDate(day.date)}</span>
       </div>
+
+      <label className="adm-day-override">
+        <span className="adm-field-label">Override destination (optional)</span>
+        <input
+          className="adm-input"
+          value={day.destination_override ?? ""}
+          onChange={(event) =>
+            onDayDestinationOverrideChange(day.id, event.target.value)
+          }
+          onBlur={onDayDestinationOverrideBlur}
+          placeholder={
+            detectedDestination
+              ? `Auto: ${detectedDestination}`
+              : "Transfer, yacht, helicopter, villa…"
+          }
+        />
+      </label>
 
       <div className="adm-day-sections">
         {sections.map((section) => {
@@ -590,6 +640,8 @@ export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
   onRemoveActivity,
   onUpdateSections,
   onReorderActivities,
+  onDayDestinationOverrideChange,
+  onDayDestinationOverrideBlur,
 }: Props) {
   if (days.length === 0) {
     return (
@@ -617,6 +669,8 @@ export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
           onRemoveActivity={onRemoveActivity}
           onUpdateSections={onUpdateSections}
           onReorderActivities={onReorderActivities}
+          onDayDestinationOverrideChange={onDayDestinationOverrideChange}
+          onDayDestinationOverrideBlur={onDayDestinationOverrideBlur}
         />
       ))}
     </div>

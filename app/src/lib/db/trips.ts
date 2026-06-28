@@ -30,6 +30,10 @@ import {
 } from "../planner/trip-days-sync";
 import { isUntitledDestination } from "../planner-utils";
 import { normalizeTripDestinations, parseDestinationsJson } from "../planner/trip-destinations";
+import {
+  buildEstablishmentCityLookup,
+  syncTripDestinationsFromItinerary,
+} from "../planner/itinerary-destinations";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -75,6 +79,7 @@ function mapActivity(row: PrismaActivity): Activity {
     assigned_to: row.assigned_to ?? "",
     booking_notes: row.booking_notes ?? "",
     sort_order: row.sort_order,
+    establishment_city: row.establishment_city ?? "",
   };
 }
 
@@ -84,8 +89,55 @@ function mapDay(row: PrismaTripDay, activities: Activity[]): TripDay {
     trip_id: row.trip_id,
     date: row.date,
     sections: parseDaySections(row.sections),
+    destination_override: row.destination_override ?? "",
     activities,
   };
+}
+
+async function loadEstablishmentCityLookup() {
+  const [establishments, events, venues] = await Promise.all([
+    prisma.establishment.findMany({
+      select: { name: true, city: true, category: true },
+    }),
+    prisma.conciergeEvent.findMany({
+      select: { name: true, destination: true },
+    }),
+    prisma.eventVenue.findMany({
+      select: { name: true, destination: true },
+    }),
+  ]);
+
+  return buildEstablishmentCityLookup([
+    ...establishments.map((row) => ({
+      name: row.name,
+      city: row.city,
+      category: row.category,
+    })),
+    ...events.map((row) => ({
+      name: row.name,
+      city: row.destination,
+      category: "event",
+    })),
+    ...venues.map((row) => ({
+      name: row.name,
+      city: row.destination,
+      category: "event",
+    })),
+  ]);
+}
+
+async function enrichTripDays(days: TripDay[]): Promise<TripDay[]> {
+  const lookup = await loadEstablishmentCityLookup();
+  return days.map((day) => ({
+    ...day,
+    activities: day.activities.map((activity) => {
+      if (activity.establishment_city?.trim() || !activity.title?.trim()) {
+        return activity;
+      }
+      const city = lookup(activity.title.trim(), activity.activity_type);
+      return city ? { ...activity, establishment_city: city } : activity;
+    }),
+  }));
 }
 
 async function loadDays(tripId: number): Promise<TripDay[]> {
@@ -110,9 +162,17 @@ export async function getTrip(id: number): Promise<TripWithDays | undefined> {
     : null;
   await ensureChecklistSeeded(id);
   const checklist = await listChecklistItems(id);
+  const days = await enrichTripDays(await loadDays(id));
+  const lookup = await loadEstablishmentCityLookup();
+  const destinationFields = syncTripDestinationsFromItinerary(
+    { ...trip, days },
+    lookup
+  );
+
   return {
     ...trip,
-    days: await loadDays(id),
+    ...destinationFields,
+    days,
     client: client ? mapClientRecord(client) : null,
     checklist,
   };
@@ -140,18 +200,26 @@ export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
     },
   });
 
-  return rows.map((row) => {
-    const trip = mapTrip(row);
-    const days = row.days.map((day) =>
-      mapDay(day, day.activities.map(mapActivity))
-    );
-    return {
-      ...trip,
-      days,
-      client: row.client ? mapClientRecord(row.client) : null,
-      checklist: [],
-    };
-  });
+  return Promise.all(
+    rows.map(async (row) => {
+      const trip = mapTrip(row);
+      const days = await enrichTripDays(
+        row.days.map((day) => mapDay(day, day.activities.map(mapActivity)))
+      );
+      const lookup = await loadEstablishmentCityLookup();
+      const destinationFields = syncTripDestinationsFromItinerary(
+        { ...trip, days },
+        lookup
+      );
+      return {
+        ...trip,
+        ...destinationFields,
+        days,
+        client: row.client ? mapClientRecord(row.client) : null,
+        checklist: [],
+      };
+    })
+  );
 }
 
 const tripDataFields = (
@@ -218,9 +286,16 @@ export async function updateTrip(
   const payload = { ...EMPTY_TRIP_HEADER, ...data };
 
   try {
+    const lookup = await loadEstablishmentCityLookup();
+    const days = existing?.days ?? [];
+    const destinationFields = syncTripDestinationsFromItinerary(
+      { ...payload, days },
+      lookup
+    );
+
     await prisma.trip.update({
       where: { id },
-      data: tripDataFields(payload),
+      data: tripDataFields({ ...payload, ...destinationFields }),
     });
   } catch {
     return undefined;
@@ -270,11 +345,31 @@ export async function updateDaySections(
   dayId: number,
   sections: DaySection[]
 ): Promise<TripDay | undefined> {
-  const serialized = serializeDaySections(sections);
+  return updateTripDay(dayId, { sections });
+}
+
+export async function updateTripDay(
+  dayId: number,
+  data: { sections?: DaySection[]; destination_override?: string }
+): Promise<TripDay | undefined> {
+  const updateData: {
+    sections?: string;
+    destination_override?: string;
+  } = {};
+
+  if (data.sections) {
+    updateData.sections = serializeDaySections(data.sections);
+  }
+  if (data.destination_override !== undefined) {
+    updateData.destination_override = data.destination_override;
+  }
+
+  if (Object.keys(updateData).length === 0) return undefined;
+
   try {
     const row = await prisma.tripDay.update({
       where: { id: dayId },
-      data: { sections: serialized },
+      data: updateData,
       include: {
         activities: { orderBy: [{ sort_order: "asc" }, { time: "asc" }] },
       },
@@ -424,6 +519,7 @@ export async function updateActivity(
       | "assigned_to"
       | "booking_notes"
       | "sort_order"
+      | "establishment_city"
     >
   >
 ): Promise<Activity | undefined> {
@@ -432,7 +528,27 @@ export async function updateActivity(
       where: { id },
       data: fields,
     });
-    return mapActivity(row);
+    const activity = mapActivity(row);
+
+    if (fields.establishment_city !== undefined || fields.title !== undefined) {
+      const day = await prisma.tripDay.findUnique({
+        where: { id: row.trip_day_id },
+        select: { trip_id: true },
+      });
+      if (day) {
+        const trip = await getTrip(day.trip_id);
+        if (trip) {
+          const lookup = await loadEstablishmentCityLookup();
+          const destinationFields = syncTripDestinationsFromItinerary(trip, lookup);
+          await prisma.trip.update({
+            where: { id: day.trip_id },
+            data: tripDataFields({ ...trip, ...destinationFields }),
+          });
+        }
+      }
+    }
+
+    return activity;
   } catch {
     return undefined;
   }
@@ -466,7 +582,10 @@ export async function duplicateTrip(tripId: number): Promise<TripWithDays | unde
     if (day.sections.length) {
       await prisma.tripDay.update({
         where: { id: newDay.id },
-        data: { sections: serializeDaySections(day.sections) },
+        data: {
+          sections: serializeDaySections(day.sections),
+          destination_override: day.destination_override ?? "",
+        },
       });
     }
     for (const act of day.activities) {
@@ -480,6 +599,7 @@ export async function duplicateTrip(tripId: number): Promise<TripWithDays | unde
           details: act.details,
           status: act.status,
           sort_order: act.sort_order,
+          establishment_city: act.establishment_city ?? "",
         },
       });
     }

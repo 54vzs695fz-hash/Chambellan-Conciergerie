@@ -13,6 +13,7 @@ interface SearchResult {
   id: number;
   name: string;
   meta: string;
+  city: string;
   isPriority: boolean;
 }
 
@@ -36,7 +37,7 @@ interface Props {
   destination?: string;
   placeholder?: string;
   className?: string;
-  onSelect?: (item: { name: string; meta?: string }) => void;
+  onSelect?: (item: { name: string; meta?: string; city?: string }) => void;
   allowSaveToLibrary?: boolean;
 }
 
@@ -116,6 +117,7 @@ export function LibraryAutocomplete({
               id: row.id,
               name: row.name,
               meta: [catLabel, loc].filter(Boolean).join(" · "),
+              city: loc,
               isPriority,
             };
           }
@@ -267,7 +269,7 @@ export function LibraryAutocomplete({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onChange(item.name);
-                  onSelect?.({ name: item.name, meta: item.meta });
+                  onSelect?.({ name: item.name, meta: item.meta, city: item.city });
                   setOpen(false);
                 }}
               >
