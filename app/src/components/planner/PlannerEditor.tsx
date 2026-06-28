@@ -22,6 +22,8 @@ import {
   datesMatchRange,
   syncTripDaysInState,
 } from "@/lib/planner/trip-days-sync";
+import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
+import type { TripDestinationFields as TripDestinationState } from "@/lib/planner/trip-destinations";
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPdfExportModal } from "./PlannerPdfExportModal";
 import { PlannerPreviewErrorBoundary } from "./PlannerPreviewErrorBoundary";
@@ -151,6 +153,10 @@ export function PlannerEditor({ initialTrip }: Props) {
     value: TripWithDays[K]
   ) => {
     applyTripUpdate((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateDestinationFields = (fields: TripDestinationState) => {
+    applyTripUpdate((prev) => ({ ...prev, ...fields }));
   };
 
   const updateHost = (hostName: PlannerHostOption) => {
@@ -387,6 +393,7 @@ export function PlannerEditor({ initialTrip }: Props) {
           : "";
 
   const previewTrip = clientPreviewTrip ?? trip;
+  const navDestination = resolveDashboardDestinationDisplay(trip, "Weekly planner");
 
   return (
     <div className={`lux-studio has-mobile-nav${viewMode === "client" ? " lux-studio--client" : " lux-studio--concierge"}`}>
@@ -396,7 +403,10 @@ export function PlannerEditor({ initialTrip }: Props) {
             ← Planners
           </Link>
           {viewMode === "concierge" ? (
-            <PlannerConciergeNav destination={trip.destination} />
+            <PlannerConciergeNav
+              destination={navDestination.primary}
+              destinationSubtitle={navDestination.secondary}
+            />
           ) : null}
           {statusLabel ? (
             <span
@@ -477,6 +487,7 @@ export function PlannerEditor({ initialTrip }: Props) {
           trip={trip}
           clients={clients}
           onFieldChange={updateField}
+          onDestinationFieldsChange={updateDestinationFields}
           onHostChange={updateHost}
           onFieldBlur={onFieldBlur}
           onDateFieldChange={onDateFieldChange}

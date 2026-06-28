@@ -151,6 +151,24 @@
   color: color-mix(in srgb, var(--shell-accent, #a67c3d) 88%, #111);
 }
 
+.dash-home-programme__destination-sub {
+  margin: 0.12rem 0 0;
+  width: 100%;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--shell-text-secondary, #374151);
+}
+
+.dash-follow-up-destination-sub {
+  margin: 0.12rem 0 0;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--shell-text-secondary, #374151);
+}
+
 .dash-home-programme__dates {
   margin: 0;
   width: 100%;
@@ -834,6 +852,15 @@
 .dash-booking-progress-sep {
   margin: 0 0.35rem;
   color: var(--shell-text-muted, #6b7280);
+}
+
+.dash-booking-progress-destination-sub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--shell-text-secondary, #374151);
 }
 
 .dash-booking-progress-dates {

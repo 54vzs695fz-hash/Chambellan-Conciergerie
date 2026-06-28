@@ -11,6 +11,7 @@ import {
   buildTripPaymentSummary,
   paymentRemainingBadgeLabel,
 } from "@/lib/planner/payment-summary";
+import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import {
   isActionRequiredChecklistItem,
   isImportantChecklistItem,
@@ -199,11 +200,17 @@ export function buildDashboardProgrammeFollowUpCards(
         today
       )?.label ?? "";
 
+    const destinationDisplay = resolveDashboardDestinationDisplay(
+      trip,
+      "Programme"
+    );
+
     cards.push({
       key: `programme-${trip.id}`,
       tripId: trip.id,
       client_name: trip.client_name || "Client",
-      destination: trip.destination || "Programme",
+      destination: destinationDisplay.primary,
+      destination_subtitle: destinationDisplay.secondary,
       arrival_date: trip.arrival_date,
       arrival_countdown: countdown,
       follow_up_status: trip.follow_up_status ?? "follow_up",

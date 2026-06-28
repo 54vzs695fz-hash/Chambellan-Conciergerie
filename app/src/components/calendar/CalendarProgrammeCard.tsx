@@ -72,6 +72,11 @@ export function CalendarProgrammeCard({
             <p className="cal-prog-card-destination font-serif text-gold tracking-wide">
               {programme.destination}
             </p>
+            {programme.destinationSubtitle ? (
+              <p className="cal-prog-card-destination-sub">
+                {programme.destinationSubtitle}
+              </p>
+            ) : null}
             <p className="cal-prog-card-dates">
               {formatDateRange(programme.arrivalDate, programme.departureDate)}
               {programme.guestCount ? ` · ${programme.guestCount}` : ""}
@@ -92,6 +97,11 @@ export function CalendarProgrammeCard({
                 <p className="cal-prog-card-destination font-serif text-gold tracking-wide">
                   {programme.destination}
                 </p>
+                {programme.destinationSubtitle ? (
+                  <p className="cal-prog-card-destination-sub">
+                    {programme.destinationSubtitle}
+                  </p>
+                ) : null}
               </div>
               {badges}
             </div>

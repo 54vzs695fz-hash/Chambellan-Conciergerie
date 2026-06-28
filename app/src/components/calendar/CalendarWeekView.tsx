@@ -89,6 +89,7 @@ export function CalendarWeekView({
                 >
                   <span>
                     {p.clientName} · {p.destination}
+                    {p.destinationSubtitle ? ` · ${p.destinationSubtitle}` : ""}
                   </span>
                   <CalendarProgrammeBadges
                     programme={p}

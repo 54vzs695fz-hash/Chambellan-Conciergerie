@@ -1475,6 +1475,42 @@
   font-size: 0.88em;
 }
 
+.lux-destination-sub {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(0.72rem, 1.6vw, 0.92rem);
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  margin: 0.2rem 0 0;
+  line-height: 1.35;
+}
+
+.lux-header--travel .lux-destination-sub {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.lux-header--travel .lux-destination-sub.lux-header-fit--tight {
+  letter-spacing: 0.12em;
+}
+
+.lux-header--travel .lux-destination-sub.lux-header-fit--compact {
+  letter-spacing: 0.1em;
+  font-size: 0.95em;
+}
+
+.lux-header--travel .lux-destination-sub.lux-header-fit--min {
+  letter-spacing: 0.08em;
+  font-size: 0.88em;
+}
+
+.lux-header--travel .lux-destination-sub.lux-header-fit--wrap {
+  white-space: normal;
+}
+
 .lux-header-dates {
   text-align: left;
   padding-top: 0.15rem;

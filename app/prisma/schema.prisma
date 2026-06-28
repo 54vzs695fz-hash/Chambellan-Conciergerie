@@ -28,6 +28,9 @@ model Trip {
   client_id                Int?
   client_name              String    @default("")
   destination              String    @default("")
+  multi_destination        Boolean   @default(false)
+  destinations             Json      @default("[]")
+  destination_region       String    @default("")
   arrival_date             String    @default("")
   departure_date           String    @default("")
   hotel                    String    @default("")

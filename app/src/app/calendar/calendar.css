@@ -1424,6 +1424,16 @@
   color: color-mix(in srgb, var(--section-color, #3e6fa8) 68%, var(--shell-text, #111111));
 }
 
+.cal-prog-card-destination-sub,
+.cal-side-destination-sub,
+.cal-fu-programme-sub {
+  margin: 0.12rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--shell-text-secondary, #374151);
+}
+
 .cal-prog-card-dates {
   margin: 0.4rem 0 0;
   font-size: 0.72rem;

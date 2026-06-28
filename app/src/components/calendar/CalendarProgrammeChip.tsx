@@ -32,7 +32,7 @@ export function CalendarProgrammeChip({
         event.stopPropagation();
         onClick();
       }}
-      title={`${programme.clientName} · ${programme.destination}`}
+      title={`${programme.clientName} · ${programme.destination}${programme.destinationSubtitle ? ` · ${programme.destinationSubtitle}` : ""}`}
     >
       <span className="cal-chip-dots" aria-hidden>
         <span

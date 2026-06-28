@@ -2,6 +2,10 @@ import { formatClientGuestCount } from "@/lib/planner/planner-sheet-model";
 import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
 import { needsPaymentWarning } from "@/lib/planner/payment-status";
 import { paymentRemainingBadgeLabel } from "@/lib/planner/payment-summary";
+import {
+  resolveDashboardDestinationDisplay,
+  tripDestinationFilterValues,
+} from "@/lib/planner/trip-destinations";
 import type { Trip, TripFollowUpStatus, TripPaymentStatus } from "@/lib/types";
 
 export type CalendarView = "agenda" | "month" | "list";
@@ -10,6 +14,8 @@ export interface CalendarProgramme {
   id: number;
   clientName: string;
   destination: string;
+  destinationSubtitle: string | null;
+  destinationPlaces: string[];
   arrivalDate: string;
   departureDate: string;
   guestCount: string | null;
@@ -104,10 +110,14 @@ export function tripToCalendarProgramme(trip: Trip): CalendarProgramme | null {
   const departure = parseIsoDate(trip.departure_date);
   if (!arrival || !departure) return null;
 
+  const destinationDisplay = resolveDashboardDestinationDisplay(trip);
+
   return {
     id: trip.id,
     clientName: trip.client_name.trim() || "Client",
-    destination: trip.destination.trim() || "Untitled destination",
+    destination: destinationDisplay.primary,
+    destinationSubtitle: destinationDisplay.secondary,
+    destinationPlaces: tripDestinationFilterValues(trip),
     arrivalDate: trip.arrival_date,
     departureDate: trip.departure_date,
     guestCount: formatClientGuestCount(trip.tailored_for),
@@ -175,7 +185,13 @@ export function filterProgrammes(
   today = startOfDay(new Date())
 ): CalendarProgramme[] {
   return programmes.filter((p) => {
-    if (filters.destination && p.destination !== filters.destination) return false;
+    if (filters.destination) {
+      const matchesDestination =
+        p.destination === filters.destination ||
+        p.destinationSubtitle === filters.destination ||
+        p.destinationPlaces.includes(filters.destination);
+      if (!matchesDestination) return false;
+    }
     if (
       filters.client &&
       !p.clientName.toLowerCase().includes(filters.client.toLowerCase())
@@ -212,9 +228,12 @@ export function filterProgrammes(
 }
 
 export function uniqueDestinations(programmes: CalendarProgramme[]): string[] {
-  return [...new Set(programmes.map((p) => p.destination))].sort((a, b) =>
-    a.localeCompare(b)
-  );
+  const values = new Set<string>();
+  for (const programme of programmes) {
+    values.add(programme.destination);
+    programme.destinationPlaces.forEach((place) => values.add(place));
+  }
+  return [...values].sort((a, b) => a.localeCompare(b));
 }
 
 export function uniqueClients(programmes: CalendarProgramme[]): string[] {

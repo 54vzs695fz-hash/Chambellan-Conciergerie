@@ -52,6 +52,7 @@ export function CalendarFollowUpPanel({
                   onClick={() => onSelectProgramme(p)}
                 >
                   {p.clientName} · {p.destination}
+                  {p.destinationSubtitle ? ` · ${p.destinationSubtitle}` : ""}
                 </button>
                 <span className="cal-programme-badges">
                   <ProgrammeStatusBadge

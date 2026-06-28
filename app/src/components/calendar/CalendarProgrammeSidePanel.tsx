@@ -93,6 +93,9 @@ function ProgrammeHero({
           <h2 className="cal-side-title font-serif text-gold tracking-wide">
             {programme.destination}
           </h2>
+          {programme.destinationSubtitle ? (
+            <p className="cal-side-destination-sub">{programme.destinationSubtitle}</p>
+          ) : null}
           <p className="cal-side-meta">
             {formatDateRange(programme.arrivalDate, programme.departureDate)}
             {programme.guestCount ? ` · ${programme.guestCount}` : ""}

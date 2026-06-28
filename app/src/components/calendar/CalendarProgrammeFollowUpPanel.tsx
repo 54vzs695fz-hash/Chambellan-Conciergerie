@@ -569,6 +569,9 @@ export function CalendarProgrammeFollowUpPanel({
             <p className="cal-fu-programme font-serif text-gold tracking-wide">
               {programme.destination}
             </p>
+            {programme.destinationSubtitle ? (
+              <p className="cal-fu-programme-sub">{programme.destinationSubtitle}</p>
+            ) : null}
             <p className="cal-fu-meta">
               {programme.clientName}
               {programme.guestCount ? ` · ${programme.guestCount}` : ""}

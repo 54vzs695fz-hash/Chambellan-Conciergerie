@@ -18,6 +18,7 @@ import {
 } from "@/lib/planner/planner-sheet-model";
 import { GuestNameDisplay } from "@/components/planner/GuestNameDisplay";
 import { applyPlannerHeaderFit } from "@/lib/planner/fit-planner-header";
+import { resolvePlannerDestinationHeader } from "@/lib/planner/trip-destinations";
 import {
   formatDateRange,
   formatHeaderTravelDates,
@@ -412,6 +413,7 @@ export function PlannerLuxuryDocument({
   const clientGuestCount = formatClientGuestCount(trip.tailored_for);
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
+  const destinationHeader = resolvePlannerDestinationHeader(trip);
   const metaRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -439,6 +441,11 @@ export function PlannerLuxuryDocument({
     trip.arrival_date,
     trip.departure_date,
     trip.destination,
+    trip.multi_destination,
+    trip.destinations,
+    trip.destination_region,
+    destinationHeader.mainTitle,
+    destinationHeader.subtitle,
     variant,
     showHeaderDates,
     showClientIdentity,
@@ -478,8 +485,11 @@ export function PlannerLuxuryDocument({
             ) : null}
           </div>
           <div className="lux-meta-center">
-            {trip.destination?.trim() ? (
-              <h1 className="lux-destination">{trip.destination}</h1>
+            {destinationHeader.mainTitle ? (
+              <h1 className="lux-destination">{destinationHeader.mainTitle}</h1>
+            ) : null}
+            {destinationHeader.subtitle ? (
+              <p className="lux-destination-sub">{destinationHeader.subtitle}</p>
             ) : null}
             <p className="lux-subtitle">{PLANNER_DOCUMENT_SUBTITLE}</p>
             {!isClientItinerary &&

@@ -29,6 +29,7 @@ import {
   serializeDefaultDaySections,
 } from "../planner/trip-days-sync";
 import { isUntitledDestination } from "../planner-utils";
+import { normalizeTripDestinations, parseDestinationsJson } from "../planner/trip-destinations";
 import type {
   Activity as PrismaActivity,
   Trip as PrismaTrip,
@@ -36,9 +37,17 @@ import type {
 } from "@/generated/prisma/client";
 
 function mapTrip(row: PrismaTrip): Trip {
+  const destinationFields = normalizeTripDestinations({
+    multi_destination: row.multi_destination,
+    destinations: parseDestinationsJson(row.destinations),
+    destination: row.destination,
+    destination_region: row.destination_region,
+  });
+
   return {
     ...EMPTY_TRIP_HEADER,
     ...row,
+    ...destinationFields,
     client_id: row.client_id,
     follow_up_status:
       (row.follow_up_status as Trip["follow_up_status"]) || "follow_up",
@@ -147,10 +156,16 @@ export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
 
 const tripDataFields = (
   payload: Omit<Trip, "id" | "created_at" | "updated_at">
-) => ({
+) => {
+  const destinationFields = normalizeTripDestinations(payload);
+
+  return {
   client_id: payload.client_id,
   client_name: payload.client_name,
-  destination: payload.destination,
+  destination: destinationFields.destination,
+  multi_destination: destinationFields.multi_destination,
+  destinations: destinationFields.destinations,
+  destination_region: destinationFields.destination_region,
   arrival_date: payload.arrival_date,
   departure_date: payload.departure_date,
   hotel: payload.hotel,
@@ -181,7 +196,8 @@ const tripDataFields = (
   amount_received: payload.amount_received,
   payment_method: payload.payment_method,
   payment_notes: payload.payment_notes,
-});
+};
+};
 
 export async function createTrip(
   data: Partial<Omit<Trip, "id" | "created_at" | "updated_at">> = {}

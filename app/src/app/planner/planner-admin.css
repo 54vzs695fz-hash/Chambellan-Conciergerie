@@ -1249,3 +1249,82 @@ body.lux-pdf-export-open {
     font-size: 16px;
   }
 }
+
+.adm-field--full {
+  grid-column: 1 / -1;
+}
+
+.adm-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.78rem;
+  color: #2a2622;
+  cursor: pointer;
+}
+
+.adm-checkbox input {
+  width: 0.95rem;
+  height: 0.95rem;
+  accent-color: #9a7b4f;
+}
+
+.adm-multi-destinations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.adm-multi-destinations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.adm-multi-destination-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.adm-multi-destination-row .adm-input {
+  flex: 1;
+}
+
+.adm-multi-destination-remove,
+.adm-multi-destination-add {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 0.15rem 0;
+  font-size: 0.72rem;
+  color: #9a7b4f;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.adm-multi-destination-remove:hover,
+.adm-multi-destination-add:hover {
+  color: #7a623f;
+}
+
+.adm-nav-destination-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.adm-nav-destination-sub {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: #7a736c;
+  line-height: 1.3;
+  max-width: 12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

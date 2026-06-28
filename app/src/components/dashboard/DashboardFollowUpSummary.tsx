@@ -75,6 +75,11 @@ export function DashboardFollowUpSummary({
                       <span className="dash-follow-up-sep">·</span>
                       {programme.destination}
                     </p>
+                    {programme.destination_subtitle ? (
+                      <p className="dash-follow-up-destination-sub">
+                        {programme.destination_subtitle}
+                      </p>
+                    ) : null}
                     {programme.arrival_countdown ? (
                       <p className="dash-follow-up-countdown">
                         {programme.arrival_countdown}

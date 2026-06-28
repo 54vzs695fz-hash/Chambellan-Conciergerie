@@ -316,6 +316,11 @@ function BookingProgressPlannerCard({
                 <span className="dash-booking-progress-sep">·</span>
                 {planner.destination}
               </span>
+              {planner.destination_subtitle ? (
+                <span className="dash-booking-progress-destination-sub">
+                  {planner.destination_subtitle}
+                </span>
+              ) : null}
               <span className="dash-booking-progress-dates">{planner.dates}</span>
               {planner.guest_count ? (
                 <span className="dash-bp-planner-guests">{planner.guest_count}</span>

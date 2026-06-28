@@ -23,7 +23,10 @@ export function destinationShortLabel(destination: string, maxLen = 14): string 
 }
 
 export function programmeChipLabel(programme: CalendarProgramme): string {
-  return `${shortClientName(programme.clientName)} · ${destinationShortLabel(programme.destination)}`;
+  const destinationLabel = programme.destinationSubtitle
+    ? `${destinationShortLabel(programme.destination)} · ${destinationShortLabel(programme.destinationSubtitle, 18)}`
+    : destinationShortLabel(programme.destination);
+  return `${shortClientName(programme.clientName)} · ${destinationLabel}`;
 }
 
 export const PROGRAMME_STATUS_DOT: Record<TripFollowUpStatus, string> = {

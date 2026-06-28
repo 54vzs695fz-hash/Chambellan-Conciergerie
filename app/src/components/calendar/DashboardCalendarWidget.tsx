@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DestinationDisplayLabel } from "@/components/planner/DestinationDisplayLabel";
 import { formatDateRange } from "@/lib/planner-utils";
 import { PaymentStatusBadge } from "@/components/status/PaymentStatusBadge";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
@@ -61,9 +62,10 @@ export function DashboardCalendarWidget({ trips }: Props) {
             >
               <div className="dash-home-programme">
                 <p className="dash-home-programme__client">{p.clientName}</p>
-                <p className="dash-home-programme__destination">
-                  {p.destination}
-                </p>
+                <DestinationDisplayLabel
+                  primary={p.destination}
+                  secondary={p.destinationSubtitle}
+                />
                 <p className="dash-home-programme__dates">
                   {formatDateRange(p.arrivalDate, p.departureDate)}
                 </p>

@@ -198,6 +198,13 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
         if (destination && centerWidth > 0) {
           applyFit(destination, centerWidth, false);
         }
+
+        const destinationSub = centerCol
+          ? centerCol.querySelector(".lux-destination-sub")
+          : null;
+        if (destinationSub && centerWidth > 0) {
+          applyFit(destinationSub, centerWidth, true);
+        }
       });
     }
 

@@ -9,6 +9,8 @@ import {
 } from "@/lib/dashboard/recent-planners";
 import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
 import { paymentRemainingBadgeLabel } from "@/lib/planner/payment-summary";
+import { DestinationDisplayLabel } from "@/components/planner/DestinationDisplayLabel";
+import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import { formatDateRange } from "@/lib/planner-utils";
 import type { Trip } from "@/lib/types";
 
@@ -31,6 +33,7 @@ function RecentPlannerCard({
   phase: RecentPlannerPhase;
 }) {
   const paymentStatus = normalizeTripPaymentStatus(trip.payment_status);
+  const destinationDisplay = resolveDashboardDestinationDisplay(trip, "Untitled");
 
   return (
     <li>
@@ -43,9 +46,10 @@ function RecentPlannerCard({
             <p className="dash-home-programme__client">
               {trip.client_name.trim() || "Client"}
             </p>
-            <p className="dash-home-programme__destination">
-              {trip.destination.trim() || "Untitled"}
-            </p>
+            <DestinationDisplayLabel
+              primary={destinationDisplay.primary}
+              secondary={destinationDisplay.secondary}
+            />
             <p className="dash-home-programme__dates">
               {formatDateRange(trip.arrival_date, trip.departure_date)}
             </p>

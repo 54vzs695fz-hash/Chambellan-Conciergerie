@@ -39,9 +39,12 @@ import {
   type EstablishmentCategory,
 } from "@/lib/establishments/categories";
 import { teamAutofillFromEstablishment } from "@/lib/establishments/autofill";
+import { resolveLibraryDestinationPrioritize } from "@/lib/planner/trip-destinations";
+import type { TripDestinationFields as TripDestinationState } from "@/lib/planner/trip-destinations";
 import { LibraryAutocomplete } from "@/components/library/LibraryAutocomplete";
 import { PlannerActivitiesEditor } from "./PlannerActivitiesEditor";
 import { PlannerCollapsibleSection } from "./PlannerCollapsibleSection";
+import { TripDestinationFields } from "./TripDestinationFields";
 import { ReservationsStatusPanel } from "@/components/reservations/ReservationsStatusPanel";
 
 interface DashboardProps {
@@ -51,6 +54,7 @@ interface DashboardProps {
     key: K,
     value: TripWithDays[K]
   ) => void;
+  onDestinationFieldsChange: (fields: TripDestinationState) => void;
   onHostChange: (hostName: PlannerHostOption) => void;
   onFieldBlur: () => void;
   onDateFieldChange: (
@@ -138,6 +142,7 @@ export function PlannerConciergeDashboard({
   trip,
   clients,
   onFieldChange,
+  onDestinationFieldsChange,
   onHostChange,
   onFieldBlur,
   onDateFieldChange,
@@ -150,6 +155,8 @@ export function PlannerConciergeDashboard({
   onUpdateSections,
   onReorderActivities,
 }: DashboardProps) {
+  const libraryDestination = resolveLibraryDestinationPrioritize(trip);
+
   return (
     <div className="adm-root">
       <div className="adm-content">
@@ -282,15 +289,11 @@ export function PlannerConciergeDashboard({
 
         <PlannerCollapsibleSection title="Travel Information">
           <div className="adm-grid adm-grid--2">
-            <Field label="Destination">
-              <input
-                className="adm-input"
-                value={trip.destination}
-                onChange={(e) => onFieldChange("destination", e.target.value)}
-                onBlur={onFieldBlur}
-                placeholder="Destination"
-              />
-            </Field>
+            <TripDestinationFields
+              trip={trip}
+              onDestinationFieldsChange={onDestinationFieldsChange}
+              onBlur={onFieldBlur}
+            />
             <div className="adm-field">
               <span className="adm-field-label">Travel dates</span>
               <div className="adm-dates-row">
@@ -327,7 +330,7 @@ export function PlannerConciergeDashboard({
                     tripField={field.tripField}
                     value={String(trip[field.tripField] ?? "")}
                     category={category}
-                    destination={trip.destination}
+                    destination={libraryDestination}
                     onChange={onFieldChange}
                     onBlur={onFieldBlur}
                   />
@@ -356,7 +359,7 @@ export function PlannerConciergeDashboard({
               <LibraryAutocomplete
                 source="event"
                 value={String(trip.event_booking ?? "")}
-                destination={trip.destination}
+                destination={libraryDestination}
                 placeholder="Event — search or type freely"
                 onChange={(next) => onFieldChange("event_booking", next)}
                 onBlur={onFieldBlur}
@@ -366,7 +369,7 @@ export function PlannerConciergeDashboard({
               <LibraryAutocomplete
                 source="event_venue"
                 value={String(trip.event_venue ?? "")}
-                destination={trip.destination}
+                destination={libraryDestination}
                 placeholder="Event venue — search or type freely"
                 onChange={(next) => onFieldChange("event_venue", next)}
                 onBlur={onFieldBlur}
@@ -378,7 +381,7 @@ export function PlannerConciergeDashboard({
         <PlannerCollapsibleSection title="Activities" wide defaultOpen>
           <PlannerActivitiesEditor
             days={trip.days}
-            destination={trip.destination}
+            destination={libraryDestination}
             onAddActivity={onAddActivity}
             onPatchActivity={onPatchActivity}
             onRemoveActivity={onRemoveActivity}
@@ -451,7 +454,7 @@ export function PlannerConciergeDashboard({
                       source="establishment"
                       value={String(trip[row.nameField] ?? "")}
                       establishmentCategory={category}
-                      destination={trip.destination}
+                      destination={libraryDestination}
                       placeholder="Name / Contact — search or type freely"
                       onChange={(next) => onFieldChange(row.nameField, next)}
                       onBlur={onFieldBlur}
@@ -539,8 +542,10 @@ export function PlannerConciergeDashboard({
 
 export function PlannerConciergeNav({
   destination,
+  destinationSubtitle,
 }: {
   destination: string;
+  destinationSubtitle?: string | null;
 }) {
   return (
     <div className="adm-nav-brand">
@@ -552,8 +557,13 @@ export function PlannerConciergeNav({
         className="adm-nav-logo"
         unoptimized
       />
-      <span className="adm-nav-destination">
-        {destination?.trim() || "Weekly planner"}
+      <span className="adm-nav-destination-wrap">
+        <span className="adm-nav-destination">
+          {destination?.trim() || "Weekly planner"}
+        </span>
+        {destinationSubtitle ? (
+          <span className="adm-nav-destination-sub">{destinationSubtitle}</span>
+        ) : null}
       </span>
     </div>
   );

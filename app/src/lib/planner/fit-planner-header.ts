@@ -83,6 +83,13 @@ export function applyPlannerHeaderFit(meta: HTMLElement | null) {
   if (destination && centerWidth > 0) {
     applyHeaderFitToElement(destination, centerWidth, false);
   }
+
+  const destinationSub = centerCol?.querySelector<HTMLElement>(
+    ".lux-destination-sub"
+  );
+  if (destinationSub && centerWidth > 0) {
+    applyHeaderFitToElement(destinationSub, centerWidth, true);
+  }
 }
 
 export { clearHeaderFit, applyHeaderFitToElement, columnInnerWidth };

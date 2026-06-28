@@ -110,6 +110,7 @@ export interface DashboardProgrammeFollowUpCard {
   tripId: number;
   client_name: string;
   destination: string;
+  destination_subtitle: string | null;
   arrival_date: string;
   arrival_countdown: string;
   follow_up_status: TripFollowUpStatus;
@@ -140,6 +141,9 @@ export interface Trip {
   client_id: number | null;
   client_name: string;
   destination: string;
+  multi_destination: boolean;
+  destinations: string[];
+  destination_region: string;
   arrival_date: string;
   departure_date: string;
   /** @deprecated legacy — use driver_name */
@@ -356,6 +360,9 @@ export const EMPTY_TRIP_HEADER: Omit<
   client_id: null,
   client_name: "",
   destination: "",
+  multi_destination: false,
+  destinations: [],
+  destination_region: "",
   arrival_date: "",
   departure_date: "",
   hotel: "",

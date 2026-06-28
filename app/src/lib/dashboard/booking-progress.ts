@@ -6,6 +6,7 @@ import {
   type PlannerBookingSummary,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
+import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import { normalizeTripPaymentStatus } from "@/lib/planner/payment-status";
 import { paymentRemainingBadgeLabel } from "@/lib/planner/payment-summary";
 import { formatDateRange, isUntitledDestination } from "@/lib/planner-utils";
@@ -24,6 +25,7 @@ export interface BookingProgressPlanner {
   tripId: number;
   client_name: string;
   destination: string;
+  destination_subtitle: string | null;
   dates: string;
   arrival_date: string;
   guest_count: string | null;
@@ -109,11 +111,13 @@ export function buildBookingProgressPlanner(
 ): BookingProgressPlanner {
   const paymentStatus = normalizeTripPaymentStatus(trip.payment_status);
   const items = buildReservationStatusItems(trip.days);
+  const destinationDisplay = resolveDashboardDestinationDisplay(trip, "Untitled");
 
   return {
     tripId: trip.id,
     client_name: trip.client_name.trim() || "Client",
-    destination: trip.destination.trim() || "Untitled",
+    destination: destinationDisplay.primary,
+    destination_subtitle: destinationDisplay.secondary,
     dates: formatDateRange(trip.arrival_date, trip.departure_date),
     arrival_date: trip.arrival_date,
     guest_count: formatBookingProgressGuestLabel(trip.tailored_for),
