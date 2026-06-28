@@ -811,6 +811,121 @@
   border-top: 1px solid rgba(229, 221, 210, 0.9);
 }
 
+/* Client stay history */
+.client-stay-history {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(229, 221, 210, 0.9);
+}
+
+.client-stay-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.client-stay-history-card {
+  padding: 1rem 1.1rem;
+}
+
+.client-stay-history-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .client-stay-history-card-head {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+}
+
+.client-stay-history-destination {
+  font-size: 1.05rem;
+}
+
+.client-stay-history-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+  min-width: 0;
+}
+
+.client-stay-history-metric-label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c564f;
+  margin-bottom: 0.15rem;
+}
+
+.client-stay-history-section + .client-stay-history-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed rgba(229, 221, 210, 0.95);
+}
+
+.client-stay-history-subtitle {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5c564f;
+  margin-bottom: 0.5rem;
+}
+
+.client-stay-history-establishments {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.client-stay-history-establishments li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.client-stay-history-est-name {
+  font-size: 0.92rem;
+}
+
+.client-stay-history-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.client-stay-history-tags li {
+  padding: 0.35rem 0.65rem;
+  background: #f3ede4;
+  border-radius: 4px;
+  font-size: 0.82rem;
+}
+
+.client-stay-history-vip-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.client-stay-history-vip-input {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
 .crm-delete-dialog {
   max-width: 24rem;
 }

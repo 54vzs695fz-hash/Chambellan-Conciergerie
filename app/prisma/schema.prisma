@@ -191,6 +191,7 @@ model StayClosing {
   id         Int                @id @default(autoincrement())
   trip_id    Int                @unique
   closed_at  DateTime           @default(now())
+  vip_notes  String             @default("")
   created_at DateTime           @default(now())
   updated_at DateTime           @updatedAt
   trip       Trip               @relation(fields: [trip_id], references: [id], onDelete: Cascade)

@@ -50,6 +50,7 @@ function mapStayClosing(
     id: row.id,
     trip_id: row.trip_id,
     closed_at: row.closed_at.toISOString(),
+    vip_notes: row.vip_notes,
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
     entries: row.entries.map(mapEntry),

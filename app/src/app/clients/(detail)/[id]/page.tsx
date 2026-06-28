@@ -3,8 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { ClientDeleteButton } from "@/components/crm/ClientDeleteButton";
 import { ClientForm } from "@/components/crm/ClientForm";
 import { ClientRelationshipsSection } from "@/components/crm/ClientRelationshipsSection";
+import { ClientStayHistorySection } from "@/components/crm/ClientStayHistorySection";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
 import { listClientRelationships } from "@/lib/db/client-relationships";
+import { getClientStayHistory } from "@/lib/db/client-stay-history";
 import {
   getClient,
   getClientDestinations,
@@ -58,6 +60,8 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   const trips = await getClientTripHistory(clientId);
+  const stayHistory = await getClientStayHistory(clientId);
+  const activeTrips = trips.filter((trip) => trip.follow_up_status !== "completed");
   const destinations = await getClientDestinations(clientId);
   const linkedPlannerCount = await getClientLinkedTripCount(clientId);
   const relationships = await listClientRelationships(clientId);
@@ -68,7 +72,7 @@ export default async function ClientDetailPage({
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
           <h1 className="font-serif text-2xl tracking-wide">{client.full_name}</h1>
-          <p className="text-sm text-muted mt-1">Client profile & trip history</p>
+          <p className="text-sm text-muted mt-1">Client profile & stay history</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <form
@@ -139,12 +143,12 @@ export default async function ClientDetailPage({
           </section>
 
           <section>
-            <h2 className="section-title mb-4">Trip history</h2>
-            {trips.length === 0 ? (
-              <p className="text-sm text-muted">No planners linked yet.</p>
+            <h2 className="section-title mb-4">Active planners</h2>
+            {activeTrips.length === 0 ? (
+              <p className="text-sm text-muted">No active planners linked.</p>
             ) : (
               <ul className="space-y-2">
-                {trips.map((t) => (
+                {activeTrips.map((t) => (
                   <li key={t.id}>
                     <Link
                       href={`/planner/${t.id}`}
@@ -178,6 +182,8 @@ export default async function ClientDetailPage({
           </section>
         </div>
       </div>
+
+      <ClientStayHistorySection initialHistory={stayHistory} />
     </div>
   );
 }

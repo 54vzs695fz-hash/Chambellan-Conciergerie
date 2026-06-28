@@ -274,9 +274,35 @@ export interface StayClosing {
   id: number;
   trip_id: number;
   closed_at: string;
+  vip_notes: string;
   created_at: string;
   updated_at: string;
   entries: StayClosingEntry[];
+}
+
+export interface ClientStayHistoryEstablishment {
+  name: string;
+  approximate_total_bill: string;
+  commission: string;
+  commission_applied: boolean;
+}
+
+export interface ClientStayHistoryItem {
+  trip_id: number;
+  stay_closing_id: number | null;
+  destination: string;
+  destination_region: string;
+  arrival_date: string;
+  departure_date: string;
+  closed_at: string | null;
+  visited_establishments: string[];
+  establishments: ClientStayHistoryEstablishment[];
+  approximate_stay_spend: number | null;
+  approximate_stay_spend_label: string;
+  commission_generated: number | null;
+  commission_generated_label: string;
+  vip_notes: string;
+  has_closing_data: boolean;
 }
 
 export interface StayClosingEntryInput {
