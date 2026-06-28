@@ -23,9 +23,7 @@ interface FormRow {
   commission: EstablishmentCommissionFields;
   commission_summary: string;
   show_premium_drinks: boolean;
-  show_food: boolean;
   approximate_total_bill: string;
-  food_amount: string;
   premium_drinks_amount: string;
   internal_notes: string;
   commission_result: ReturnType<typeof calculateStayClosingCommission>;
@@ -71,7 +69,7 @@ function buildFormRows(preview: PreviewResponse): FormRow[] {
 
     const amounts = {
       approximate_total_bill: saved?.approximate_total_bill ?? "",
-      food_amount: saved?.food_amount ?? "",
+      food_amount: "",
       premium_drinks_amount: saved?.premium_drinks_amount ?? "",
     };
 
@@ -85,9 +83,7 @@ function buildFormRows(preview: PreviewResponse): FormRow[] {
       commission: visited.commission,
       commission_summary: formatEstablishmentCommissionSummary(visited.commission),
       show_premium_drinks: visited.field_requirements.show_premium_drinks,
-      show_food: visited.field_requirements.show_food,
       approximate_total_bill: amounts.approximate_total_bill,
-      food_amount: amounts.food_amount,
       premium_drinks_amount: amounts.premium_drinks_amount,
       internal_notes: saved?.internal_notes ?? "",
       commission_result: calculateStayClosingCommission(
@@ -103,7 +99,7 @@ function buildFormRows(preview: PreviewResponse): FormRow[] {
 function recalculateRow(row: FormRow): FormRow {
   const amounts = {
     approximate_total_bill: row.approximate_total_bill,
-    food_amount: row.food_amount,
+    food_amount: "",
     premium_drinks_amount: row.premium_drinks_amount,
   };
   return {
@@ -158,7 +154,6 @@ export function StayClosingDialog({ tripId, open, onClose, onSaved }: Props) {
       Pick<
         FormRow,
         | "approximate_total_bill"
-        | "food_amount"
         | "premium_drinks_amount"
         | "internal_notes"
       >
@@ -186,7 +181,7 @@ export function StayClosingDialog({ tripId, open, onClose, onSaved }: Props) {
             establishment_name: row.establishment_name,
             activity_ids: row.activity_ids,
             approximate_total_bill: row.approximate_total_bill,
-            food_amount: row.food_amount,
+            food_amount: "",
             premium_drinks_amount: row.premium_drinks_amount,
             internal_notes: row.internal_notes,
           })),
@@ -307,26 +302,8 @@ export function StayClosingDialog({ tripId, open, onClose, onSaved }: Props) {
                     </label>
                   ) : null}
 
-                  {row.show_food ? (
-                    <label className="stay-closing-field">
-                      <span className="field-label">Food amount</span>
-                      <input
-                        className="field-input"
-                        value={row.food_amount}
-                        onChange={(event) =>
-                          updateRow(row.key, {
-                            food_amount: event.target.value,
-                          })
-                        }
-                        placeholder="e.g. 1200"
-                        inputMode="decimal"
-                        disabled={saving}
-                      />
-                    </label>
-                  ) : null}
-
                   <label className="stay-closing-field">
-                    <span className="field-label">Internal notes</span>
+                    <span className="field-label">Notes</span>
                     <textarea
                       className="field-input stay-closing-notes"
                       value={row.internal_notes}
@@ -335,7 +312,7 @@ export function StayClosingDialog({ tripId, open, onClose, onSaved }: Props) {
                           internal_notes: event.target.value,
                         })
                       }
-                      placeholder="Internal notes for this visit…"
+                      placeholder="Optional notes for this visit…"
                       rows={2}
                       disabled={saving}
                     />

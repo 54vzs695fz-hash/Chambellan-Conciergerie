@@ -7,7 +7,7 @@ import {
   type SeasonSpendEntry,
   type SeasonalCommissionFields,
 } from "@/lib/establishments/seasonal-commission";
-import { resolveReferenceDate } from "@/lib/dashboard/business-commissions";
+import { resolveReferenceDate } from "@/lib/stay-closing/utils";
 
 export interface StayClosingSeasonalInput {
   establishment_id: number | null;

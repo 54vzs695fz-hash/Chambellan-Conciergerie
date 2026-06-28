@@ -38,7 +38,6 @@ const verde = normalizeEstablishmentCommission({
 
 const verdeFields = getStayClosingFieldRequirements(verde);
 assert(verdeFields.show_premium_drinks, "verde requires premium drinks");
-assert(!verdeFields.show_food, "verde does not require food");
 
 const belowThreshold = calculateStayClosingCommission(verde, {
   approximate_total_bill: "5000",
@@ -63,7 +62,6 @@ const noto = normalizeEstablishmentCommission({
 });
 const notoFields = getStayClosingFieldRequirements(noto);
 assert(!notoFields.show_premium_drinks, "noto no premium drinks field");
-assert(!notoFields.show_food, "noto no food field");
 
 const notoCommission = calculateStayClosingCommission(noto, {
   approximate_total_bill: "4000",

@@ -4,36 +4,43 @@ import type { EstablishmentInput } from "@/lib/types";
 import {
   COMMISSION_BASIS_LABELS,
   COMMISSION_BASIS_OPTIONS,
-  COMMISSION_CALCULATION_LABELS,
-  COMMISSION_CALCULATION_OPTIONS,
   COMMISSION_ELIGIBILITY_LABELS,
-  COMMISSION_ELIGIBILITY_OPTIONS,
   formatEstablishmentCommissionSummary,
   type CommissionBasis,
-  type CommissionCalculationType,
   type CommissionEligibility,
 } from "@/lib/establishments/commission";
-import { formatSeasonalCommissionSummary } from "@/lib/establishments/seasonal-commission";
+import type { EstablishmentSeasonProgress } from "@/lib/establishments/seasonal-commission";
+
+const ELIGIBILITY_OPTIONS: CommissionEligibility[] = [
+  "none",
+  "minimum_total_bill",
+  "minimum_premium_drinks",
+  "custom",
+];
 
 interface Props {
   form: EstablishmentInput;
+  seasonProgress?: EstablishmentSeasonProgress | null;
   onChange: <K extends keyof EstablishmentInput>(
     key: K,
     value: EstablishmentInput[K]
   ) => void;
 }
 
-export function EstablishmentCommissionSection({ form, onChange }: Props) {
+export function EstablishmentCommissionSection({
+  form,
+  seasonProgress = null,
+  onChange,
+}: Props) {
   const summary = formatEstablishmentCommissionSummary(form);
-  const seasonalSummary = formatSeasonalCommissionSummary(form);
 
   return (
     <section className="est-commission-section space-y-5">
       <div>
         <h2 className="section-title">Commission</h2>
         <p className="text-sm text-muted mt-1">
-          Define how commission is calculated and when it applies for this
-          establishment.
+          Simple percentage rules — the app calculates commission automatically
+          when closing a stay.
         </p>
       </div>
 
@@ -64,80 +71,20 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
       {form.commission_available ? (
         <>
           <div>
-            <label className="field-label" htmlFor="est-commission-calc">
-              Commission calculation
+            <label className="field-label" htmlFor="est-commission-percentage">
+              Commission %
             </label>
-            <select
-              id="est-commission-calc"
+            <input
+              id="est-commission-percentage"
               className="field-input min-h-[44px]"
-              value={form.commission_calc_type}
+              value={form.commission_percentage}
               onChange={(event) =>
-                onChange(
-                  "commission_calc_type",
-                  event.target.value as CommissionCalculationType
-                )
+                onChange("commission_percentage", event.target.value)
               }
-            >
-              {COMMISSION_CALCULATION_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {COMMISSION_CALCULATION_LABELS[option]}
-                </option>
-              ))}
-            </select>
+              placeholder="e.g. 10"
+              inputMode="decimal"
+            />
           </div>
-
-          {form.commission_calc_type === "percentage" ? (
-            <div>
-              <label className="field-label" htmlFor="est-commission-percentage">
-                Commission percentage
-              </label>
-              <input
-                id="est-commission-percentage"
-                className="field-input min-h-[44px]"
-                value={form.commission_percentage}
-                onChange={(event) =>
-                  onChange("commission_percentage", event.target.value)
-                }
-                placeholder="e.g. 10"
-                inputMode="decimal"
-              />
-            </div>
-          ) : null}
-
-          {form.commission_calc_type === "fixed_amount" ? (
-            <div>
-              <label className="field-label" htmlFor="est-commission-fixed">
-                Commission fixed amount
-              </label>
-              <input
-                id="est-commission-fixed"
-                className="field-input min-h-[44px]"
-                value={form.commission_fixed_amount}
-                onChange={(event) =>
-                  onChange("commission_fixed_amount", event.target.value)
-                }
-                placeholder="e.g. €500"
-              />
-            </div>
-          ) : null}
-
-          {form.commission_calc_type === "custom" ? (
-            <div>
-              <label className="field-label" htmlFor="est-commission-calc-custom">
-                Custom calculation
-              </label>
-              <textarea
-                id="est-commission-calc-custom"
-                className="field-input min-h-[72px]"
-                rows={2}
-                value={form.commission_calc_custom}
-                onChange={(event) =>
-                  onChange("commission_calc_custom", event.target.value)
-                }
-                placeholder="Describe the custom commission rule"
-              />
-            </div>
-          ) : null}
 
           <div>
             <label className="field-label" htmlFor="est-commission-basis">
@@ -148,10 +95,7 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
               className="field-input min-h-[44px]"
               value={form.commission_basis}
               onChange={(event) =>
-                onChange(
-                  "commission_basis",
-                  event.target.value as CommissionBasis
-                )
+                onChange("commission_basis", event.target.value as CommissionBasis)
               }
             >
               {COMMISSION_BASIS_OPTIONS.map((option) => (
@@ -181,7 +125,7 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
 
           <div>
             <label className="field-label" htmlFor="est-commission-eligibility">
-              Eligibility rules
+              Eligibility rule
             </label>
             <select
               id="est-commission-eligibility"
@@ -194,7 +138,7 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
                 )
               }
             >
-              {COMMISSION_ELIGIBILITY_OPTIONS.map((option) => (
+              {ELIGIBILITY_OPTIONS.map((option) => (
                 <option key={option} value={option}>
                   {COMMISSION_ELIGIBILITY_LABELS[option]}
                 </option>
@@ -208,7 +152,7 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
                 className="field-label"
                 htmlFor="est-commission-eligibility-custom"
               >
-                Custom eligibility rule
+                Custom eligibility
               </label>
               <input
                 id="est-commission-eligibility-custom"
@@ -240,98 +184,66 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
           ) : null}
 
           <div className="est-seasonal-commission">
-            <h3 className="adm-subsection-title">Seasonal commission</h3>
+            <h3 className="adm-subsection-title">Optional season target</h3>
             <p className="text-sm text-muted mb-3">
-              Optional rule for partners that only pay commission after reaching
-              a seasonal client spend target.
+              Some partners only pay commission after reaching a seasonal client
+              spend target.
             </p>
 
-            <fieldset className="est-commission-fieldset">
-              <legend className="field-label">Seasonal commission enabled</legend>
-              <div className="est-commission-radio-group">
-                <label className="est-commission-radio min-h-[44px]">
-                  <input
-                    type="radio"
-                    name="seasonal_commission_enabled"
-                    checked={form.seasonal_commission_enabled === true}
-                    onChange={() => onChange("seasonal_commission_enabled", true)}
-                  />
-                  <span>Yes</span>
-                </label>
-                <label className="est-commission-radio min-h-[44px]">
-                  <input
-                    type="radio"
-                    name="seasonal_commission_enabled"
-                    checked={form.seasonal_commission_enabled === false}
-                    onChange={() => onChange("seasonal_commission_enabled", false)}
-                  />
-                  <span>No</span>
-                </label>
-              </div>
-            </fieldset>
+            <label className="est-commission-radio min-h-[44px]">
+              <input
+                type="checkbox"
+                checked={form.seasonal_commission_enabled}
+                onChange={(event) =>
+                  onChange("seasonal_commission_enabled", event.target.checked)
+                }
+              />
+              <span>Season target enabled</span>
+            </label>
 
             {form.seasonal_commission_enabled ? (
-              <>
-                <div className="adm-grid adm-grid--2 adm-grid--spaced">
-                  <div>
-                    <label className="field-label" htmlFor="est-season-start">
-                      Season starts
-                    </label>
-                    <input
-                      id="est-season-start"
-                      type="date"
-                      className="field-input min-h-[44px]"
-                      value={form.seasonal_commission_start}
-                      onChange={(event) =>
-                        onChange("seasonal_commission_start", event.target.value)
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="field-label" htmlFor="est-season-end">
-                      Season ends
-                    </label>
-                    <input
-                      id="est-season-end"
-                      type="date"
-                      className="field-input min-h-[44px]"
-                      value={form.seasonal_commission_end}
-                      onChange={(event) =>
-                        onChange("seasonal_commission_end", event.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="field-label" htmlFor="est-season-target">
-                    Season target
-                  </label>
-                  <input
-                    id="est-season-target"
-                    className="field-input min-h-[44px]"
-                    value={form.seasonal_commission_target}
-                    onChange={(event) =>
-                      onChange("seasonal_commission_target", event.target.value)
-                    }
-                    placeholder="e.g. 250000 or €250,000"
-                  />
-                </div>
-
-                <label className="est-commission-radio min-h-[44px]">
-                  <input
-                    type="checkbox"
-                    checked={form.seasonal_commission_after_target}
-                    onChange={(event) =>
-                      onChange(
-                        "seasonal_commission_after_target",
-                        event.target.checked
-                      )
-                    }
-                  />
-                  <span>Commission starts after target reached</span>
+              <div className="mt-3">
+                <label className="field-label" htmlFor="est-season-target">
+                  Season target amount
                 </label>
-              </>
+                <input
+                  id="est-season-target"
+                  className="field-input min-h-[44px]"
+                  value={form.seasonal_commission_target}
+                  onChange={(event) =>
+                    onChange("seasonal_commission_target", event.target.value)
+                  }
+                  placeholder="e.g. 250000"
+                />
+
+                {seasonProgress ? (
+                  <div className="est-season-progress mt-4">
+                    <div className="est-season-progress-row">
+                      <span className="text-sm text-muted">Season progress</span>
+                      <strong>{seasonProgress.current_spend_label}</strong>
+                    </div>
+                    <div
+                      className="est-season-progress-bar-wrap"
+                      role="progressbar"
+                      aria-valuenow={seasonProgress.progress_percent}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    >
+                      <div
+                        className="est-season-progress-bar"
+                        style={{ width: `${seasonProgress.progress_percent}%` }}
+                      />
+                    </div>
+                    <div className="est-season-progress-row">
+                      <span className="text-sm text-muted">Remaining</span>
+                      <span>{seasonProgress.remaining_label}</span>
+                    </div>
+                    {seasonProgress.target_reached ? (
+                      <span className="est-season-target-badge">Target reached</span>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </>
@@ -340,11 +252,6 @@ export function EstablishmentCommissionSection({ form, onChange }: Props) {
       <p className="est-commission-summary" aria-live="polite">
         {summary}
       </p>
-      {seasonalSummary ? (
-        <p className="est-commission-summary text-sm text-muted" aria-live="polite">
-          {seasonalSummary}
-        </p>
-      ) : null}
     </section>
   );
 }

@@ -45,7 +45,7 @@ export function ClientStayHistorySection({ initialHistory }: Props) {
         <h2 className="section-title mb-2">Stay history</h2>
         <p className="text-sm text-muted">
           Completed stays appear here automatically with destinations, visits, and
-          internal billing once a stay is closed.
+          approximate spend once a stay is closed.
         </p>
       </section>
     );
@@ -56,7 +56,8 @@ export function ClientStayHistorySection({ initialHistory }: Props) {
       <div className="mb-4">
         <h2 className="section-title mb-1">Stay history</h2>
         <p className="text-sm text-muted">
-          Internal only — billing and commission are not included in client PDFs.
+          Internal VIP notes — not included in client PDFs. Commission details are
+          in the Business tab.
         </p>
       </div>
 
@@ -93,12 +94,6 @@ export function ClientStayHistorySection({ initialHistory }: Props) {
                   </span>
                   <strong>{stay.approximate_stay_spend_label}</strong>
                 </div>
-                <div>
-                  <span className="client-stay-history-metric-label">
-                    Commission
-                  </span>
-                  <strong>{stay.commission_generated_label}</strong>
-                </div>
               </div>
             </div>
 
@@ -106,22 +101,6 @@ export function ClientStayHistorySection({ initialHistory }: Props) {
               <h3 className="client-stay-history-subtitle">Visited establishments</h3>
               {stay.visited_establishments.length === 0 ? (
                 <p className="text-sm text-muted">No venue visits recorded.</p>
-              ) : stay.has_closing_data ? (
-                <ul className="client-stay-history-establishments">
-                  {stay.establishments.map((establishment) => (
-                    <li key={establishment.name}>
-                      <span className="client-stay-history-est-name">
-                        {establishment.name}
-                      </span>
-                      <span className="client-stay-history-est-meta text-sm text-muted">
-                        Bill {establishment.approximate_total_bill}
-                        {establishment.commission_applied
-                          ? ` · Commission ${establishment.commission}`
-                          : ""}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
               ) : (
                 <ul className="client-stay-history-tags">
                   {stay.visited_establishments.map((name) => (
@@ -131,7 +110,7 @@ export function ClientStayHistorySection({ initialHistory }: Props) {
               )}
               {!stay.has_closing_data ? (
                 <p className="text-xs text-muted mt-2">
-                  Close this stay in the planner to record spend and commission.
+                  Close this stay in the planner to record spend.
                 </p>
               ) : null}
             </div>

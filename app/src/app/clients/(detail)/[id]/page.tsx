@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ClientProfileTabs } from "@/components/crm/ClientProfileTabs";
 import { ClientDeleteButton } from "@/components/crm/ClientDeleteButton";
 import { ClientForm } from "@/components/crm/ClientForm";
 import { ClientRelationshipsSection } from "@/components/crm/ClientRelationshipsSection";
-import { ClientStayHistorySection } from "@/components/crm/ClientStayHistorySection";
 import { ProgrammeStatusBadge } from "@/components/status/ProgrammeStatusBadge";
+import { getClientBusinessStays } from "@/lib/db/client-business";
 import { listClientRelationships } from "@/lib/db/client-relationships";
 import { getClientStayHistory } from "@/lib/db/client-stay-history";
 import {
@@ -61,6 +62,7 @@ export default async function ClientDetailPage({
 
   const trips = await getClientTripHistory(clientId);
   const stayHistory = await getClientStayHistory(clientId);
+  const businessStays = await getClientBusinessStays(clientId);
   const activeTrips = trips.filter((trip) => trip.follow_up_status !== "completed");
   const destinations = await getClientDestinations(clientId);
   const linkedPlannerCount = await getClientLinkedTripCount(clientId);
@@ -98,92 +100,96 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-10 mb-12">
-        <div className="space-y-10">
-          <div>
-            <h2 className="section-title mb-4">Profile</h2>
-            <ClientForm
-              initial={{
-                full_name: client.full_name,
-                phone: client.phone,
-                whatsapp: client.whatsapp,
-                email: client.email,
-                nationality: client.nationality,
-                notes: client.notes,
-                preferences: client.preferences,
-              }}
-              clientId={client.id}
-            />
+      <ClientProfileTabs
+        stayHistory={stayHistory}
+        businessStays={businessStays}
+        profileContent={
+          <div className="grid lg:grid-cols-2 gap-10 mb-12">
+            <div className="space-y-10">
+              <div>
+                <h2 className="section-title mb-4">Profile</h2>
+                <ClientForm
+                  initial={{
+                    full_name: client.full_name,
+                    phone: client.phone,
+                    whatsapp: client.whatsapp,
+                    email: client.email,
+                    nationality: client.nationality,
+                    notes: client.notes,
+                    preferences: client.preferences,
+                  }}
+                  clientId={client.id}
+                />
+              </div>
+
+              <ClientRelationshipsSection
+                clientId={client.id}
+                initialRelationships={relationships}
+                allClients={allClients.map(({ id, full_name }) => ({ id, full_name }))}
+              />
+            </div>
+
+            <div className="space-y-8">
+              <section>
+                <h2 className="section-title mb-4">Previous destinations</h2>
+                {destinations.length === 0 ? (
+                  <p className="text-sm text-muted">No destinations recorded yet.</p>
+                ) : (
+                  <ul className="flex flex-wrap gap-2">
+                    {destinations.map((d) => (
+                      <li
+                        key={d}
+                        className="px-3 py-1.5 bg-beige text-sm font-serif text-gold tracking-wide rounded-sm"
+                      >
+                        {d}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section>
+                <h2 className="section-title mb-4">Active planners</h2>
+                {activeTrips.length === 0 ? (
+                  <p className="text-sm text-muted">No active planners linked.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {activeTrips.map((t) => (
+                      <li key={t.id}>
+                        <Link
+                          href={`/planner/${t.id}`}
+                          className="card block px-4 py-3 hover:border-gold/40 text-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="font-serif text-gold">
+                              {t.destination || "Untitled"}
+                            </span>
+                            <ProgrammeStatusBadge
+                              status={
+                                (t.follow_up_status as TripFollowUpStatus) || "follow_up"
+                              }
+                              showDot
+                              arrivalDate={t.arrival_date}
+                            />
+                          </div>
+                          <p className="text-xs text-muted mt-1">
+                            {formatDateRange(t.arrival_date, t.departure_date)}
+                          </p>
+                          {t.notes ? (
+                            <p className="text-xs text-muted mt-1 italic line-clamp-2">
+                              {t.notes}
+                            </p>
+                          ) : null}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </div>
           </div>
-
-          <ClientRelationshipsSection
-            clientId={client.id}
-            initialRelationships={relationships}
-            allClients={allClients.map(({ id, full_name }) => ({ id, full_name }))}
-          />
-        </div>
-
-        <div className="space-y-8">
-          <section>
-            <h2 className="section-title mb-4">Previous destinations</h2>
-            {destinations.length === 0 ? (
-              <p className="text-sm text-muted">No destinations recorded yet.</p>
-            ) : (
-              <ul className="flex flex-wrap gap-2">
-                {destinations.map((d) => (
-                  <li
-                    key={d}
-                    className="px-3 py-1.5 bg-beige text-sm font-serif text-gold tracking-wide rounded-sm"
-                  >
-                    {d}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section>
-            <h2 className="section-title mb-4">Active planners</h2>
-            {activeTrips.length === 0 ? (
-              <p className="text-sm text-muted">No active planners linked.</p>
-            ) : (
-              <ul className="space-y-2">
-                {activeTrips.map((t) => (
-                  <li key={t.id}>
-                    <Link
-                      href={`/planner/${t.id}`}
-                      className="card block px-4 py-3 hover:border-gold/40 text-sm"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="font-serif text-gold">
-                          {t.destination || "Untitled"}
-                        </span>
-                        <ProgrammeStatusBadge
-                          status={
-                            (t.follow_up_status as TripFollowUpStatus) || "follow_up"
-                          }
-                          showDot
-                          arrivalDate={t.arrival_date}
-                        />
-                      </div>
-                      <p className="text-xs text-muted mt-1">
-                        {formatDateRange(t.arrival_date, t.departure_date)}
-                      </p>
-                      {t.notes ? (
-                        <p className="text-xs text-muted mt-1 italic line-clamp-2">
-                          {t.notes}
-                        </p>
-                      ) : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      </div>
-
-      <ClientStayHistorySection initialHistory={stayHistory} />
+        }
+      />
     </div>
   );
 }

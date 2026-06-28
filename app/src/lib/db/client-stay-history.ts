@@ -8,9 +8,7 @@ import { listEstablishments } from "@/lib/db/establishments";
 import { prisma } from "@/lib/prisma";
 import { normalizeTripDestinations, parseDestinationsJson } from "@/lib/planner/trip-destinations";
 import {
-  buildStayHistoryEstablishments,
   formatStayHistoryMoney,
-  sumStayClosingCommission,
   sumStayClosingSpend,
 } from "@/lib/stay-closing/stay-history-summary";
 import {
@@ -95,7 +93,7 @@ function mapClosingEntry(row: PrismaStayClosingEntry): StayClosingEntry {
   };
 }
 
-function buildTripWithDays(
+export function buildTripWithDays(
   row: PrismaTrip & {
     days: (PrismaTripDay & { activities: PrismaActivity[] })[];
   }
@@ -192,29 +190,15 @@ export async function getClientStayHistory(
         : visitedFromItinerary.map((item) => item.establishment_name);
 
     const spend = sumStayClosingSpend(closingEntries);
-    const commission = sumStayClosingCommission(closingEntries);
 
     return {
       trip_id: row.id,
-      stay_closing_id: row.stay_closing?.id ?? null,
       destination: trip.destination || "Untitled",
       destination_region: trip.destination_region,
       arrival_date: row.arrival_date,
       departure_date: row.departure_date,
-      closed_at: row.stay_closing?.closed_at.toISOString() ?? null,
       visited_establishments: visitedNames,
-      establishments: closingEntries.length
-        ? buildStayHistoryEstablishments(closingEntries)
-        : visitedNames.map((name) => ({
-            name,
-            approximate_total_bill: "—",
-            commission: "—",
-            commission_applied: false,
-          })),
-      approximate_stay_spend: spend,
       approximate_stay_spend_label: formatStayHistoryMoney(spend),
-      commission_generated: commission,
-      commission_generated_label: formatStayHistoryMoney(commission),
       vip_notes: row.stay_closing?.vip_notes ?? "",
       has_closing_data: closingEntries.length > 0,
     };

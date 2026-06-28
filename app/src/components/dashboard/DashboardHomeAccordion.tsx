@@ -7,7 +7,6 @@ import {
   DashboardAccordionSection,
   useExclusiveAccordion,
 } from "@/components/dashboard/DashboardAccordionSection";
-import { DashboardBusinessSection } from "@/components/dashboard/DashboardBusinessSection";
 import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
 import { DashboardFollowUpSummary } from "@/components/dashboard/DashboardFollowUpSummary";
 import { DashboardPaymentSummary } from "@/components/dashboard/DashboardPaymentSummary";
@@ -50,17 +49,6 @@ export function DashboardHomeAccordion({
         dataSection="planner"
       >
         <DashboardBookingProgress embedded initialPlanners={bookingProgress} />
-      </DashboardAccordionSection>
-
-      <DashboardAccordionSection
-        id="business-dashboard"
-        title="Business Dashboard"
-        count={counts.businessDashboard}
-        isOpen={isOpen("business-dashboard")}
-        onToggle={() => toggle("business-dashboard")}
-        dataSection="business"
-      >
-        <DashboardBusinessSection embedded />
       </DashboardAccordionSection>
 
       <DashboardAccordionSection

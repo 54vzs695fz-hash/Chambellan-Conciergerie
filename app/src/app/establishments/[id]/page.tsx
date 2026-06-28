@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EstablishmentForm } from "@/components/establishments/EstablishmentForm";
+import { getEstablishmentSeasonProgress } from "@/lib/db/client-business";
 import { getEstablishment } from "@/lib/db/establishments";
 
 export const runtime = "nodejs";
@@ -18,6 +19,8 @@ export default async function EstablishmentDetailPage({
   const establishment = await getEstablishment(establishmentId);
   if (!establishment) notFound();
 
+  const seasonProgress = await getEstablishmentSeasonProgress(establishmentId);
+
   const { id: _id, created_at: _c, updated_at: _u, ...initial } = establishment;
 
   return (
@@ -31,7 +34,11 @@ export default async function EstablishmentDetailPage({
           Essential details — expand Advanced details for address, social, tags, and internal notes.
         </p>
       </div>
-      <EstablishmentForm initial={initial} establishmentId={establishment.id} />
+      <EstablishmentForm
+        initial={initial}
+        establishmentId={establishment.id}
+        seasonProgress={seasonProgress}
+      />
     </div>
   );
 }

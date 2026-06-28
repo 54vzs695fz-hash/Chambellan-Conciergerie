@@ -8,6 +8,7 @@ import {
   ESTABLISHMENT_CATEGORY_LABELS,
 } from "@/lib/establishments/categories";
 import { LIBRARY_DESTINATIONS } from "@/lib/establishments/destinations";
+import type { EstablishmentSeasonProgress } from "@/lib/establishments/seasonal-commission";
 import { EstablishmentCommissionSection } from "@/components/establishments/EstablishmentCommissionSection";
 
 type FormVariant = "standard" | "quick";
@@ -16,12 +17,14 @@ export function EstablishmentForm({
   initial,
   establishmentId,
   variant = "standard",
+  seasonProgress = null,
   onSaved,
   onCancel,
 }: {
   initial: EstablishmentInput;
   establishmentId?: number;
   variant?: FormVariant;
+  seasonProgress?: EstablishmentSeasonProgress | null;
   onSaved?: (establishment: Establishment, options?: { keepOpen?: boolean }) => void;
   onCancel?: () => void;
 }) {
@@ -352,7 +355,11 @@ export function EstablishmentForm({
       {!isQuick ? advancedFields : null}
 
       {!isQuick ? (
-        <EstablishmentCommissionSection form={form} onChange={set} />
+        <EstablishmentCommissionSection
+          form={form}
+          seasonProgress={seasonProgress}
+          onChange={set}
+        />
       ) : null}
 
       <div
