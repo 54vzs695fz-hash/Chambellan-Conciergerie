@@ -1,5 +1,13 @@
 /* Dashboard category cards — soft backgrounds, colored left border */
 
+.dash-home-lead-mobile {
+  display: none;
+}
+
+.dash-home-lead-desktop {
+  display: inline;
+}
+
 .dash-card {
   --dash-accent: var(--shell-accent, #b89b6a);
   background: color-mix(in srgb, var(--dash-accent) 5.5%, var(--shell-card-bg, #fff));
