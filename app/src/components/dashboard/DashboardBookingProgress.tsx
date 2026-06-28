@@ -6,24 +6,12 @@ import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import {
   buildBeachClubBookingRequestMessage,
   buildBookingRequestMessage,
-  buildWhatsAppRequestUrl,
   copyTextToClipboard,
-  showsBookingRequestMessage,
 } from "@/lib/dashboard/booking-request-message";
-import { buildActivityPatchFromReservationItem } from "@/lib/planner/beach-club";
 import {
-  reconcileBookingProgressPlanner,
-  sortBookingProgressPlanners,
-} from "@/lib/dashboard/booking-progress";
-import {
-  BOOKING_PROGRESS_STATUS_LABELS,
-  BOOKING_PROGRESS_STATUS_OPTIONS,
-  bookingProgressSelectValue,
-  bookingProgressStatusClass,
-  sortBookingProgressItems,
+  isBookingRequiringAction,
   type ReservationStatusItem,
 } from "@/lib/reservations/reservation-status";
-import type { BookingStatus } from "@/lib/types";
 import { formatGridDayDate, formatGridDayName } from "@/lib/planner-utils";
 
 interface Props {
@@ -124,70 +112,29 @@ function ProgressBar({
 
 function BookingRow({
   item,
-  planner,
   copied,
   onCopyRequest,
-  onOpenWhatsApp,
-  onStatusChange,
 }: {
   item: ReservationStatusItem;
-  planner: BookingProgressPlanner;
   copied: boolean;
   onCopyRequest: () => void;
-  onOpenWhatsApp: () => void;
-  onStatusChange: (status: BookingStatus) => void;
 }) {
-  const statusValue = bookingProgressSelectValue(item.booking_status);
-  const statusClass = bookingProgressStatusClass(item.booking_status);
-  const showRequestActions = showsBookingRequestMessage(item.booking_status);
   const meta = formatItemMeta(item);
-  const whatsappAvailable = Boolean(item.venue_whatsapp.trim());
 
   return (
-    <li className={`bp-booking ${statusClass}`}>
+    <li className="bp-booking">
       <div className="bp-booking-head">
         <p className="bp-booking-venue">{item.venue}</p>
         {meta ? <p className="bp-booking-meta">{meta}</p> : null}
       </div>
 
-      {showRequestActions ? (
-        <div className="bp-booking-actions">
-          <button
-            type="button"
-            className={`bp-booking-action bp-booking-action--copy${
-              copied ? " is-copied" : ""
-            }`}
-            onClick={onCopyRequest}
-          >
-            {copied ? "Copied" : "Copy Request"}
-          </button>
-          <button
-            type="button"
-            className="bp-booking-action bp-booking-action--whatsapp"
-            disabled={!whatsappAvailable}
-            onClick={onOpenWhatsApp}
-          >
-            Open WhatsApp
-          </button>
-        </div>
-      ) : null}
-
-      <label className="bp-booking-status-field">
-        <span className="bp-booking-status-label">Status</span>
-        <select
-          className={`bp-booking-status-select ${statusClass}`}
-          value={statusValue}
-          onChange={(event) => {
-            onStatusChange(event.target.value as BookingStatus);
-          }}
-        >
-          {BOOKING_PROGRESS_STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {BOOKING_PROGRESS_STATUS_LABELS[status]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <button
+        type="button"
+        className={`bp-booking-copy${copied ? " is-copied" : ""}`}
+        onClick={onCopyRequest}
+      >
+        {copied ? "✓ Copied" : "📋 Copy Request"}
+      </button>
     </li>
   );
 }
@@ -198,25 +145,20 @@ function PlannerCard({
   onToggle,
   copiedItemKey,
   onCopyRequest,
-  onOpenWhatsApp,
-  onStatusChange,
 }: {
   planner: BookingProgressPlanner;
   isOpen: boolean;
   onToggle: () => void;
   copiedItemKey: string | null;
   onCopyRequest: (itemKey: string) => void;
-  onOpenWhatsApp: (item: ReservationStatusItem) => void;
-  onStatusChange: (
-    tripId: number,
-    item: ReservationStatusItem,
-    status: BookingStatus
-  ) => void;
 }) {
   const panelId = useId();
   const remainingLabel = `${planner.summary.remaining} booking${
     planner.summary.remaining === 1 ? "" : "s"
   } remaining`;
+  const visibleItems = planner.items.filter((item) =>
+    isBookingRequiringAction(item.booking_status)
+  );
 
   return (
     <li className={`bp-card${isOpen ? " is-open" : ""}`}>
@@ -266,17 +208,12 @@ function PlannerCard({
             </Link>
           </div>
           <ul className="bp-booking-list">
-            {planner.items.map((item) => (
+            {visibleItems.map((item) => (
               <BookingRow
                 key={item.itemKey}
                 item={item}
-                planner={planner}
                 copied={copiedItemKey === item.itemKey}
                 onCopyRequest={() => onCopyRequest(item.itemKey)}
-                onOpenWhatsApp={() => onOpenWhatsApp(item)}
-                onStatusChange={(status) => {
-                  onStatusChange(planner.tripId, item, status);
-                }}
               />
             ))}
           </ul>
@@ -290,79 +227,9 @@ export function DashboardBookingProgress({
   initialPlanners,
   embedded = false,
 }: Props) {
-  const [planners, setPlanners] = useState(initialPlanners);
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const [copiedItemKey, setCopiedItemKey] = useState<string | null>(null);
-
-  const applyPlannerUpdate = useCallback(
-    (tripId: number, updater: (items: ReservationStatusItem[]) => ReservationStatusItem[]) => {
-      setPlanners((current) => {
-        const next = sortBookingProgressPlanners(
-          current
-            .map((planner) => {
-              if (planner.tripId !== tripId) return planner;
-              return reconcileBookingProgressPlanner({
-                ...planner,
-                items: sortBookingProgressItems(updater(planner.items)),
-              });
-            })
-            .filter((planner): planner is BookingProgressPlanner => planner !== null)
-        );
-
-        if (expandedTripId !== null && !next.some((p) => p.tripId === expandedTripId)) {
-          setExpandedTripId(null);
-        }
-
-        return next;
-      });
-    },
-    [expandedTripId]
-  );
-
-  const patchItem = useCallback(
-    async (
-      tripId: number,
-      item: ReservationStatusItem,
-      patch: Partial<
-        Pick<ReservationStatusItem, "booking_status" | "assigned_to" | "booking_notes">
-      >
-    ) => {
-      const previousStatus = item.booking_status;
-
-      applyPlannerUpdate(tripId, (items) =>
-        items.map((row) =>
-          row.itemKey === item.itemKey ? { ...row, ...patch } : row
-        )
-      );
-
-      try {
-        const body = buildActivityPatchFromReservationItem(item, patch);
-        const res = await fetch(`/api/activities/${item.activityId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          applyPlannerUpdate(tripId, (items) =>
-            items.map((row) =>
-              row.itemKey === item.itemKey
-                ? { ...row, booking_status: previousStatus }
-                : row
-            )
-          );
-        }
-      } catch {
-        applyPlannerUpdate(tripId, (items) =>
-          items.map((row) =>
-            row.itemKey === item.itemKey
-              ? { ...row, booking_status: previousStatus }
-              : row
-          )
-        );
-      }
-    },
-    [applyPlannerUpdate]
-  );
+  const planners = initialPlanners;
 
   const togglePlanner = useCallback((tripId: number) => {
     setExpandedTripId((current) => (current === tripId ? null : tripId));
@@ -384,16 +251,6 @@ export function DashboardBookingProgress({
     []
   );
 
-  const handleOpenWhatsApp = useCallback(
-    (planner: BookingProgressPlanner, item: ReservationStatusItem) => {
-      const message = buildRequestMessage(planner, item);
-      const url = buildWhatsAppRequestUrl(item.venue_whatsapp, message);
-      if (!url) return;
-      window.open(url, "_blank", "noopener,noreferrer");
-    },
-    []
-  );
-
   if (!embedded && planners.length === 0) return null;
 
   const content =
@@ -411,10 +268,6 @@ export function DashboardBookingProgress({
             onToggle={() => togglePlanner(planner.tripId)}
             copiedItemKey={copiedItemKey}
             onCopyRequest={(itemKey) => handleCopyRequest(planner, itemKey)}
-            onOpenWhatsApp={(item) => handleOpenWhatsApp(planner, item)}
-            onStatusChange={(tripId, item, status) => {
-              void patchItem(tripId, item, { booking_status: status });
-            }}
           />
         ))}
       </ul>

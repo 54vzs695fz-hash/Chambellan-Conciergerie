@@ -1931,6 +1931,40 @@
   color: var(--shell-text-muted, #6b7280);
 }
 
+.bp-booking-copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid rgba(184, 149, 106, 0.28);
+  background: #fff;
+  color: var(--shell-text, #111);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.16s cubic-bezier(0.32, 0.72, 0, 1),
+    background-color 0.16s ease,
+    color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.bp-booking-copy:active {
+  transform: scale(0.98);
+}
+
+.bp-booking-copy.is-copied {
+  color: #3a7350;
+  border-color: rgba(58, 115, 80, 0.35);
+  background: rgba(58, 115, 80, 0.08);
+}
+
 .bp-booking-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
