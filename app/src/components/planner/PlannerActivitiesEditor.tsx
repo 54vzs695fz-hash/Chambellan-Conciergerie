@@ -20,7 +20,6 @@ import {
   formatGridDayName,
   sortActivitiesForSection,
 } from "@/lib/planner-utils";
-import { resolveDayEffectiveDestination } from "@/lib/planner/itinerary-destinations";
 import {
   BOOKING_STATUS_LABELS,
   BOOKING_STATUS_OPTIONS,
@@ -53,6 +52,7 @@ function reorderItems<T>(items: T[], from: number, to: number): T[] {
 
 interface Props {
   days: TripDay[];
+  multiDestination?: boolean;
   destination?: string;
   onAddActivity: (
     dayId: number,
@@ -683,6 +683,7 @@ const ActivityEditRow = memo(function ActivityEditRow({
 
 const DayEditor = memo(function DayEditor({
   day,
+  multiDestination,
   destination,
   onAddActivity,
   onPatchActivity,
@@ -693,6 +694,7 @@ const DayEditor = memo(function DayEditor({
   onDayDestinationOverrideBlur,
 }: {
   day: TripDay;
+  multiDestination: boolean;
   destination?: string;
   onAddActivity: Props["onAddActivity"];
   onPatchActivity: Props["onPatchActivity"];
@@ -799,8 +801,6 @@ const DayEditor = memo(function DayEditor({
     );
   };
 
-  const detectedDestination = resolveDayEffectiveDestination(day);
-
   return (
     <div className="adm-day">
       <div className="adm-day-head">
@@ -808,22 +808,20 @@ const DayEditor = memo(function DayEditor({
         <span className="adm-day-date">{formatGridDayDate(day.date)}</span>
       </div>
 
-      <label className="adm-day-override">
-        <span className="adm-field-label">Override destination (optional)</span>
-        <input
-          className="adm-input"
-          value={day.destination_override ?? ""}
-          onChange={(event) =>
-            onDayDestinationOverrideChange(day.id, event.target.value)
-          }
-          onBlur={onDayDestinationOverrideBlur}
-          placeholder={
-            detectedDestination
-              ? `Auto: ${detectedDestination}`
-              : "Transfer, yacht, helicopter, villa…"
-          }
-        />
-      </label>
+      {multiDestination ? (
+        <label className="adm-day-override">
+          <span className="adm-field-label">Day destination label (optional)</span>
+          <input
+            className="adm-input"
+            value={day.destination_override ?? ""}
+            onChange={(event) =>
+              onDayDestinationOverrideChange(day.id, event.target.value)
+            }
+            onBlur={onDayDestinationOverrideBlur}
+            placeholder="Transfer, yacht, helicopter, villa…"
+          />
+        </label>
+      ) : null}
 
       <div className="adm-day-sections">
         {sections.map((section) => {
@@ -963,6 +961,7 @@ const DayEditor = memo(function DayEditor({
 
 export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
   days,
+  multiDestination = false,
   destination,
   onAddActivity,
   onPatchActivity,
@@ -992,6 +991,7 @@ export const PlannerActivitiesEditor = memo(function PlannerActivitiesEditor({
         <DayEditor
           key={day.id}
           day={day}
+          multiDestination={multiDestination}
           destination={destination}
           onAddActivity={onAddActivity}
           onPatchActivity={onPatchActivity}

@@ -1369,6 +1369,35 @@ body.lux-pdf-export-open {
   gap: 0.35rem;
 }
 
+.adm-detected-dest-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.adm-detected-dest-reorder {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.adm-detected-dest-move {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #d4cdc4;
+  border-radius: 6px;
+  background: #faf8f5;
+  color: #5c554d;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.adm-detected-dest-move:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .adm-detected-dest-row .adm-input {
   min-height: 44px;
 }
@@ -1401,6 +1430,12 @@ body.lux-pdf-export-open {
 
 @media (min-width: 480px) {
   .adm-detected-dest-row {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .adm-detected-dest-row-main {
+    flex: 1;
     flex-direction: row;
     align-items: center;
   }

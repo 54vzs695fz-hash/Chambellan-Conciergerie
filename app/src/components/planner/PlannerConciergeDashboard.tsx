@@ -394,6 +394,7 @@ export function PlannerConciergeDashboard({
         <PlannerCollapsibleSection title="Activities" wide defaultOpen>
           <PlannerActivitiesEditor
             days={trip.days}
+            multiDestination={trip.multi_destination}
             destination={libraryDestination}
             onAddActivity={onAddActivity}
             onPatchActivity={onPatchActivity}

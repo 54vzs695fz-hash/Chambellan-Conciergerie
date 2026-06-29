@@ -196,7 +196,7 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
         }
 
         if (destination && centerWidth > 0) {
-          applyFit(destination, centerWidth, false);
+          applyFit(destination, centerWidth, true);
         }
 
         const destinationSub = centerCol

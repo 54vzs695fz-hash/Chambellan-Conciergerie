@@ -32,7 +32,6 @@ import { isUntitledDestination } from "../planner-utils";
 import { normalizeTripDestinations, parseDestinationsJson } from "../planner/trip-destinations";
 import {
   buildEstablishmentCityLookup,
-  mergeDetectedDestinationsWhenMulti,
 } from "../planner/itinerary-destinations";
 import { syncBeachClubPersistedFields } from "../planner/beach-club";
 import {
@@ -179,15 +178,9 @@ export async function getTrip(id: number): Promise<TripWithDays | undefined> {
   await ensureChecklistSeeded(id);
   const checklist = await listChecklistItems(id);
   const days = await enrichTripDays(await loadDays(id));
-  const lookup = await loadEstablishmentCityLookup();
-  const destinationFields = mergeDetectedDestinationsWhenMulti(
-    { ...trip, days },
-    lookup
-  );
 
   return {
     ...trip,
-    ...destinationFields,
     days,
     client: client ? mapClientRecord(client) : null,
     checklist,
@@ -222,14 +215,8 @@ export async function listConfirmedTripsWithDays(): Promise<TripWithDays[]> {
       const days = await enrichTripDays(
         row.days.map((day) => mapDay(day, day.activities.map(mapActivity)))
       );
-      const lookup = await loadEstablishmentCityLookup();
-      const destinationFields = mergeDetectedDestinationsWhenMulti(
-        { ...trip, days },
-        lookup
-      );
       return {
         ...trip,
-        ...destinationFields,
         days,
         client: row.client ? mapClientRecord(row.client) : null,
         checklist: [],
@@ -550,35 +537,6 @@ export async function updateActivity(
       data: syncedFields,
     });
     const activity = mapActivity(row);
-
-    if (
-      fields.establishment_city !== undefined ||
-      fields.title !== undefined ||
-      fields.beach_sunbeds !== undefined ||
-      fields.beach_lunch !== undefined ||
-      fields.transport_type !== undefined ||
-      fields.transport_pickup !== undefined ||
-      fields.transport_destination !== undefined
-    ) {
-      const day = await prisma.tripDay.findUnique({
-        where: { id: row.trip_day_id },
-        select: { trip_id: true },
-      });
-      if (day) {
-        const trip = await getTrip(day.trip_id);
-        if (trip?.multi_destination) {
-          const lookup = await loadEstablishmentCityLookup();
-          const destinationFields = mergeDetectedDestinationsWhenMulti(
-            trip,
-            lookup
-          );
-          await prisma.trip.update({
-            where: { id: day.trip_id },
-            data: tripDataFields({ ...trip, ...destinationFields }),
-          });
-        }
-      }
-    }
 
     return activity;
   } catch {

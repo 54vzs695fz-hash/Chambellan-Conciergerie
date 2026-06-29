@@ -9,10 +9,6 @@ import {
   useState,
 } from "react";
 import {
-  detectItineraryDestinations,
-  inferDestinationRegion,
-} from "@/lib/planner/itinerary-destinations";
-import {
   dedupeDestinations,
   destinationsMatch,
 } from "@/lib/planner/destination-matching";
@@ -77,18 +73,26 @@ const DestinationRowInput = memo(function DestinationRowInput({
   rowId,
   value,
   autoFocus,
+  canMoveUp,
+  canMoveDown,
   onDraftChange,
   onFocus,
   onBlurCommit,
   onRemove,
+  onMoveUp,
+  onMoveDown,
 }: {
   rowId: string;
   value: string;
   autoFocus: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onDraftChange: (rowId: string, draft: string) => void;
   onFocus: (rowId: string) => void;
   onBlurCommit: (rowId: string) => void;
   onRemove: (rowId: string) => void;
+  onMoveUp: (rowId: string) => void;
+  onMoveDown: (rowId: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -100,23 +104,45 @@ const DestinationRowInput = memo(function DestinationRowInput({
 
   return (
     <li className="adm-detected-dest-row">
-      <input
-        ref={inputRef}
-        className="adm-input"
-        value={value}
-        onChange={(event) => onDraftChange(rowId, event.target.value)}
-        onFocus={() => onFocus(rowId)}
-        onBlur={() => onBlurCommit(rowId)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            inputRef.current?.blur();
-          }
-        }}
-        enterKeyHint="done"
-        placeholder="City"
-        aria-label="Detected destination"
-      />
+      <div className="adm-detected-dest-row-main">
+        <input
+          ref={inputRef}
+          className="adm-input"
+          value={value}
+          onChange={(event) => onDraftChange(rowId, event.target.value)}
+          onFocus={() => onFocus(rowId)}
+          onBlur={() => onBlurCommit(rowId)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              inputRef.current?.blur();
+            }
+          }}
+          enterKeyHint="done"
+          placeholder="City"
+          aria-label="Destination"
+        />
+        <div className="adm-detected-dest-reorder">
+          <button
+            type="button"
+            className="adm-detected-dest-move"
+            disabled={!canMoveUp}
+            onClick={() => onMoveUp(rowId)}
+            aria-label="Move destination up"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            className="adm-detected-dest-move"
+            disabled={!canMoveDown}
+            onClick={() => onMoveDown(rowId)}
+            aria-label="Move destination down"
+          >
+            ↓
+          </button>
+        </div>
+      </div>
       <button
         type="button"
         className="adm-detected-dest-remove"
@@ -145,7 +171,6 @@ export function TripDestinationFields({
   }, [reactId]);
 
   const normalized = syncTripDestinationFields(trip);
-  const detected = detectItineraryDestinations(trip.days);
   const multiOn = normalized.multi_destination;
 
   const [rows, setRows] = useState<DestinationRow[]>([]);
@@ -158,7 +183,6 @@ export function TripDestinationFields({
       onDestinationFieldsChange(
         syncTripDestinationFields(trip, {
           destinations: deduped,
-          destination_region: inferDestinationRegion(deduped),
         })
       );
       return reconcileRowsToValues(nextRows, deduped, nextRowId);
@@ -219,7 +243,11 @@ export function TripDestinationFields({
     }
 
     const initialDestinations = dedupeDestinations(
-      normalized.destinations.length > 0 ? normalized.destinations : detected
+      normalized.destinations.length > 0
+        ? normalized.destinations
+        : normalized.destination.trim()
+          ? [normalized.destination.trim()]
+          : []
     );
 
     const initialRows = initialDestinations.map((value) => ({
@@ -234,7 +262,6 @@ export function TripDestinationFields({
       syncTripDestinationFields(trip, {
         multi_destination: true,
         destinations: initialDestinations,
-        destination_region: inferDestinationRegion(initialDestinations),
       })
     );
   };
@@ -273,6 +300,21 @@ export function TripDestinationFields({
     [syncRowsToTrip]
   );
 
+  const handleMoveRow = useCallback(
+    (rowId: string, direction: -1 | 1) => {
+      setRows((prev) => {
+        const index = prev.findIndex((row) => row.id === rowId);
+        if (index < 0) return prev;
+        const target = index + direction;
+        if (target < 0 || target >= prev.length) return prev;
+        const next = [...prev];
+        [next[index], next[target]] = [next[target], next[index]];
+        return syncRowsToTrip(next);
+      });
+    },
+    [syncRowsToTrip]
+  );
+
   const handleAddDestination = useCallback(() => {
     const newId = nextRowId();
     setFocusRowId(newId);
@@ -296,6 +338,11 @@ export function TripDestinationFields({
           onBlur={handlePersistBlur}
           placeholder="Saint Tropez"
         />
+        {multiOn ? (
+          <p className="adm-auto-destinations-note">
+            Used as the title when your destination list is empty.
+          </p>
+        ) : null}
       </Field>
 
       <label className="adm-checkbox--inline adm-trip-destinations-multi">
@@ -316,22 +363,26 @@ export function TripDestinationFields({
             }
           }}
         >
-          <span className="adm-field-label">Detected destinations</span>
+          <span className="adm-field-label">Destinations</span>
           <p className="adm-auto-destinations-note">
-            Cities inferred from your itinerary. Edit or remove any entry — the
-            planner destination above stays as the main title.
+            Add, edit, remove and reorder destinations manually. The planner
+            title uses this list (e.g. Monaco · Saint Tropez · Cannes).
           </p>
           <ul className="adm-detected-destinations-list">
-            {rows.map((row) => (
+            {rows.map((row, index) => (
               <DestinationRowInput
                 key={row.id}
                 rowId={row.id}
                 value={row.draft}
                 autoFocus={focusRowId === row.id}
+                canMoveUp={index > 0}
+                canMoveDown={index < rows.length - 1}
                 onDraftChange={handleDraftChange}
                 onFocus={handleRowFocus}
                 onBlurCommit={handleRowBlurCommit}
                 onRemove={handleRemoveDestination}
+                onMoveUp={(id) => handleMoveRow(id, -1)}
+                onMoveDown={(id) => handleMoveRow(id, 1)}
               />
             ))}
           </ul>

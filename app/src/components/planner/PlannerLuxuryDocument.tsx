@@ -579,7 +579,7 @@ export function PlannerLuxuryDocument({
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
   const destinationHeader = resolveAutoPlannerDestinationHeader(trip);
-  const dayDestinationLabels = dayDestinationLabelMap(trip.days);
+  const dayDestinationLabels = dayDestinationLabelMap(trip);
   const metaRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {

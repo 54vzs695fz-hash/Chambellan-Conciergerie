@@ -1,12 +1,9 @@
 import { citiesMatch, normalizeCity } from "@/lib/establishments/group-by-city";
 import { normalizeDestination } from "@/lib/establishments/destinations";
-import { destinationsMatch } from "@/lib/planner/destination-matching";
 import type { Activity, ActivityType, TripDay, TripWithDays } from "@/lib/types";
 import {
-  normalizeTripDestinations,
   resolvePlannerDestinationHeader,
   type PlannerDestinationHeader,
-  type TripDestinationFields,
 } from "@/lib/planner/trip-destinations";
 
 export type EstablishmentCityLookup = (
@@ -163,76 +160,22 @@ export function inferDestinationRegion(destinations: string[]): string {
 }
 
 /**
- * When multi-destination is ON, merge newly detected cities into the list.
- * Never modifies the manual planner destination.
+ * Manual per-day labels only when multi-destination is on.
+ * No establishment-based city markers.
  */
-export function mergeDetectedDestinationsWhenMulti(
-  trip: Pick<
-    TripWithDays,
-    "days" | "destination" | "destination_region"
-  > &
-    Partial<Pick<TripWithDays, "multi_destination" | "destinations">>,
-  lookup?: EstablishmentCityLookup
-): TripDestinationFields {
-  const normalized = normalizeTripDestinations(trip);
+export function dayDestinationLabelMap(
+  trip: Pick<TripWithDays, "days" | "multi_destination">
+): Map<number, string> {
+  if (!trip.multi_destination) return new Map();
 
-  if (!normalized.multi_destination) {
-    return normalized;
-  }
-
-  const detected = detectItineraryDestinations(trip.days, lookup);
-  const merged = [...normalized.destinations];
-
-  for (const city of detected) {
-    if (!merged.some((entry) => destinationsMatch(entry, city))) {
-      merged.push(city);
+  const map = new Map<number, string>();
+  for (const day of trip.days) {
+    const override = day.destination_override?.trim();
+    if (override) {
+      map.set(day.id, formatDestinationForDisplay(override));
     }
   }
-
-  return {
-    ...normalized,
-    destinations: merged,
-    destination_region:
-      inferDestinationRegion(merged) || normalized.destination_region,
-  };
-}
-
-/** Apply itinerary hints without overwriting the manual planner destination. */
-export function applyItineraryDestinationHints(
-  trip: TripWithDays,
-  lookup?: EstablishmentCityLookup
-): TripWithDays {
-  const hints = mergeDetectedDestinationsWhenMulti(trip, lookup);
-  return {
-    ...trip,
-    ...hints,
-    destination: String(trip.destination ?? "").trim(),
-  };
-}
-
-/** @deprecated Use mergeDetectedDestinationsWhenMulti — never overwrites manual destination. */
-export function syncTripDestinationsFromItinerary(
-  trip: Pick<TripWithDays, "days" | "destination" | "destination_region"> &
-    Partial<TripDestinationFields>,
-  lookup?: EstablishmentCityLookup
-): TripDestinationFields {
-  return mergeDetectedDestinationsWhenMulti(trip, lookup);
-}
-
-/** @deprecated Use applyItineraryDestinationHints */
-export function applyItineraryDestinationSync(
-  trip: TripWithDays,
-  lookup?: EstablishmentCityLookup
-): TripWithDays {
-  return applyItineraryDestinationHints(trip, lookup);
-}
-
-/** PDF header — manual planner destination only. */
-export function resolveAutoPlannerDestinationHeader(
-  trip: TripWithDays,
-  _lookup?: EstablishmentCityLookup
-): PlannerDestinationHeader {
-  return resolvePlannerDestinationHeader(trip);
+  return map;
 }
 
 export function buildEstablishmentCityLookup(
@@ -263,16 +206,10 @@ export function buildEstablishmentCityLookup(
   };
 }
 
-export function dayDestinationLabelMap(
-  days: TripDay[],
-  lookup?: EstablishmentCityLookup
-): Map<number, string> {
-  const labels = buildDayDestinationLabels(days, lookup);
-  const map = new Map<number, string>();
-  for (const label of labels) {
-    if (label.showLabel && label.destination) {
-      map.set(label.dayId, label.destination);
-    }
-  }
-  return map;
+/** PDF header — manual planner destination only. */
+export function resolveAutoPlannerDestinationHeader(
+  trip: TripWithDays,
+  _lookup?: EstablishmentCityLookup
+): PlannerDestinationHeader {
+  return resolvePlannerDestinationHeader(trip);
 }

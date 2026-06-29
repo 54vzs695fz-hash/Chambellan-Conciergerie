@@ -25,7 +25,6 @@ import {
 } from "@/lib/planner/trip-days-sync";
 import { resolveDashboardDestinationDisplay } from "@/lib/planner/trip-destinations";
 import type { TripDestinationFields as TripDestinationState } from "@/lib/planner/trip-destinations";
-import { applyItineraryDestinationHints } from "@/lib/planner/itinerary-destinations";
 import { syncTripDestinationFields } from "@/lib/planner/trip-destinations";
 import { downloadPlannerPdf } from "./planner-pdf-download";
 import { PlannerPdfExportModal } from "./PlannerPdfExportModal";
@@ -57,7 +56,7 @@ function patchActivityInTrip(
   activityId: number,
   fields: Partial<Activity>
 ): TripWithDays {
-  return applyItineraryDestinationHints({
+  return {
     ...prev,
     days: prev.days.map((day) => {
       const index = day.activities.findIndex((a) => a.id === activityId);
@@ -66,7 +65,7 @@ function patchActivityInTrip(
       activities[index] = { ...activities[index], ...fields };
       return { ...day, activities };
     }),
-  });
+  };
 }
 
 export function PlannerEditor({ initialTrip }: Props) {
@@ -182,14 +181,12 @@ export function PlannerEditor({ initialTrip }: Props) {
 
   const updateDayDestinationOverride = (dayId: number, value: string) => {
     pendingDayOverrideRef.current = { dayId, value };
-    setTrip((prev) =>
-      applyItineraryDestinationHints({
-        ...prev,
-        days: prev.days.map((day) =>
-          day.id === dayId ? { ...day, destination_override: value } : day
-        ),
-      })
-    );
+    setTrip((prev) => ({
+      ...prev,
+      days: prev.days.map((day) =>
+        day.id === dayId ? { ...day, destination_override: value } : day
+      ),
+    }));
   };
 
   const onDayDestinationOverrideBlur = async () => {
@@ -209,21 +206,19 @@ export function PlannerEditor({ initialTrip }: Props) {
       setTrip(refreshed);
       return;
     }
-    setTrip((prev) =>
-      applyItineraryDestinationHints({
-        ...prev,
-        days: prev.days.map((day) =>
-          day.id === pending.dayId || day.id === resolvedId
-            ? {
-                ...day,
-                id: resolvedId,
-                destination_override:
-                  updatedDay.destination_override ?? pending.value,
-              }
-            : day
-        ),
-      })
-    );
+    setTrip((prev) => ({
+      ...prev,
+      days: prev.days.map((day) =>
+        day.id === pending.dayId || day.id === resolvedId
+          ? {
+              ...day,
+              id: resolvedId,
+              destination_override:
+                updatedDay.destination_override ?? pending.value,
+            }
+          : day
+      ),
+    }));
   };
 
   const updateHost = (hostName: PlannerHostOption) => {
@@ -307,20 +302,18 @@ export function PlannerEditor({ initialTrip }: Props) {
     });
     if (!res.ok) return;
     const activity: Activity = await res.json();
-    setTrip((prev) =>
-      applyItineraryDestinationHints({
-        ...prev,
-        days: prev.days.map((d) =>
-          d.id === dayId || d.id === resolvedId
-            ? {
-                ...d,
-                id: resolvedId,
-                activities: [...d.activities, activity],
-              }
-            : d
-        ),
-      })
-    );
+    setTrip((prev) => ({
+      ...prev,
+      days: prev.days.map((d) =>
+        d.id === dayId || d.id === resolvedId
+          ? {
+              ...d,
+              id: resolvedId,
+              activities: [...d.activities, activity],
+            }
+          : d
+      ),
+    }));
   };
 
   const runQuickAdd = useCallback(
@@ -362,20 +355,18 @@ export function PlannerEditor({ initialTrip }: Props) {
       if (!res.ok) return;
 
       const activity: Activity = await res.json();
-      setTrip((prev) =>
-        applyItineraryDestinationHints({
-          ...prev,
-          days: prev.days.map((d) =>
-            d.id === target.dayId || d.id === resolvedId
-              ? {
-                  ...d,
-                  id: resolvedId,
-                  activities: [...d.activities, activity],
-                }
-              : d
-          ),
-        })
-      );
+      setTrip((prev) => ({
+        ...prev,
+        days: prev.days.map((d) =>
+          d.id === target.dayId || d.id === resolvedId
+            ? {
+                ...d,
+                id: resolvedId,
+                activities: [...d.activities, activity],
+              }
+            : d
+        ),
+      }));
 
       requestAnimationFrame(() => {
         document
@@ -425,15 +416,13 @@ export function PlannerEditor({ initialTrip }: Props) {
     if (id <= 0) return;
     const res = await fetch(`/api/activities/${id}`, { method: "DELETE" });
     if (!res.ok) return;
-    setTrip((prev) =>
-      applyItineraryDestinationHints({
-        ...prev,
-        days: prev.days.map((d) => ({
-          ...d,
-          activities: d.activities.filter((a) => a.id !== id),
-        })),
-      })
-    );
+    setTrip((prev) => ({
+      ...prev,
+      days: prev.days.map((d) => ({
+        ...d,
+        activities: d.activities.filter((a) => a.id !== id),
+      })),
+    }));
   };
 
   const reorderActivities = async (

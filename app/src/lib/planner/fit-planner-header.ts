@@ -81,7 +81,7 @@ export function applyPlannerHeaderFit(meta: HTMLElement | null) {
   }
 
   if (destination && centerWidth > 0) {
-    applyHeaderFitToElement(destination, centerWidth, false);
+    applyHeaderFitToElement(destination, centerWidth, true);
   }
 
   const destinationSub = centerCol?.querySelector<HTMLElement>(

@@ -63,14 +63,27 @@ export interface PlannerDestinationHeader {
   subtitle: string | null;
 }
 
-/** PDF and document headers — manual planner destination only. */
+/** Planner / PDF / list title from manual fields only. */
+export function resolvePlannerDisplayTitle(
+  trip: Partial<TripDestinationFields>
+): string {
+  const normalized = normalizeTripDestinations(trip);
+
+  if (!normalized.multi_destination) {
+    return normalized.destination.trim();
+  }
+
+  const joined = formatDestinationsJoin(normalized.destinations);
+  return joined || normalized.destination.trim();
+}
+
+/** PDF and document headers — manual fields only. */
 export function resolvePlannerDestinationHeader(
   trip: Partial<TripDestinationFields>
 ): PlannerDestinationHeader {
-  const normalized = normalizeTripDestinations(trip);
-  const manual = normalized.destination.trim();
-  if (!manual) return { mainTitle: "", subtitle: null };
-  return { mainTitle: manual, subtitle: null };
+  const mainTitle = resolvePlannerDisplayTitle(trip);
+  if (!mainTitle) return { mainTitle: "", subtitle: null };
+  return { mainTitle, subtitle: null };
 }
 
 export interface DashboardDestinationDisplay {
@@ -82,18 +95,8 @@ export function resolveDashboardDestinationDisplay(
   trip: Partial<TripDestinationFields>,
   fallback = "Untitled destination"
 ): DashboardDestinationDisplay {
-  const normalized = normalizeTripDestinations(trip);
-  const manual = normalized.destination.trim() || fallback;
-
-  if (!normalized.multi_destination || normalized.destinations.length === 0) {
-    return { primary: manual, secondary: null };
-  }
-
-  const joined = formatDestinationsJoin(normalized.destinations);
-  return {
-    primary: manual,
-    secondary: joined && joined !== manual ? joined : null,
-  };
+  const title = resolvePlannerDisplayTitle(trip).trim() || fallback;
+  return { primary: title, secondary: null };
 }
 
 export function tripDestinationFilterValues(
@@ -102,8 +105,10 @@ export function tripDestinationFilterValues(
   const normalized = normalizeTripDestinations(trip);
   const values = new Set<string>();
 
-  if (normalized.destination) values.add(normalized.destination);
+  const title = resolvePlannerDisplayTitle(trip);
+  if (title) values.add(title);
   normalized.destinations.forEach((place) => values.add(place));
+  if (normalized.destination) values.add(normalized.destination);
   if (normalized.destination_region) {
     values.add(normalized.destination_region);
   }
@@ -116,5 +121,8 @@ export function resolveLibraryDestinationPrioritize(
   trip: Partial<TripDestinationFields>
 ): string {
   const normalized = normalizeTripDestinations(trip);
+  if (normalized.multi_destination && normalized.destinations.length > 0) {
+    return normalized.destinations[0];
+  }
   return normalized.destination.trim() || normalized.destinations[0] || "";
 }
