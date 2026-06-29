@@ -135,7 +135,12 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
         const leftCol = meta.querySelector(".lux-meta-left");
         const rightCol = meta.querySelector(".lux-meta-right");
         const centerCol = meta.querySelector(".lux-meta-center");
-        const destination = centerCol ? centerCol.querySelector(".lux-destination") : null;
+        const destinationStack = centerCol
+          ? centerCol.querySelector(".lux-destination-stack")
+          : null;
+        const destinationSingle = centerCol
+          ? centerCol.querySelector(".lux-destination:not(.lux-destination-line)")
+          : null;
         const fitClasses = [
           "lux-header-fit--tight",
           "lux-header-fit--compact",
@@ -195,8 +200,14 @@ export const LOCK_PLANNER_PRINT_LAYOUT_SCRIPT = `
           }
         }
 
-        if (destination && centerWidth > 0) {
-          applyFit(destination, centerWidth, true);
+        if (destinationStack && centerWidth > 0) {
+          destinationStack
+            .querySelectorAll(".lux-destination-line")
+            .forEach((line) => {
+              applyFit(line, centerWidth, false);
+            });
+        } else if (destinationSingle && centerWidth > 0) {
+          applyFit(destinationSingle, centerWidth, true);
         }
 
         const destinationSub = centerCol

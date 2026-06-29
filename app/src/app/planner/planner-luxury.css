@@ -294,6 +294,48 @@
   hyphens: auto;
 }
 
+.lux-destination-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 100%;
+  text-align: center;
+}
+
+.lux-destination-stack .lux-destination-line {
+  margin: 0;
+  width: max-content;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.12;
+}
+
+.lux-destination-bullet {
+  display: block;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9a7b4f;
+  line-height: 1;
+  margin: 0.14em 0;
+  text-align: center;
+  user-select: none;
+}
+
+.lux-destination-stack--dense .lux-destination-line {
+  font-size: 0.9em;
+  letter-spacing: 0.18em;
+}
+
+.lux-destination-stack--dense .lux-destination-bullet {
+  font-size: 0.88em;
+  margin: 0.1em 0;
+}
+
 .lux-subtitle {
   font-family: var(--font-cormorant), Georgia, serif;
   font-size: clamp(0.82rem, 1.9vw, 1rem);
@@ -1603,6 +1645,19 @@
   padding-right: var(--lux-header-side-inset, 1.5rem);
 }
 
+.lux-header--travel .lux-destination-stack .lux-destination-line {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.lux-header--travel .lux-destination-stack .lux-destination-line.lux-header-fit--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .lux-header--travel .lux-destination {
   white-space: nowrap;
   overflow-wrap: normal;
@@ -2269,6 +2324,30 @@
   color: var(--lux-gold-rich);
   font-weight: 500;
   font-feature-settings: "kern" 1, "liga" 1;
+}
+
+.lux-print-root--client .lux-destination-stack .lux-destination-line {
+  font-size: 3.52rem;
+  letter-spacing: 0.25em;
+  line-height: 1.02;
+  color: var(--lux-gold-rich);
+}
+
+.lux-print-root--client .lux-destination-stack--dense .lux-destination-line {
+  font-size: 3.05rem;
+  letter-spacing: 0.2em;
+}
+
+.lux-print-root--client .lux-destination-bullet {
+  font-size: 1.65rem;
+  letter-spacing: 0.25em;
+  color: var(--lux-gold-rich);
+  margin: 0.1em 0;
+}
+
+.lux-print-root--client .lux-destination-stack--dense .lux-destination-bullet {
+  font-size: 1.4rem;
+  margin: 0.08em 0;
 }
 
 .lux-print-root--client .lux-subtitle {

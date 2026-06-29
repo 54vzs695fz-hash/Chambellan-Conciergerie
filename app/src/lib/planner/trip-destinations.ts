@@ -77,6 +77,26 @@ export function resolvePlannerDisplayTitle(
   return joined || normalized.destination.trim();
 }
 
+/** PDF header lines — vertical stack when multi-destination has 2+ places. */
+export function resolvePlannerDestinationTitleLines(
+  trip: Partial<TripDestinationFields>
+): string[] {
+  const normalized = normalizeTripDestinations(trip);
+
+  if (!normalized.multi_destination) {
+    const single = normalized.destination.trim();
+    return single ? [single] : [];
+  }
+
+  if (normalized.destinations.length >= 2) {
+    return normalized.destinations;
+  }
+
+  const fallback =
+    normalized.destinations[0]?.trim() || normalized.destination.trim();
+  return fallback ? [fallback] : [];
+}
+
 /** PDF and document headers — manual fields only. */
 export function resolvePlannerDestinationHeader(
   trip: Partial<TripDestinationFields>

@@ -51,7 +51,6 @@ export function applyPlannerHeaderFit(meta: HTMLElement | null) {
   const leftCol = meta.querySelector<HTMLElement>(".lux-meta-left");
   const rightCol = meta.querySelector<HTMLElement>(".lux-meta-right");
   const centerCol = meta.querySelector<HTMLElement>(".lux-meta-center");
-  const destination = centerCol?.querySelector<HTMLElement>(".lux-destination");
   const leftWidth = leftCol ? columnInnerWidth(leftCol) : 0;
   const rightWidth = rightCol ? columnInnerWidth(rightCol) : 0;
   const centerWidth = centerCol ? columnInnerWidth(centerCol) : 0;
@@ -80,8 +79,19 @@ export function applyPlannerHeaderFit(meta: HTMLElement | null) {
     }
   }
 
-  if (destination && centerWidth > 0) {
-    applyHeaderFitToElement(destination, centerWidth, true);
+  const destinationStack = centerCol?.querySelector<HTMLElement>(
+    ".lux-destination-stack"
+  );
+  const destinationSingle = centerCol?.querySelector<HTMLElement>(
+    ".lux-destination:not(.lux-destination-line)"
+  );
+
+  if (destinationStack && centerWidth > 0) {
+    destinationStack
+      .querySelectorAll<HTMLElement>(".lux-destination-line")
+      .forEach((line) => applyHeaderFitToElement(line, centerWidth, false));
+  } else if (destinationSingle && centerWidth > 0) {
+    applyHeaderFitToElement(destinationSingle, centerWidth, true);
   }
 
   const destinationSub = centerCol?.querySelector<HTMLElement>(

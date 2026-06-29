@@ -33,7 +33,8 @@ import {
 import {
   dayDestinationLabelMap,
 } from "@/lib/planner/itinerary-destinations";
-import { resolvePlannerDisplayTitle } from "@/lib/planner/trip-destinations";
+import { resolvePlannerDestinationTitleLines } from "@/lib/planner/trip-destinations";
+import { PlannerDestinationTitle } from "./PlannerDestinationTitle";
 import {
   formatDateRange,
   formatHeaderTravelDates,
@@ -581,7 +582,7 @@ export function PlannerLuxuryDocument({
   const clientGuestCount = formatClientGuestCount(trip.tailored_for);
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
-  const destinationHeaderTitle = resolvePlannerDisplayTitle(trip);
+  const destinationTitleLines = resolvePlannerDestinationTitleLines(trip);
   const dayDestinationLabels = dayDestinationLabelMap(trip);
   const metaRef = useRef<HTMLDivElement>(null);
 
@@ -610,7 +611,7 @@ export function PlannerLuxuryDocument({
     trip.arrival_date,
     trip.departure_date,
     trip.days,
-    destinationHeaderTitle,
+    destinationTitleLines.join("\n"),
     variant,
     showHeaderDates,
     showClientIdentity,
@@ -650,9 +651,7 @@ export function PlannerLuxuryDocument({
             ) : null}
           </div>
           <div className="lux-meta-center">
-            {destinationHeaderTitle ? (
-              <h1 className="lux-destination">{destinationHeaderTitle}</h1>
-            ) : null}
+            <PlannerDestinationTitle trip={trip} />
             <p className="lux-subtitle">{PLANNER_DOCUMENT_SUBTITLE}</p>
             {!isClientItinerary &&
             (trip.arrival_date || trip.departure_date) ? (
