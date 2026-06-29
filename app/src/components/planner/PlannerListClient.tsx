@@ -168,11 +168,20 @@ export function PlannerListClient({ initialTrips }: Props) {
           {trips.map((t) => (
             <li key={t.id} className="planner-list-row card">
               <Link href={`/planner/${t.id}`} className="planner-list-link">
-                <div>
-                  <p className="font-serif text-gold tracking-wide">
+                <div className="planner-list-body">
+                  <p className="planner-list-dates">
+                    {formatDateRange(t.arrival_date, t.departure_date)}
+                  </p>
+                  {t.client_name?.trim() ? (
+                    <p className="planner-list-client">{t.client_name}</p>
+                  ) : null}
+                  <p className="planner-list-destination font-serif text-gold tracking-wide">
                     {displayDestination(t.destination)}
                   </p>
-                  <p className="text-sm mt-0.5">{t.client_name}</p>
+                  <PlannerArrivalCountdown
+                    arrivalDate={t.arrival_date}
+                    departureDate={t.departure_date}
+                  />
                   <div
                     className="planner-list-status"
                     onClick={(event) => {
@@ -194,14 +203,7 @@ export function PlannerListClient({ initialTrips }: Props) {
                       }
                     />
                   </div>
-                  <PlannerArrivalCountdown
-                    arrivalDate={t.arrival_date}
-                    departureDate={t.departure_date}
-                  />
                 </div>
-                <p className="text-xs text-muted text-right shrink-0">
-                  {formatDateRange(t.arrival_date, t.departure_date)}
-                </p>
               </Link>
               <button
                 type="button"

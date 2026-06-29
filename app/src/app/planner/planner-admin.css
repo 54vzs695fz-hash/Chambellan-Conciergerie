@@ -639,15 +639,7 @@
   }
 
   .planner-list-link {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
     padding: 0.95rem 1rem;
-  }
-
-  .planner-list-link .text-right {
-    text-align: left;
-    width: 100%;
   }
 
   .planner-list-bulk-btn {
@@ -963,13 +955,39 @@ body.lux-pdf-export-open {
 .planner-list-link {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  display: block;
   padding: 1rem 1.25rem;
   text-decoration: none;
   color: inherit;
+}
+
+.planner-list-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
+.planner-list-dates {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  color: #7a736c;
+  line-height: 1.35;
+}
+
+.planner-list-client {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: #2a2622;
+  line-height: 1.35;
+}
+
+.planner-list-destination {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  line-height: 1.3;
 }
 
 .planner-list-delete {
