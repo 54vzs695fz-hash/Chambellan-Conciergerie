@@ -27,8 +27,12 @@ import {
 } from "@/lib/planner/beach-club";
 import {
   activityHasTransportDisplayContent,
+  formatTransportRouteLine,
   isTransportationActivity,
   normalizeTransportationActivity,
+  resolveTransportPdfHeading,
+  resolveTransportPdfVehicleLabel,
+  transportPdfIcon,
 } from "@/lib/planner/transportation";
 import {
   buildCityChangeDividerMap,
@@ -77,57 +81,37 @@ function activityHasClientRowContent(activity: Activity): boolean {
   );
 }
 
-function TransportationRoute({
-  pickup,
-  destination,
-}: {
-  pickup: string;
-  destination: string;
-}) {
-  if (!pickup && !destination) return null;
+function TransportPdfCardContent({ activity }: { activity: Activity }) {
+  const transport = normalizeTransportationActivity(activity);
+  const time = activity.time?.trim() ? formatTimeDisplay(activity.time) : "";
+  const heading = resolveTransportPdfHeading(transport);
+  const route = formatTransportRouteLine(transport.pickup, transport.destination);
+  const vehicleLabel = resolveTransportPdfVehicleLabel(transport, heading);
+  const icon = transportPdfIcon(transport.transportType);
 
   return (
-    <div className="lux-transport-route">
-      {pickup ? <span className="lux-transport-location">{pickup}</span> : null}
-      {pickup && destination ? (
-        <span className="lux-transport-route-arrow" aria-hidden>
-          ↓
+    <>
+      <div className="lux-transport-header">
+        <span className="lux-transport-icon" aria-hidden>
+          {icon}
         </span>
+        <span className="lux-transport-heading">{heading}</span>
+      </div>
+      {vehicleLabel ? (
+        <span className="lux-transport-vehicle">{vehicleLabel}</span>
       ) : null}
-      {destination ? (
-        <span className="lux-transport-location lux-transport-location--destination">
-          {destination}
-        </span>
+      {time ? (
+        <time className="lux-transport-time">{time}</time>
       ) : null}
-    </div>
+      {route ? <p className="lux-transport-route-line">{route}</p> : null}
+    </>
   );
 }
 
 function TransportationTravelCard({ activity }: { activity: Activity }) {
-  const transport = normalizeTransportationActivity(activity);
-
   return (
     <article className="lux-transport-card">
-      {activity.time?.trim() ? (
-        <time className="lux-transport-time">
-          {formatTimeDisplay(activity.time)}
-        </time>
-      ) : null}
-      <div className="lux-transport-body">
-        <span className="lux-transport-icon" aria-hidden>
-          ◇
-        </span>
-        <div className="lux-transport-copy">
-          {transport.displayTitle ? (
-            <LuxuryVenueName name={transport.displayTitle} />
-          ) : null}
-          <span className="lux-transport-type">{transport.typeLabel}</span>
-          <TransportationRoute
-            pickup={transport.pickup}
-            destination={transport.destination}
-          />
-        </div>
-      </div>
+      <TransportPdfCardContent activity={activity} />
     </article>
   );
 }
@@ -395,24 +379,9 @@ function ConciergeActivityCard({
   if (!activityHasVisibleContent(activity)) return null;
 
   if (isTransportationActivity(activity)) {
-    const transport = normalizeTransportationActivity(activity);
     return (
       <div className="lux-activity-card lux-activity-card--itinerary lux-activity-card--transport">
-        {activity.time?.trim() ? (
-          <span className="lux-activity-time">
-            {formatTimeDisplay(activity.time)}
-          </span>
-        ) : null}
-        {transport.displayTitle ? (
-          <p className="lux-activity-venue">{transport.displayTitle}</p>
-        ) : null}
-        <p className="lux-transport-type lux-transport-type--concierge">
-          {transport.typeLabel}
-        </p>
-        <TransportationRoute
-          pickup={transport.pickup}
-          destination={transport.destination}
-        />
+        <TransportPdfCardContent activity={activity} />
       </div>
     );
   }

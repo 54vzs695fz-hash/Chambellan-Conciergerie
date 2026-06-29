@@ -64,6 +64,76 @@ export function transportTypeAutoTitle(type: TransportType): string {
   }
 }
 
+/** Client PDF heading — concise transfer label. */
+export function resolveTransportPdfHeading(
+  transport: NormalizedTransportation
+): string {
+  const legacy = transport.displayTitle.trim();
+  if (legacy && !AUTO_TITLES.has(legacy)) {
+    return legacy.toUpperCase();
+  }
+
+  switch (transport.transportType) {
+    case "helicopter":
+      return "HELICOPTER TRANSFER";
+    case "boat_transfer":
+      return "BOAT TRANSFER";
+    case "tender":
+      return "TENDER TRANSFER";
+    case "walking_escort":
+      return "ESCORT";
+    case "luxury_sedan":
+    case "van":
+    case "other":
+    default:
+      return "TRANSFER";
+  }
+}
+
+export function transportPdfIcon(type: TransportType): string {
+  switch (type) {
+    case "helicopter":
+      return "🚁";
+    case "boat_transfer":
+    case "tender":
+      return "🚤";
+    case "walking_escort":
+      return "🚶";
+    default:
+      return "🚐";
+  }
+}
+
+export function formatTransportRouteLine(
+  pickup: string,
+  destination: string
+): string | null {
+  const from = pickup.trim();
+  const to = destination.trim();
+  if (from && to) return `${from} → ${to}`;
+  if (from) return from;
+  if (to) return to;
+  return null;
+}
+
+/** Optional vehicle label when it adds detail beyond the heading. */
+export function resolveTransportPdfVehicleLabel(
+  transport: NormalizedTransportation,
+  heading: string
+): string | null {
+  if (!transport.hasExplicitType) return null;
+
+  const label = transport.typeLabel.trim();
+  if (!label || label === "Van" || label === "Other") return null;
+
+  const headingUpper = heading.toUpperCase();
+  if (headingUpper.includes(label.toUpperCase())) return null;
+  if (label === "Helicopter" && headingUpper.includes("HELICOPTER")) return null;
+  if (label === "Boat Transfer" && headingUpper.includes("BOAT")) return null;
+
+  return label;
+}
+
 const AUTO_TITLES = new Set(
   TRANSPORT_TYPE_OPTIONS.map((type) => transportTypeAutoTitle(type))
 );

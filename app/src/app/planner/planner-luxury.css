@@ -1021,10 +1021,11 @@
 }
 
 .lux-transport-card {
-  background: #f1ece4;
+  background: linear-gradient(180deg, #ebe5db 0%, #e2dbd0 100%);
   border-radius: 8px;
-  border-left: 2px solid #8a7355;
-  padding: 0.32rem 0.34rem 0.34rem 0.38rem;
+  border: 1px solid rgba(122, 99, 72, 0.28);
+  border-left: 3px solid #7a6348;
+  padding: 0.38rem 0.42rem 0.4rem 0.46rem;
   box-sizing: border-box;
   flex-shrink: 0;
   min-width: 0;
@@ -1034,80 +1035,87 @@
 .lux-transport-card + .lux-transport-card,
 .lux-travel-card + .lux-transport-card,
 .lux-transport-card + .lux-travel-card {
-  margin-top: 0.08rem;
+  margin-top: 0.12rem;
+}
+
+.lux-transport-header {
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.lux-transport-icon {
+  flex-shrink: 0;
+  font-size: 0.88rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.lux-transport-heading {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6b5a42;
+  line-height: 1.2;
+}
+
+.lux-transport-vehicle {
+  display: block;
+  margin-top: 0.12rem;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a7a66;
 }
 
 .lux-transport-time {
   display: block;
   font-family: var(--font-cormorant), Georgia, serif;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 500;
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
   color: #252320;
-  margin-bottom: 0.18rem;
-}
-
-.lux-transport-body {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.42rem;
-}
-
-.lux-transport-icon {
-  flex-shrink: 0;
   margin-top: 0.18rem;
-  font-size: 0.72rem;
-  line-height: 1;
-  color: #9a7b4f;
-  letter-spacing: 0;
-}
-
-.lux-transport-copy {
-  min-width: 0;
-  flex: 1;
-}
-
-.lux-transport-type {
-  display: block;
-  margin-top: 0.08rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #8a7a66;
-  font-weight: 600;
-}
-
-.lux-transport-route {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  margin-top: 0.28rem;
-}
-
-.lux-transport-location {
-  font-family: var(--font-cormorant), Georgia, serif;
-  font-size: 1.02rem;
-  letter-spacing: 0.04em;
-  color: #2a2622;
   line-height: 1.2;
 }
 
-.lux-transport-route-arrow {
-  font-size: 0.72rem;
-  line-height: 1;
-  color: #9a7b4f;
-  letter-spacing: 0;
-  padding: 0.06rem 0;
+.lux-transport-route-line {
+  margin: 0.22rem 0 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #1c1916;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .lux-activity-card--transport {
-  border-left: 2px solid #8a7355;
-  background: #f1ece4;
+  border-left: 3px solid #7a6348;
+  background: linear-gradient(180deg, #ebe5db 0%, #e2dbd0 100%);
+  border: 1px solid rgba(122, 99, 72, 0.28);
+  border-left: 3px solid #7a6348;
+  padding: 0.5rem 0.45rem 0.52rem 0.5rem;
 }
 
-.lux-transport-type--concierge {
-  margin-top: 0.12rem;
+.lux-activity-card--transport .lux-transport-heading {
+  font-size: 0.64rem;
+}
+
+.lux-activity-card--transport .lux-transport-route-line {
+  font-size: 1.12rem;
+}
+
+.lux-activity-card--transport .lux-transport-time {
+  font-size: 0.82rem;
+  margin-top: 0.14rem;
 }
 
 .lux-activity-venue {
@@ -2565,6 +2573,38 @@
   border-radius: 7px;
   border-left-color: var(--lux-gold-accent);
   background: #f3efe8;
+}
+
+.lux-print-root--client .lux-transport-card,
+.lux-print-root--client .lux-activity-card--transport {
+  background: linear-gradient(180deg, #e8e2d8 0%, #ded7cb 100%);
+  border-color: rgba(122, 99, 72, 0.32);
+  border-left-color: #6f5a40;
+  border-left-width: 3px;
+  border-radius: 7px;
+  padding: 0.34rem 0.36rem 0.36rem 0.4rem;
+}
+
+.lux-print-root--client .lux-transport-heading {
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: #5c4d38;
+}
+
+.lux-print-root--client .lux-transport-route-line {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #141210;
+  margin-top: 0.18rem;
+}
+
+.lux-print-root--client .lux-transport-time {
+  font-size: 0.84rem;
+  margin-top: 0.14rem;
+}
+
+.lux-print-root--client .lux-transport-icon {
+  font-size: 0.82rem;
 }
 
 .lux-print-root--client .lux-day-card--sparse .lux-travel-card {
