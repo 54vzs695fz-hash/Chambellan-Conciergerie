@@ -169,8 +169,11 @@ export function dayDestinationLabelMap(
   if (!trip.multi_destination) return new Map();
 
   const map = new Map<number, string>();
-  for (const day of trip.days) {
-    const override = day.destination_override?.trim();
+  const days = Array.isArray(trip.days) ? trip.days : [];
+
+  for (const day of days) {
+    if (!day) continue;
+    const override = String(day.destination_override ?? "").trim();
     if (override) {
       map.set(day.id, formatDestinationForDisplay(override));
     }

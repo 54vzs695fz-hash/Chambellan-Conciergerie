@@ -1,5 +1,6 @@
 import type { Browser } from "puppeteer-core";
 import type { PlannerExportVariant } from "../planner/planner-sheet-model";
+import { createPdfExportToken } from "./pdf-export-token";
 import { LOCK_PLANNER_PRINT_LAYOUT_SCRIPT } from "./lock-planner-print-layout-script";
 
 function resolveBaseUrl(baseUrl?: string): string {
@@ -93,7 +94,8 @@ export async function generatePlannerPdf(
   baseUrl?: string
 ): Promise<Buffer> {
   const origin = resolveBaseUrl(baseUrl);
-  const url = `${origin}/planner/${tripId}/print?mode=${mode}`;
+  const pdfToken = await createPdfExportToken(tripId);
+  const url = `${origin}/planner/${tripId}/print?mode=${mode}&pdfToken=${encodeURIComponent(pdfToken)}`;
 
   const browser = await launchBrowser();
 
@@ -101,8 +103,38 @@ export async function generatePlannerPdf(
     const page = await browser.newPage();
     await page.setViewport({ width: 1123, height: 794, deviceScaleFactor: 1 });
     await page.emulateMediaType("print");
-    await page.goto(url, { waitUntil: "networkidle0", timeout: 60_000 });
-    await page.waitForSelector(".lux-document", { timeout: 30_000 });
+
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+      }
+    });
+    page.on("pageerror", (err) => {
+      consoleErrors.push(err instanceof Error ? err.message : String(err));
+    });
+
+    const response = await page.goto(url, {
+      waitUntil: "networkidle0",
+      timeout: 60_000,
+    });
+    if (!response?.ok()) {
+      throw new Error(
+        `Print page returned HTTP ${response?.status() ?? "unknown"}`
+      );
+    }
+
+    try {
+      await page.waitForSelector(".lux-document", { timeout: 30_000 });
+    } catch {
+      const title = await page.title();
+      const bodyText = await page.evaluate(
+        () => document.body?.innerText?.slice(0, 500) ?? ""
+      );
+      throw new Error(
+        `Print layout failed to render (.lux-document missing). title="${title}" errors=${consoleErrors.join(" | ") || "none"} body="${bodyText}"`
+      );
+    }
     await page.evaluate(() => document.fonts.ready);
 
     const readyInTime = await page

@@ -3,6 +3,10 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { isSessionVersionValid } from "@/lib/auth/auth-version";
 import { SESSION_COOKIE } from "@/lib/auth/constants";
+import {
+  extractPlannerPrintTripId,
+  verifyPdfExportToken,
+} from "@/lib/pdf/pdf-export-token";
 
 const PUBLIC_PATHS = new Set(["/login"]);
 
@@ -62,6 +66,14 @@ function clearSessionCookie(response: NextResponse): NextResponse {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  const printTripId = extractPlannerPrintTripId(pathname);
+  if (printTripId !== null) {
+    const pdfToken = request.nextUrl.searchParams.get("pdfToken");
+    if (await verifyPdfExportToken(printTripId, pdfToken)) {
+      return NextResponse.next();
+    }
+  }
 
   if (isPublicAsset(pathname)) {
     if (pathname === "/login" && (await hasValidSession(request))) {

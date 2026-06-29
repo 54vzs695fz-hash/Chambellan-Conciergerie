@@ -1,6 +1,11 @@
 import type { Activity, TripDay, TripWithDays } from "@/lib/types";
 import { getVisibleSections } from "@/lib/planner/day-sections";
 import type { PlannerExportVariant } from "@/lib/planner/planner-sheet-model";
+import { activityHasDisplayContent, isBeachClubActivity } from "@/lib/planner/beach-club";
+import {
+  activityHasTransportDisplayContent,
+  isTransportationActivity,
+} from "@/lib/planner/transportation";
 import {
   groupActivitiesByLuxuryPeriod,
   sortActivitiesForSection,
@@ -12,10 +17,22 @@ export function activityHasVisibleExportContent(
   activity: Activity | null | undefined
 ): boolean {
   if (!activity) return false;
-  const time = String(activity.time ?? "").trim();
-  const title = String(activity.title ?? "").trim();
-  const details = String(activity.details ?? "").trim();
-  return Boolean(time || title || details);
+
+  try {
+    if (isTransportationActivity(activity)) {
+      return activityHasTransportDisplayContent(activity);
+    }
+    if (isBeachClubActivity(activity)) {
+      return activityHasDisplayContent(activity);
+    }
+
+    const time = String(activity.time ?? "").trim();
+    const title = String(activity.title ?? "").trim();
+    const details = String(activity.details ?? "").trim();
+    return Boolean(time || title || details);
+  } catch {
+    return false;
+  }
 }
 
 function orderedActiveSections(day: TripDay) {
@@ -202,12 +219,12 @@ function isElementVisibleInContainer(
 
 function measureClientDayDom(card: Element, index: number): PlannerDayDomCounts {
   const afternoonCards = card.querySelectorAll(
-    ".lux-period-block--afternoon .lux-travel-card"
+    ".lux-period-block--afternoon .lux-travel-card, .lux-period-block--afternoon .lux-transport-card"
   );
   const eveningCards = card.querySelectorAll(
-    ".lux-period-block--evening .lux-travel-card"
+    ".lux-period-block--evening .lux-travel-card, .lux-period-block--evening .lux-transport-card"
   );
-  const allCards = card.querySelectorAll(".lux-travel-card");
+  const allCards = card.querySelectorAll(".lux-travel-card, .lux-transport-card");
 
   const visibleAfternoon = [...afternoonCards].filter((el) =>
     isElementVisibleInContainer(card, el)

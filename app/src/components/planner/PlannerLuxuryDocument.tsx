@@ -32,8 +32,8 @@ import {
 } from "@/lib/planner/transportation";
 import {
   dayDestinationLabelMap,
-  resolveAutoPlannerDestinationHeader,
 } from "@/lib/planner/itinerary-destinations";
+import { resolvePlannerDisplayTitle } from "@/lib/planner/trip-destinations";
 import {
   formatDateRange,
   formatHeaderTravelDates,
@@ -170,10 +170,11 @@ function isSparseTimelineDay(day: TripDay): boolean {
 
 function LuxuryVenueName({ name }: { name: string }) {
   const ref = useRef<HTMLParagraphElement>(null);
+  const safeName = String(name ?? "").trim();
 
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !safeName) return;
 
     el.style.fontSize = "";
     const computed = getComputedStyle(el);
@@ -187,11 +188,13 @@ function LuxuryVenueName({ name }: { name: string }) {
       sizePx -= 0.25;
       el.style.fontSize = `${sizePx}px`;
     }
-  }, [name]);
+  }, [safeName]);
+
+  if (!safeName) return null;
 
   return (
     <p ref={ref} className="lux-travel-venue">
-      {name}
+      {safeName}
     </p>
   );
 }
@@ -304,7 +307,7 @@ function ClientDayCard({
       day.activities.filter(
         (a) =>
           a.period === section.id &&
-          (a.time || a.title?.trim() || a.details?.trim())
+          activityHasClientRowContent(a)
       ),
       section.id,
       section.label
@@ -491,7 +494,7 @@ function ConciergeDayColumn({
       day.activities.filter(
         (a) =>
           a.period === sectionId &&
-          (a.time || a.title?.trim() || a.details?.trim())
+          activityHasClientRowContent(a)
       ),
       sectionId,
       sectionLabel
@@ -578,7 +581,7 @@ export function PlannerLuxuryDocument({
   const clientGuestCount = formatClientGuestCount(trip.tailored_for);
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
-  const destinationHeader = resolveAutoPlannerDestinationHeader(trip);
+  const destinationHeaderTitle = resolvePlannerDisplayTitle(trip);
   const dayDestinationLabels = dayDestinationLabelMap(trip);
   const metaRef = useRef<HTMLDivElement>(null);
 
@@ -607,8 +610,7 @@ export function PlannerLuxuryDocument({
     trip.arrival_date,
     trip.departure_date,
     trip.days,
-    destinationHeader.mainTitle,
-    destinationHeader.subtitle,
+    destinationHeaderTitle,
     variant,
     showHeaderDates,
     showClientIdentity,
@@ -648,11 +650,8 @@ export function PlannerLuxuryDocument({
             ) : null}
           </div>
           <div className="lux-meta-center">
-            {destinationHeader.mainTitle ? (
-              <h1 className="lux-destination">{destinationHeader.mainTitle}</h1>
-            ) : null}
-            {destinationHeader.subtitle ? (
-              <p className="lux-destination-sub">{destinationHeader.subtitle}</p>
+            {destinationHeaderTitle ? (
+              <h1 className="lux-destination">{destinationHeaderTitle}</h1>
             ) : null}
             <p className="lux-subtitle">{PLANNER_DOCUMENT_SUBTITLE}</p>
             {!isClientItinerary &&

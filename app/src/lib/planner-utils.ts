@@ -107,10 +107,14 @@ export function formatDateRangeCompact(
   return `${short(a)} – ${short(b)}`;
 }
 
-export function formatTimeDisplay(time: string): string {
-  if (!time) return "";
-  const [h, m] = time.split(":");
-  return `${h}:${m}`;
+export function formatTimeDisplay(time: string | null | undefined): string {
+  const raw = String(time ?? "").trim();
+  if (!raw) return "";
+  const match = raw.match(/^(\d{1,2})(?::(\d{2}))?/);
+  if (!match) return raw;
+  const hours = match[1].padStart(2, "0");
+  const minutes = (match[2] ?? "00").padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
 const LATE_NIGHT_END_HOUR = 5;

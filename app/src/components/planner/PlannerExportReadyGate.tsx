@@ -120,6 +120,12 @@ export function PlannerExportReadyGate({
             console.warn("lockPlannerPrintLayout failed:", err);
           }
           await waitForPaint();
+          const afterLock = measurePlannerExportDom(variant);
+          markReady(afterLock);
+          return;
+        }
+
+        if (document.querySelector(".lux-print-root .lux-document")) {
           markReady(measurePlannerExportDom(variant));
         }
         return;
@@ -149,6 +155,11 @@ export function PlannerExportReadyGate({
       }
 
       if (plannerExportHasRenderableContent(expected, afterLock)) {
+        markReady(afterLock);
+        return;
+      }
+
+      if (document.querySelector(".lux-print-root .lux-document")) {
         markReady(afterLock);
       }
     }
