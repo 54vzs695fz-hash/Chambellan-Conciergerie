@@ -116,7 +116,7 @@ export function formatTransportRouteLine(
   return null;
 }
 
-/** Optional vehicle label when it adds detail beyond the heading. */
+/** Optional vehicle label shown below the route. */
 export function resolveTransportPdfVehicleLabel(
   transport: NormalizedTransportation,
   heading: string
@@ -124,12 +124,13 @@ export function resolveTransportPdfVehicleLabel(
   if (!transport.hasExplicitType) return null;
 
   const label = transport.typeLabel.trim();
-  if (!label || label === "Van" || label === "Other") return null;
+  if (!label || label === "Other") return null;
 
   const headingUpper = heading.toUpperCase();
   if (headingUpper.includes(label.toUpperCase())) return null;
   if (label === "Helicopter" && headingUpper.includes("HELICOPTER")) return null;
   if (label === "Boat Transfer" && headingUpper.includes("BOAT")) return null;
+  if (label === "Tender" && headingUpper.includes("TENDER")) return null;
 
   return label;
 }

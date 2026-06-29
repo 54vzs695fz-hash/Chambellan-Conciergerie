@@ -32,11 +32,9 @@ import {
   normalizeTransportationActivity,
   resolveTransportPdfHeading,
   resolveTransportPdfVehicleLabel,
-  transportPdfIcon,
 } from "@/lib/planner/transportation";
 import {
   buildCityChangeDividerMap,
-  dayDestinationLabelMap,
 } from "@/lib/planner/itinerary-destinations";
 import { resolvePlannerDestinationTitleLines } from "@/lib/planner/trip-destinations";
 import { PlannerDestinationTitle } from "./PlannerDestinationTitle";
@@ -87,23 +85,17 @@ function TransportPdfCardContent({ activity }: { activity: Activity }) {
   const heading = resolveTransportPdfHeading(transport);
   const route = formatTransportRouteLine(transport.pickup, transport.destination);
   const vehicleLabel = resolveTransportPdfVehicleLabel(transport, heading);
-  const icon = transportPdfIcon(transport.transportType);
 
   return (
     <>
-      <div className="lux-transport-header">
-        <span className="lux-transport-icon" aria-hidden>
-          {icon}
-        </span>
-        <span className="lux-transport-heading">{heading}</span>
-      </div>
-      {vehicleLabel ? (
-        <span className="lux-transport-vehicle">{vehicleLabel}</span>
-      ) : null}
       {time ? (
         <time className="lux-transport-time">{time}</time>
       ) : null}
+      <span className="lux-transport-heading">{heading}</span>
       {route ? <p className="lux-transport-route-line">{route}</p> : null}
+      {vehicleLabel ? (
+        <span className="lux-transport-vehicle">{vehicleLabel}</span>
+      ) : null}
     </>
   );
 }
@@ -265,29 +257,18 @@ function ClientPeriodBlock({
   );
 }
 
-function CityChangeDivider({ city }: { city: string }) {
-  const label = city.trim();
-  if (!label) return null;
-
-  return (
-    <div className="lux-city-divider" role="separator" aria-label={label}>
-      <span className="lux-city-divider-line" aria-hidden />
-      <p className="lux-city-divider-name">{label}</p>
-      <span className="lux-city-divider-line" aria-hidden />
-    </div>
-  );
-}
-
 function DayDestinationLabel({ label }: { label: string }) {
-  return <p className="lux-day-destination-label">{label}</p>;
+  const text = label.trim();
+  if (!text) return null;
+  return <p className="lux-day-destination-label">{text}</p>;
 }
 
 function ClientDayCard({
   day,
-  cityDivider,
+  destinationLabel,
 }: {
   day: TripDay;
-  cityDivider?: string;
+  destinationLabel?: string;
 }) {
   const sections = getVisibleSections(day);
 
@@ -334,12 +315,14 @@ function ClientDayCard({
 
   return (
     <article
-      className={`lux-day-card${sparseDay ? " lux-day-card--sparse" : ""}${cityDivider ? " lux-day-card--city-start" : ""}`}
+      className={`lux-day-card${sparseDay ? " lux-day-card--sparse" : ""}`}
     >
-      {cityDivider ? <CityChangeDivider city={cityDivider} /> : null}
       <header className="lux-day-card-head">
         <span className="lux-day-card-name">{formatGridDayName(day.date)}</span>
         <span className="lux-day-card-date">{formatLuxuryDayDate(day.date)}</span>
+        {destinationLabel ? (
+          <DayDestinationLabel label={destinationLabel} />
+        ) : null}
       </header>
       {splitTimeline ? (
         <div
@@ -565,7 +548,6 @@ export function PlannerLuxuryDocument({
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
   const destinationTitleLines = resolvePlannerDestinationTitleLines(trip);
   const cityChangeDividers = buildCityChangeDividerMap(trip);
-  const dayDestinationLabels = dayDestinationLabelMap(trip);
   const metaRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -691,7 +673,7 @@ export function PlannerLuxuryDocument({
                     <ClientDayCard
                       key={day.id}
                       day={day}
-                      cityDivider={cityChangeDividers.get(day.id)}
+                      destinationLabel={cityChangeDividers.get(day.id)}
                     />
                   ))}
                 </div>
@@ -704,7 +686,7 @@ export function PlannerLuxuryDocument({
                     <ConciergeDayColumn
                       key={day.id}
                       day={day}
-                      destinationLabel={dayDestinationLabels.get(day.id)}
+                      destinationLabel={cityChangeDividers.get(day.id)}
                     />
                   ))}
                 </div>
