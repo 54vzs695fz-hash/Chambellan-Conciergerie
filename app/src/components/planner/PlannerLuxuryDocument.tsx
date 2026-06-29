@@ -31,6 +31,7 @@ import {
   normalizeTransportationActivity,
 } from "@/lib/planner/transportation";
 import {
+  buildCityChangeDividerMap,
   dayDestinationLabelMap,
 } from "@/lib/planner/itinerary-destinations";
 import { resolvePlannerDestinationTitleLines } from "@/lib/planner/trip-destinations";
@@ -280,16 +281,29 @@ function ClientPeriodBlock({
   );
 }
 
+function CityChangeDivider({ city }: { city: string }) {
+  const label = city.trim();
+  if (!label) return null;
+
+  return (
+    <div className="lux-city-divider" role="separator" aria-label={label}>
+      <span className="lux-city-divider-line" aria-hidden />
+      <p className="lux-city-divider-name">{label}</p>
+      <span className="lux-city-divider-line" aria-hidden />
+    </div>
+  );
+}
+
 function DayDestinationLabel({ label }: { label: string }) {
   return <p className="lux-day-destination-label">{label}</p>;
 }
 
 function ClientDayCard({
   day,
-  destinationLabel,
+  cityDivider,
 }: {
   day: TripDay;
-  destinationLabel?: string;
+  cityDivider?: string;
 }) {
   const sections = getVisibleSections(day);
 
@@ -336,14 +350,12 @@ function ClientDayCard({
 
   return (
     <article
-      className={`lux-day-card${sparseDay ? " lux-day-card--sparse" : ""}`}
+      className={`lux-day-card${sparseDay ? " lux-day-card--sparse" : ""}${cityDivider ? " lux-day-card--city-start" : ""}`}
     >
+      {cityDivider ? <CityChangeDivider city={cityDivider} /> : null}
       <header className="lux-day-card-head">
         <span className="lux-day-card-name">{formatGridDayName(day.date)}</span>
         <span className="lux-day-card-date">{formatLuxuryDayDate(day.date)}</span>
-        {destinationLabel ? (
-          <DayDestinationLabel label={destinationLabel} />
-        ) : null}
       </header>
       {splitTimeline ? (
         <div
@@ -583,6 +595,7 @@ export function PlannerLuxuryDocument({
   const showClientIdentity =
     Boolean(trip.client_name?.trim()) || Boolean(clientGuestCount);
   const destinationTitleLines = resolvePlannerDestinationTitleLines(trip);
+  const cityChangeDividers = buildCityChangeDividerMap(trip);
   const dayDestinationLabels = dayDestinationLabelMap(trip);
   const metaRef = useRef<HTMLDivElement>(null);
 
@@ -709,7 +722,7 @@ export function PlannerLuxuryDocument({
                     <ClientDayCard
                       key={day.id}
                       day={day}
-                      destinationLabel={dayDestinationLabels.get(day.id)}
+                      cityDivider={cityChangeDividers.get(day.id)}
                     />
                   ))}
                 </div>

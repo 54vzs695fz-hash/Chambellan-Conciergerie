@@ -2531,6 +2531,22 @@
   letter-spacing: 0.16em;
 }
 
+.lux-print-root--client .lux-city-divider {
+  margin-bottom: 0.38rem;
+  gap: 0.28rem;
+}
+
+.lux-print-root--client .lux-city-divider-line {
+  max-width: 4.85rem;
+  border-top-color: rgba(154, 123, 79, 0.62);
+}
+
+.lux-print-root--client .lux-city-divider-name {
+  font-size: 0.64rem;
+  letter-spacing: 0.24em;
+  color: var(--lux-gold-rich);
+}
+
 .lux-print-root--client .lux-period-title {
   font-size: 0.64rem;
   letter-spacing: 0.18em;

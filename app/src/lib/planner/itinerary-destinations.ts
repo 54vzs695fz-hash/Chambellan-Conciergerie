@@ -1,5 +1,6 @@
 import { citiesMatch, normalizeCity } from "@/lib/establishments/group-by-city";
 import { normalizeDestination } from "@/lib/establishments/destinations";
+import { destinationsMatch } from "@/lib/planner/destination-matching";
 import type { Activity, ActivityType, TripDay, TripWithDays } from "@/lib/types";
 import {
   resolvePlannerDestinationHeader,
@@ -160,8 +161,7 @@ export function inferDestinationRegion(destinations: string[]): string {
 }
 
 /**
- * Manual per-day labels only when multi-destination is on.
- * No establishment-based city markers.
+ * Manual per-day labels only when multi-destination is on (concierge override).
  */
 export function dayDestinationLabelMap(
   trip: Pick<TripWithDays, "days" | "multi_destination">
@@ -178,6 +178,48 @@ export function dayDestinationLabelMap(
       map.set(day.id, formatDestinationForDisplay(override));
     }
   }
+  return map;
+}
+
+/** Client PDF — show an elegant city divider only when the itinerary enters a new city. */
+export function buildCityChangeDividerMap(
+  trip: Pick<TripWithDays, "days" | "multi_destination">
+): Map<number, string> {
+  if (!trip.multi_destination) return new Map();
+
+  const days = [...(trip.days ?? [])].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+
+  const effective = days.map((day) => ({
+    dayId: day.id,
+    city: resolveDayEffectiveDestination(day),
+  }));
+
+  const uniqueCities: string[] = [];
+  for (const entry of effective) {
+    if (!entry.city) continue;
+    if (uniqueCities.some((city) => destinationsMatch(city, entry.city!))) {
+      continue;
+    }
+    uniqueCities.push(entry.city);
+  }
+
+  if (uniqueCities.length < 2) return new Map();
+
+  const map = new Map<number, string>();
+  let previousCity: string | null = null;
+
+  for (const { dayId, city } of effective) {
+    if (!city) continue;
+
+    if (previousCity === null || !destinationsMatch(previousCity, city)) {
+      map.set(dayId, city);
+    }
+
+    previousCity = city;
+  }
+
   return map;
 }
 
