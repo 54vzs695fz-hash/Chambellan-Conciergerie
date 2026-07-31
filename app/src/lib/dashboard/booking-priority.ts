@@ -5,6 +5,7 @@ import {
   isClientProgrammeConfirmed,
 } from "@/lib/dashboard/booking-progress";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
+import { startOfDay, toIsoDate } from "@/lib/calendar/programmes";
 import { isUntitledDestination } from "@/lib/planner-utils";
 import {
   isBookingRequiringAction,
@@ -15,6 +16,8 @@ import type { Establishment, TripPaymentStatus, TripWithDays } from "@/lib/types
 
 export type BookingPriorityLevel = "high" | "medium" | "ready";
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 export interface BookingPriorityItem {
   tripId: number;
   client_name: string;
@@ -22,6 +25,7 @@ export interface BookingPriorityItem {
   destination_subtitle: string | null;
   dates: string;
   arrival_date: string;
+  departure_date: string;
   guest_label: string | null;
   remaining: number;
   percent: number;
@@ -98,6 +102,60 @@ export function formatBookingPriorityGuestLabel(
   return trimmed;
 }
 
+/** Local calendar today as YYYY-MM-DD (app timezone). */
+export function bookingPriorityTodayIso(now: Date = new Date()): string {
+  return toIsoDate(startOfDay(now));
+}
+
+/**
+ * Booking Priority date gate — active or future stays only.
+ * Excludes departureDate < today (past stays). Departure day stays eligible.
+ */
+export function isBookingPriorityStayActive(
+  arrivalDate: string | null | undefined,
+  departureDate: string | null | undefined,
+  today: Date | string = new Date()
+): boolean {
+  const arrival = String(arrivalDate ?? "").trim();
+  const departure = String(departureDate ?? "").trim();
+
+  if (!arrival || !departure || !ISO_DATE_RE.test(arrival) || !ISO_DATE_RE.test(departure)) {
+    console.warn(
+      "[booking-priority] missing or invalid travel dates — excluded from Booking Priority",
+      { arrivalDate: arrival || null, departureDate: departure || null }
+    );
+    return false;
+  }
+
+  const todayStr =
+    typeof today === "string" && ISO_DATE_RE.test(today)
+      ? today
+      : bookingPriorityTodayIso(
+          typeof today === "string" ? new Date() : today
+        );
+
+  // Past stay — never in Booking Priority
+  if (departure < todayStr) return false;
+
+  const upcoming = arrival > todayStr;
+  const inStay = arrival <= todayStr && departure >= todayStr;
+  return upcoming || inStay;
+}
+
+export function pruneBookingPriorityItems(
+  items: BookingPriorityItem[],
+  today: Date | string = new Date()
+): BookingPriorityItem[] {
+  return items.filter(
+    (item) =>
+      isBookingPriorityStayActive(
+        item.arrival_date,
+        item.departure_date,
+        today
+      ) && item.remaining > 0
+  );
+}
+
 function countWaitingConfirmations(items: ReservationStatusItem[]): number {
   return items.filter((item) => item.booking_status === "waiting_confirmation")
     .length;
@@ -157,6 +215,7 @@ function buildBookingPriorityItem(
     destination_subtitle: planner.destination_subtitle,
     dates: formatBookingPriorityStayDates(arrivalDate, departureDate),
     arrival_date: arrivalDate,
+    departure_date: departureDate,
     guest_label: formatBookingPriorityGuestLabel(planner.guest_count),
     remaining,
     percent: planner.summary.percent,
@@ -188,6 +247,7 @@ export function syncBookingPriorityItem(
 
   return {
     ...existing,
+    arrival_date: planner.arrival_date || existing.arrival_date,
     remaining,
     percent: display.percent,
     progressTone: display.progressTone,
@@ -202,41 +262,52 @@ export function syncBookingPriorityItem(
 
 export function syncBookingPriorityWithPlanners(
   priorityItems: BookingPriorityItem[],
-  planners: BookingProgressPlanner[]
+  planners: BookingProgressPlanner[],
+  today: Date | string = new Date()
 ): BookingPriorityItem[] {
   const plannerByTrip = new Map(planners.map((planner) => [planner.tripId, planner]));
 
-  return priorityItems
-    .map((item) => {
-      const planner = plannerByTrip.get(item.tripId);
-      if (!planner) return item;
-      return syncBookingPriorityItem(item, planner);
-    })
-    .sort((a, b) =>
-      compareBookingPrioritySortFields(
-        {
-          remaining: a.remaining,
-          arrival_date: a.arrival_date,
-          waiting_confirmations: 0,
-          pending_transfers: 0,
-          pending_payment: 0,
-        },
-        {
-          remaining: b.remaining,
-          arrival_date: b.arrival_date,
-          waiting_confirmations: 0,
-          pending_transfers: 0,
-          pending_payment: 0,
-        }
-      )
-    );
+  return pruneBookingPriorityItems(
+    priorityItems
+      .map((item) => {
+        const planner = plannerByTrip.get(item.tripId);
+        if (!planner) return item;
+        return syncBookingPriorityItem(item, planner);
+      })
+      .sort((a, b) =>
+        compareBookingPrioritySortFields(
+          {
+            remaining: a.remaining,
+            arrival_date: a.arrival_date,
+            waiting_confirmations: 0,
+            pending_transfers: 0,
+            pending_payment: 0,
+          },
+          {
+            remaining: b.remaining,
+            arrival_date: b.arrival_date,
+            waiting_confirmations: 0,
+            pending_transfers: 0,
+            pending_payment: 0,
+          }
+        )
+      ),
+    today
+  );
 }
 
 export function listBookingPriorityItems(
   confirmedTrips: TripWithDays[],
-  establishments: Establishment[] = []
+  establishments: Establishment[] = [],
+  today: Date | string = new Date()
 ): BookingPriorityItem[] {
   const lookup = buildEstablishmentContactLookup(establishments);
+  const todayStr =
+    typeof today === "string" && ISO_DATE_RE.test(today)
+      ? today
+      : bookingPriorityTodayIso(
+          typeof today === "string" ? new Date() : today
+        );
 
   return confirmedTrips
     .filter(
@@ -244,9 +315,17 @@ export function listBookingPriorityItems(
         isClientProgrammeConfirmed(trip) &&
         !isUntitledDestination(trip.destination)
     )
+    .filter((trip) =>
+      isBookingPriorityStayActive(
+        trip.arrival_date,
+        trip.departure_date,
+        todayStr
+      )
+    )
     .map((trip) => {
       const planner = buildBookingProgressPlanner(trip, lookup);
-      if (planner.summary.total === 0) return null;
+      // Only programmes with bookings still requiring action
+      if (planner.summary.remaining <= 0) return null;
       return buildBookingPriorityItem(
         planner,
         trip.arrival_date,

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DashboardBookingProgress } from "@/components/dashboard/DashboardBookingProgress";
 import { DashboardMobileBookingPriority } from "@/components/dashboard/DashboardMobileBookingPriority";
 import { DashboardRecentPlanners } from "@/components/dashboard/DashboardRecentPlanners";
-import { syncBookingPriorityWithPlanners } from "@/lib/dashboard/booking-priority";
+import {
+  pruneBookingPriorityItems,
+  syncBookingPriorityWithPlanners,
+} from "@/lib/dashboard/booking-priority";
 import type { BookingPriorityItem } from "@/lib/dashboard/booking-priority";
 import type { BookingProgressPlanner } from "@/lib/dashboard/booking-progress";
 import type { Trip } from "@/lib/types";
@@ -29,9 +32,35 @@ export function DashboardMobileHome({
   trips,
   clients,
 }: Props) {
-  const [priorityItems, setPriorityItems] = useState(bookingPriority);
+  const [priorityItems, setPriorityItems] = useState(() =>
+    pruneBookingPriorityItems(bookingPriority)
+  );
   const [expandedTripId, setExpandedTripId] = useState<number | null>(null);
   const bookingProgressRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setPriorityItems(pruneBookingPriorityItems(bookingPriority));
+  }, [bookingPriority]);
+
+  useEffect(() => {
+    const pruneForToday = () => {
+      setPriorityItems((current) => pruneBookingPriorityItems(current));
+    };
+
+    pruneForToday();
+    const intervalId = window.setInterval(pruneForToday, 60_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") pruneForToday();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", pruneForToday);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", pruneForToday);
+    };
+  }, []);
 
   const handlePlannersChange = useCallback(
     (planners: BookingProgressPlanner[]) => {
